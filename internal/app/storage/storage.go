@@ -1,6 +1,8 @@
 package storage
 
-import "errors"
+import (
+	"errors"
+)
 
 // URLStorager defines the interface for URL storage.
 type URLStorager interface {
@@ -36,4 +38,9 @@ func (s *Storage) Get(slug string) (string, error) {
 	}
 
 	return url, nil
+}
+
+// ListAll returns the full map of stored URLs.
+func (s *Storage) ListAll() map[string]string {
+	return s.urls
 }

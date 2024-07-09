@@ -11,18 +11,20 @@ import (
 )
 
 type Server struct {
-	mux *http.ServeMux
-	s   *storage.Storage
+	mux     *http.ServeMux
+	baseURL string
+	addr    string
+	s       *storage.Storage
 }
 
 const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 const slugLength = 8
 
 // New creates a new HTTP server.
-func New() *Server {
+func New(baseURL, addr string) *Server {
 	mux := http.NewServeMux()
 	storage := storage.New()
-	server := &Server{mux: mux, s: storage}
+	server := &Server{mux: mux, s: storage, baseURL: baseURL, addr: addr}
 
 	mux.Handle("/", server.RootHandler())
 
@@ -30,10 +32,11 @@ func New() *Server {
 }
 
 // Start starts the server under the specified address.
-func (s *Server) Start(addr string) error {
-	return http.ListenAndServe(addr, s.mux)
+func (s *Server) Start() error {
+	return http.ListenAndServe(s.addr, s.mux)
 }
 
+// RootHandler handles basic request.
 func (s *Server) RootHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
@@ -47,15 +50,20 @@ func (s *Server) RootHandler() http.Handler {
 	})
 }
 
+// AddHandler handles adding a new URL.
 func (s *Server) AddHandler(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		panic(err)
 	}
 	url := string(body)
+	if url == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
 	slug := generateRandomString(slugLength)
-	shortURL := "http://localhost:8080/" + slug
+	shortURL := s.baseURL + s.addr + "/" + slug
 
 	s.s.Add(slug, url)
 
@@ -64,6 +72,7 @@ func (s *Server) AddHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(shortURL))
 }
 
+// GetHandler handles retrieving the URL by its slug.
 func (s *Server) GetHandler(w http.ResponseWriter, r *http.Request) {
 	slug := strings.Trim(r.URL.Path, "/")
 

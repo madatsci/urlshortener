@@ -5,8 +5,8 @@ import (
 )
 
 func main() {
-	s := server.New()
-	if err := s.Start(":8080"); err != nil {
+	s := server.New("http://localhost", ":8080")
+	if err := s.Start(); err != nil {
 		panic(err)
 	}
 }
