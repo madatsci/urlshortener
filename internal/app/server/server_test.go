@@ -42,35 +42,25 @@ func TestAddHandler(t *testing.T) {
 		},
 	}
 
-	baseURL := "http://localhost"
-	addr := ":8080"
-	s := New(baseURL, addr)
+	s, ts := testServer()
+	defer ts.Close()
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			r := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(test.requestBody))
-			w := httptest.NewRecorder()
+			resp, respStr := testRequest(t, ts, http.MethodPost, "/", strings.NewReader(test.requestBody))
 
-			s.AddHandler(w, r)
-
-			res := w.Result()
-			assert.Equal(t, test.want.code, res.StatusCode, "Unexpected response code")
-			assert.Equal(t, test.want.contentType, res.Header.Get("Content-Type"), "Unexpected content type")
-
-			defer res.Body.Close()
+			assert.Equal(t, test.want.code, resp.StatusCode, "Unexpected response code")
+			assert.Equal(t, test.want.contentType, resp.Header.Get("Content-Type"), "Unexpected content type")
 
 			if !test.want.wantErr {
-				resBody, err := io.ReadAll(res.Body)
-				require.NoError(t, err)
-
 				var slug string
-				for k := range s.s.ListAll() {
+				for k := range s.h.Storage().ListAll() {
 					slug = k
 					break
 				}
 
-				wantBody := baseURL + addr + "/" + slug
-				assert.Equal(t, wantBody, string(resBody))
+				wantBody := s.baseURL + s.addr + "/" + slug
+				assert.Equal(t, wantBody, respStr)
 			}
 		})
 	}
@@ -110,33 +100,52 @@ func TestGetHandler(t *testing.T) {
 			name: "negative case: empty path",
 			path: "/",
 			want: want{
-				code:     http.StatusBadRequest,
+				code:     http.StatusMethodNotAllowed,
 				location: "",
 				wantErr:  true,
 			},
 		},
 	}
 
-	baseURL := "http://localhost"
-	addr := ":8080"
-	s := New(baseURL, addr)
-	s.s.Add("shortURL", "https://practicum.yandex.ru/")
+	s, ts := testServer()
+	s.h.Storage().Add("shortURL", "https://practicum.yandex.ru/")
+	defer ts.Close()
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			r := httptest.NewRequest(http.MethodGet, test.path, nil)
-			w := httptest.NewRecorder()
-
-			s.GetHandler(w, r)
-
-			res := w.Result()
-			assert.Equal(t, test.want.code, res.StatusCode, "Unexpected response code")
-
-			defer res.Body.Close()
+			resp, _ := testRequest(t, ts, http.MethodGet, test.path, nil)
+			assert.Equal(t, test.want.code, resp.StatusCode, "Unexpected response code")
 
 			if !test.want.wantErr {
-				assert.Equal(t, test.want.location, res.Header.Get("Location"), "Unexpected location")
+				assert.Equal(t, test.want.location, resp.Header.Get("Location"), "Unexpected location")
 			}
 		})
 	}
+}
+
+func testServer() (*Server, *httptest.Server) {
+	baseURL := "http://localhost"
+	addr := ":8080"
+	s := New(baseURL, addr)
+
+	return s, httptest.NewServer(s.Router())
+}
+
+func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io.Reader) (*http.Response, string) {
+	req, err := http.NewRequest(method, ts.URL+path, body)
+	require.NoError(t, err)
+
+	cli := &http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+	resp, err := cli.Do(req)
+	require.NoError(t, err)
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	return resp, string(respBody)
 }
