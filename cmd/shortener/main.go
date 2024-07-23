@@ -1,11 +1,16 @@
 package main
 
 import (
+	"github.com/madatsci/urlshortener/internal/app/config"
 	"github.com/madatsci/urlshortener/internal/app/server"
 )
 
 func main() {
-	s := server.New("http://localhost", ":8080")
+	parseFlags()
+
+	config := config.New(httpHost, httpPort, generatedHost, generatedPort)
+
+	s := server.New(config)
 	if err := s.Start(); err != nil {
 		panic(err)
 	}

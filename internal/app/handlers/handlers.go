@@ -1,22 +1,23 @@
 package handlers
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/madatsci/urlshortener/internal/app/config"
 	"github.com/madatsci/urlshortener/internal/app/storage"
 )
 
 type Handlers struct {
-	s       *storage.Storage
-	baseURL string
-	addr    string
+	s *storage.Storage
+	c *config.Config
 }
 
 // New creates new Handlers.
-func New(baseURL, addr string) *Handlers {
-	return &Handlers{baseURL: baseURL, addr: addr, s: storage.New()}
+func New(config *config.Config) *Handlers {
+	return &Handlers{c: config, s: storage.New()}
 }
 
 // AddHandler handles adding a new URL.
@@ -32,7 +33,7 @@ func (h *Handlers) AddHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	slug := generateSlug(slugLength)
-	shortURL := h.baseURL + h.addr + "/" + slug
+	shortURL := fmt.Sprintf("%s:%d/%s", h.c.GeneratedHost, h.c.GeneratedPort, slug)
 
 	h.s.Add(slug, url)
 

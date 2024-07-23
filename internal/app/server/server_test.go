@@ -1,12 +1,14 @@
 package server
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
+	"github.com/madatsci/urlshortener/internal/app/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -59,7 +61,7 @@ func TestAddHandler(t *testing.T) {
 					break
 				}
 
-				wantBody := s.baseURL + s.addr + "/" + slug
+				wantBody := fmt.Sprintf("%s:%d/%s", s.config.GeneratedHost, s.config.GeneratedPort, slug)
 				assert.Equal(t, wantBody, respStr)
 			}
 		})
@@ -124,9 +126,14 @@ func TestGetHandler(t *testing.T) {
 }
 
 func testServer() (*Server, *httptest.Server) {
-	baseURL := "http://localhost"
-	addr := ":8080"
-	s := New(baseURL, addr)
+	config := &config.Config{
+		HttpHost:      "http://localhost",
+		HttpPort:      8080,
+		GeneratedHost: "http://localhost",
+		GeneratedPort: 8080,
+	}
+
+	s := New(config)
 
 	return s, httptest.NewServer(s.Router())
 }
