@@ -24,6 +24,7 @@ func New(config *config.Config) *Server {
 
 	r.Route("/", func(r chi.Router) {
 		r.Post("/", h.AddHandler)
+		r.Post("/api/shorten", h.AddHandlerJSON)
 		r.Get("/{slug}", h.GetHandler)
 	})
 

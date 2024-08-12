@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,6 +14,14 @@ import (
 type Handlers struct {
 	s *storage.Storage
 	c *config.Config
+}
+
+type shortenRequest struct {
+	URL string `json:"url"`
+}
+
+type shortenResponse struct {
+	Result string `json:"result"`
 }
 
 // New creates new Handlers.
@@ -33,13 +42,50 @@ func (h *Handlers) AddHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	slug := generateSlug(slugLength)
-	shortURL := fmt.Sprintf("%s:%d/%s", h.c.GeneratedHost, h.c.GeneratedPort, slug)
+	shortURL := fmt.Sprintf("http://%s:%d/%s", h.c.GeneratedHost, h.c.GeneratedPort, slug)
 
 	h.s.Add(slug, url)
 
 	w.Header().Set("content-type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
 	w.Write([]byte(shortURL))
+}
+
+// AddHandler handles adding a new URL via JSON request.
+func (h *Handlers) AddHandlerJSON(w http.ResponseWriter, r *http.Request) {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		panic(err)
+	}
+
+	var request shortenRequest
+	err = json.Unmarshal(body, &request)
+	if err != nil {
+		panic(err)
+	}
+
+	if request.URL == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	slug := generateSlug(slugLength)
+	shortURL := fmt.Sprintf("http://%s:%d/%s", h.c.GeneratedHost, h.c.GeneratedPort, slug)
+
+	h.s.Add(slug, request.URL)
+
+	response := &shortenResponse{
+		Result: shortURL,
+	}
+
+	res, err := json.Marshal(response)
+	if err != nil {
+		panic(err)
+	}
+
+	w.Header().Set("content-type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	w.Write(res)
 }
 
 // GetHandler handles retrieving the URL by its slug.
