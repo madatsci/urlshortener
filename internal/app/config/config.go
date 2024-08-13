@@ -1,18 +1,16 @@
 package config
 
 type Config struct {
-	HttpHost      string
-	HttpPort      int
-	GeneratedHost string
-	GeneratedPort int
+	HttpHost string
+	HttpPort int
+	BaseURL  string
 }
 
 // New creates a new Config struct.
-func New(httpHost string, httpPort int, generatedHost string, generatedPort int) *Config {
+func New(httpHost string, httpPort int, baseURL string) *Config {
 	return &Config{
-		HttpHost:      httpHost,
-		HttpPort:      httpPort,
-		GeneratedHost: generatedHost,
-		GeneratedPort: generatedPort,
+		HttpHost: httpHost,
+		HttpPort: httpPort,
+		BaseURL:  baseURL,
 	}
 }

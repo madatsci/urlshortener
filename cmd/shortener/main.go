@@ -8,7 +8,7 @@ import (
 func main() {
 	parseFlags()
 
-	config := config.New(httpHost, httpPort, generatedHost, generatedPort)
+	config := config.New(httpHost, httpPort, baseURL)
 
 	s := server.New(config)
 	if err := s.Start(); err != nil {

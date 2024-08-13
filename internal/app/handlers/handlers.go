@@ -42,7 +42,7 @@ func (h *Handlers) AddHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	slug := generateSlug(slugLength)
-	shortURL := fmt.Sprintf("http://%s:%d/%s", h.c.GeneratedHost, h.c.GeneratedPort, slug)
+	shortURL := fmt.Sprintf("%s/%s", h.c.BaseURL, slug)
 
 	h.s.Add(slug, url)
 
@@ -70,7 +70,7 @@ func (h *Handlers) AddHandlerJSON(w http.ResponseWriter, r *http.Request) {
 	}
 
 	slug := generateSlug(slugLength)
-	shortURL := fmt.Sprintf("http://%s:%d/%s", h.c.GeneratedHost, h.c.GeneratedPort, slug)
+	shortURL := fmt.Sprintf("%s/%s", h.c.BaseURL, slug)
 
 	h.s.Add(slug, request.URL)
 

@@ -61,7 +61,7 @@ func TestAddHandler(t *testing.T) {
 					break
 				}
 
-				wantBody := fmt.Sprintf("%s:%d/%s", s.config.GeneratedHost, s.config.GeneratedPort, slug)
+				wantBody := fmt.Sprintf("%s/%s", s.config.BaseURL, slug)
 				assert.Equal(t, wantBody, respStr)
 			}
 		})
@@ -127,10 +127,9 @@ func TestGetHandler(t *testing.T) {
 
 func testServer() (*Server, *httptest.Server) {
 	config := &config.Config{
-		HttpHost:      "http://localhost",
-		HttpPort:      8080,
-		GeneratedHost: "http://localhost",
-		GeneratedPort: 8080,
+		HttpHost: "localhost",
+		HttpPort: 8080,
+		BaseURL:  "http://localhost:8080",
 	}
 
 	s := New(config)
