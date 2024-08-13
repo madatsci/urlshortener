@@ -3,7 +3,7 @@ package main
 import (
 	"errors"
 	"flag"
-	"regexp"
+	"net/url"
 	"strconv"
 	"strings"
 )
@@ -12,7 +12,6 @@ var (
 	httpHost = "localhost"
 	httpPort = 8080
 	baseURL  = "http://localhost:8080"
-	validURL = regexp.MustCompile(`^https?:\/\/\w+:\d+`)
 )
 
 func parseFlags() {
@@ -21,7 +20,8 @@ func parseFlags() {
 	})
 
 	flag.Func("b", "base URL of the generated short URL", func(flagValue string) error {
-		if !validURL.MatchString(flagValue) {
+		u, err := url.Parse(flagValue)
+		if err != nil || u.Scheme == "" || u.Host == "" {
 			return errors.New("invalid URL format")
 		}
 
