@@ -50,6 +50,7 @@ func TestAddHandler(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			resp, respStr := testRequest(t, ts, http.MethodPost, "/", strings.NewReader(test.requestBody))
+			defer resp.Body.Close()
 
 			assert.Equal(t, test.want.code, resp.StatusCode, "Unexpected response code")
 			assert.Equal(t, test.want.contentType, resp.Header.Get("Content-Type"), "Unexpected content type")
@@ -116,6 +117,8 @@ func TestGetHandler(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			resp, _ := testRequest(t, ts, http.MethodGet, test.path, nil)
+			defer resp.Body.Close()
+
 			assert.Equal(t, test.want.code, resp.StatusCode, "Unexpected response code")
 
 			if !test.want.wantErr {
@@ -147,7 +150,6 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io
 	}
 	resp, err := cli.Do(req)
 	require.NoError(t, err)
-	defer resp.Body.Close()
 
 	respBody, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
