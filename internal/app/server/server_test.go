@@ -127,9 +127,8 @@ func TestGetHandler(t *testing.T) {
 
 func testServer() (*Server, *httptest.Server) {
 	config := &config.Config{
-		HttpHost: "localhost",
-		HttpPort: 8080,
-		BaseURL:  "http://localhost:8080",
+		ServerAddr: "localhost:8080",
+		BaseURL:    "http://localhost:8080",
 	}
 
 	s := New(config)

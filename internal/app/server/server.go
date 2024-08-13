@@ -1,7 +1,6 @@
 package server
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -36,7 +35,7 @@ func New(config *config.Config) *Server {
 
 // Start starts the server under the specified address.
 func (s *Server) Start() error {
-	return http.ListenAndServe(fmt.Sprintf("%s:%d", s.config.HttpHost, s.config.HttpPort), s.mux)
+	return http.ListenAndServe(s.config.ServerAddr, s.mux)
 }
 
 // Router returns server router for usage in tests.

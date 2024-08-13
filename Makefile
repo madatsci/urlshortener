@@ -17,3 +17,7 @@ test_iter3:
 .PHONY: test_iter4
 test_iter4:
 	./shortenertestbeta -test.v -test.run=^TestIteration4$$ -binary-path=cmd/shortener/shortener -source-path=. -server-port=8081
+
+.PHONY: test_iter5
+test_iter5:
+	./shortenertestbeta -test.v -test.run=^TestIteration5$$ -binary-path=cmd/shortener/shortener -source-path=. -server-port=8081
