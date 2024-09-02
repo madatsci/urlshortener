@@ -11,6 +11,7 @@ import (
 	"github.com/madatsci/urlshortener/internal/app/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 func TestAddHandler(t *testing.T) {
@@ -134,7 +135,9 @@ func testServer() (*Server, *httptest.Server) {
 		BaseURL:    "http://localhost:8080",
 	}
 
-	s := New(config)
+	logger := zap.NewNop().Sugar()
+
+	s := New(config, logger)
 
 	return s, httptest.NewServer(s.Router())
 }

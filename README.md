@@ -1,11 +1,4 @@
-# go-musthave-shortener-tpl
-
-Шаблон репозитория для трека «Сервис сокращения URL».
-
-## Начало работы
-
-1. Склонируйте репозиторий в любую подходящую директорию на вашем компьютере.
-2. В корне репозитория выполните команду `go mod init <name>` (где `<name>` — адрес вашего репозитория на GitHub без префикса `https://`) для создания модуля.
+# Development
 
 ## Обновление шаблона
 
@@ -30,3 +23,26 @@ git fetch template && git checkout template/main .github
 При мёрже ветки с инкрементом в основную ветку `main` будут запускаться все автотесты.
 
 Подробнее про локальный и автоматический запуск читайте в [README автотестов](https://github.com/Yandex-Practicum/go-autotests).
+
+# API Examples
+
+## Create short URL
+
+```bash
+curl -X POST http://localhost:8080 -H "Content-Type: text/plain" -d "https://practicum-yandex.ru"
+
+# Response:
+http://localhost:8080/LeKRAJMW
+```
+
+## Use short URL
+
+```bash
+curl -I -X GET localhost:8080/LeKRAJMW
+
+# Response:
+HTTP/1.1 307 Temporary Redirect
+Location: https://practicum-yandex.ru
+Date: Mon, 02 Sep 2024 17:52:57 GMT
+Content-Length: 0
+```
