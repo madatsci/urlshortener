@@ -52,7 +52,7 @@ func New(config *config.Config, logger *zap.SugaredLogger) *Server {
 
 	r.Route("/", func(r chi.Router) {
 		r.Post("/", server.withLogging(h.AddHandler))
-		r.Post("/api/shorten", h.AddHandlerJSON)
+		r.Post("/api/shorten", server.withLogging(h.AddHandlerJSON))
 		r.Get("/{slug}", server.withLogging(h.GetHandler))
 	})
 
