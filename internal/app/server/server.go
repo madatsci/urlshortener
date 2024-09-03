@@ -2,6 +2,7 @@ package server
 
 import (
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -17,28 +18,7 @@ type (
 		h      *handlers.Handlers
 		log    *zap.SugaredLogger
 	}
-
-	responseData struct {
-		status int
-		size   int
-	}
-
-	loggingResponseWriter struct {
-		http.ResponseWriter
-		responseData *responseData
-	}
 )
-
-func (r *loggingResponseWriter) Write(b []byte) (int, error) {
-	size, err := r.ResponseWriter.Write(b)
-	r.responseData.size += size
-	return size, err
-}
-
-func (r *loggingResponseWriter) WriteHeader(statusCode int) {
-	r.ResponseWriter.WriteHeader(statusCode)
-	r.responseData.status = statusCode
-}
 
 // New creates a new HTTP server.
 func New(config *config.Config, logger *zap.SugaredLogger) *Server {
@@ -51,9 +31,9 @@ func New(config *config.Config, logger *zap.SugaredLogger) *Server {
 	h := handlers.New(config)
 
 	r.Route("/", func(r chi.Router) {
-		r.Post("/", server.withLogging(h.AddHandler))
-		r.Post("/api/shorten", server.withLogging(h.AddHandlerJSON))
-		r.Get("/{slug}", server.withLogging(h.GetHandler))
+		r.Post("/", server.withMiddleware(h.AddHandler))
+		r.Post("/api/shorten", server.withMiddleware(h.AddHandlerJSON))
+		r.Get("/{slug}", server.withMiddleware(h.GetHandler))
 	})
 
 	server.h = h
@@ -72,9 +52,11 @@ func (s *Server) Router() *chi.Mux {
 	return s.mux
 }
 
-func (s *Server) withLogging(f func(w http.ResponseWriter, r *http.Request)) http.HandlerFunc {
-	h := http.HandlerFunc(f)
+func (s *Server) withMiddleware(h http.HandlerFunc) http.HandlerFunc {
+	return s.withLogging(gzipMiddleware(h))
+}
 
+func (s *Server) withLogging(h http.HandlerFunc) http.HandlerFunc {
 	logFn := func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 
@@ -100,4 +82,32 @@ func (s *Server) withLogging(f func(w http.ResponseWriter, r *http.Request)) htt
 	}
 
 	return logFn
+}
+
+func gzipMiddleware(h http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ow := w
+
+		acceptEncoding := r.Header.Get("Accept-Encoding")
+		supportsGzip := strings.Contains(acceptEncoding, "gzip")
+		if supportsGzip {
+			cw := newCompressWriter(w)
+			ow = cw
+			defer cw.Close()
+		}
+
+		contentEncoding := r.Header.Get("Content-Encoding")
+		sendsGzip := strings.Contains(contentEncoding, "gzip")
+		if sendsGzip {
+			cr, err := newCompressReader(r.Body)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			r.Body = cr
+			defer cr.Close()
+		}
+
+		h.ServeHTTP(ow, r)
+	}
 }

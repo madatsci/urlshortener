@@ -29,3 +29,7 @@ test_iter6:
 .PHONY: test_iter7
 test_iter7:
 	./shortenertestbeta -test.v -test.run=^TestIteration7$$ -binary-path=cmd/shortener/shortener -source-path=.
+
+.PHONY: test_iter8
+test_iter8:
+	./shortenertestbeta -test.v -test.run=^TestIteration8$$ -binary-path=cmd/shortener/shortener -source-path=.
