@@ -9,14 +9,17 @@ import (
 func main() {
 	parseFlags()
 
-	config := config.New(serverAddr, baseURL)
+	config := config.New(serverAddr, baseURL, fileStoragePath)
 
 	logger, err := logger.New()
 	if err != nil {
 		panic(err)
 	}
 
-	s := server.New(config, logger)
+	s, err := server.New(config, logger)
+	if err != nil {
+		panic(err)
+	}
 	if err := s.Start(); err != nil {
 		panic(err)
 	}

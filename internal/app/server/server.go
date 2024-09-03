@@ -21,14 +21,17 @@ type (
 )
 
 // New creates a new HTTP server.
-func New(config *config.Config, logger *zap.SugaredLogger) *Server {
+func New(config *config.Config, logger *zap.SugaredLogger) (*Server, error) {
 	server := &Server{
 		config: config,
 		log:    logger,
 	}
 
 	r := chi.NewRouter()
-	h := handlers.New(config)
+	h, err := handlers.New(config)
+	if err != nil {
+		return nil, err
+	}
 
 	r.Route("/", func(r chi.Router) {
 		r.Post("/", server.withMiddleware(h.AddHandler))
@@ -39,7 +42,7 @@ func New(config *config.Config, logger *zap.SugaredLogger) *Server {
 	server.h = h
 	server.mux = r
 
-	return server
+	return server, nil
 }
 
 // Start starts the server under the specified address.

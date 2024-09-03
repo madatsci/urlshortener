@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 
@@ -47,7 +48,7 @@ func TestAddHandler(t *testing.T) {
 		},
 	}
 
-	s, ts := testServer()
+	s, ts := testServer(t)
 	defer ts.Close()
 
 	for _, test := range tests {
@@ -111,7 +112,7 @@ func TestAddHandlerJSON(t *testing.T) {
 		},
 	}
 
-	s, ts := testServer()
+	s, ts := testServer(t)
 	defer ts.Close()
 
 	for _, test := range tests {
@@ -175,7 +176,7 @@ func TestGetHandler(t *testing.T) {
 		},
 	}
 
-	s, ts := testServer()
+	s, ts := testServer(t)
 	longURL := "https://practicum.yandex.ru/"
 	s.h.Storage().Add("shortURL", longURL)
 	defer ts.Close()
@@ -195,7 +196,7 @@ func TestGetHandler(t *testing.T) {
 }
 
 func TestGzipCompression(t *testing.T) {
-	s, ts := testServer()
+	s, ts := testServer(t)
 	defer ts.Close()
 
 	t.Run("sends_gzip", func(t *testing.T) {
@@ -249,15 +250,20 @@ func TestGzipCompression(t *testing.T) {
 	})
 }
 
-func testServer() (*Server, *httptest.Server) {
+func testServer(t *testing.T) (*Server, *httptest.Server) {
+	filepath := "../../../tmp/test_storage.txt"
+	os.Remove(filepath)
+
 	config := &config.Config{
-		ServerAddr: "localhost:8080",
-		BaseURL:    "http://localhost:8080",
+		ServerAddr:      "localhost:8080",
+		BaseURL:         "http://localhost:8080",
+		FileStoragePath: filepath,
 	}
 
 	logger := zap.NewNop().Sugar()
 
-	s := New(config, logger)
+	s, err := New(config, logger)
+	require.NoError(t, err)
 
 	return s, httptest.NewServer(s.Router())
 }

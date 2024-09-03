@@ -26,8 +26,13 @@ type (
 )
 
 // New creates new Handlers.
-func New(config *config.Config) *Handlers {
-	return &Handlers{c: config, s: storage.New()}
+func New(config *config.Config) (*Handlers, error) {
+	storage, err := storage.New(config.FileStoragePath)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Handlers{c: config, s: storage}, nil
 }
 
 // AddHandler handles adding a new URL via text/plain request.

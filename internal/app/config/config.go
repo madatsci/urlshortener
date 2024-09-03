@@ -1,14 +1,16 @@
 package config
 
 type Config struct {
-	ServerAddr string
-	BaseURL    string
+	ServerAddr      string
+	BaseURL         string
+	FileStoragePath string
 }
 
 // New creates a new Config struct.
-func New(serverAddr string, baseURL string) *Config {
+func New(serverAddr, baseURL, fileStoragePath string) *Config {
 	return &Config{
-		ServerAddr: serverAddr,
-		BaseURL:    baseURL,
+		ServerAddr:      serverAddr,
+		BaseURL:         baseURL,
+		FileStoragePath: fileStoragePath,
 	}
 }
