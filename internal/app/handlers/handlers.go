@@ -12,10 +12,18 @@ import (
 	"github.com/madatsci/urlshortener/internal/app/storage"
 )
 
-type Handlers struct {
-	s *storage.Storage
-	c *config.Config
-}
+type (
+	Handlers struct {
+		s Storage
+		c *config.Config
+	}
+
+	Storage interface {
+		Add(slug string, url string) error
+		Get(slug string) (string, error)
+		ListAll() map[string]string
+	}
+)
 
 // New creates new Handlers.
 func New(config *config.Config) *Handlers {
@@ -91,6 +99,6 @@ func (h *Handlers) GetHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // Storage returns Handlers' storage.
-func (h *Handlers) Storage() *storage.Storage {
+func (h *Handlers) Storage() Storage {
 	return h.s
 }
