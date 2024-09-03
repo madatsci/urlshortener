@@ -26,13 +26,24 @@ git fetch template && git checkout template/main .github
 
 # API Examples
 
-## Create short URL
+## Create short URL via text/plain
 
 ```bash
 curl -X POST http://localhost:8080 -H "Content-Type: text/plain" -d "https://practicum-yandex.ru"
 
 # Response:
 http://localhost:8080/LeKRAJMW
+```
+
+## Create short URL via application/json
+
+```bash
+curl -X POST http://localhost:8080/api/shorten \
+    -H "Content-Type: application/json" \
+    -d '{"url":"https://practicum-yandex.ru"}'
+
+# Response:
+{"result":"http://localhost:8080/TANIJUrQ"}
 ```
 
 ## Use short URL

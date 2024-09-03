@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/madatsci/urlshortener/internal/app/config"
+	"github.com/madatsci/urlshortener/internal/app/models"
 	"github.com/madatsci/urlshortener/internal/app/storage"
 )
 
@@ -16,20 +17,12 @@ type Handlers struct {
 	c *config.Config
 }
 
-type shortenRequest struct {
-	URL string `json:"url"`
-}
-
-type shortenResponse struct {
-	Result string `json:"result"`
-}
-
 // New creates new Handlers.
 func New(config *config.Config) *Handlers {
 	return &Handlers{c: config, s: storage.New()}
 }
 
-// AddHandler handles adding a new URL.
+// AddHandler handles adding a new URL via text/plain request.
 func (h *Handlers) AddHandler(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -51,17 +44,13 @@ func (h *Handlers) AddHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(shortURL))
 }
 
-// AddHandler handles adding a new URL via JSON request.
+// AddHandlerJSON handles adding a new URL via application/json request.
 func (h *Handlers) AddHandlerJSON(w http.ResponseWriter, r *http.Request) {
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		panic(err)
-	}
-
-	var request shortenRequest
-	err = json.Unmarshal(body, &request)
-	if err != nil {
-		panic(err)
+	var request models.ShortenRequest
+	dec := json.NewDecoder(r.Body)
+	if err := dec.Decode(&request); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
 	if request.URL == "" {
@@ -74,18 +63,17 @@ func (h *Handlers) AddHandlerJSON(w http.ResponseWriter, r *http.Request) {
 
 	h.s.Add(slug, request.URL)
 
-	response := &shortenResponse{
+	response := models.ShortenResponse{
 		Result: shortURL,
-	}
-
-	res, err := json.Marshal(response)
-	if err != nil {
-		panic(err)
 	}
 
 	w.Header().Set("content-type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	w.Write(res)
+
+	enc := json.NewEncoder(w)
+	if err := enc.Encode(response); err != nil {
+		panic(err)
+	}
 }
 
 // GetHandler handles retrieving the URL by its slug.

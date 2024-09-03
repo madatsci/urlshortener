@@ -70,6 +70,72 @@ func TestAddHandler(t *testing.T) {
 	}
 }
 
+func TestAddHandlerJSON(t *testing.T) {
+	type want struct {
+		code        int
+		contentType string
+		wantErr     bool
+	}
+	tests := []struct {
+		name        string
+		requestBody string
+		want        want
+	}{
+		{
+			name:        "positive case",
+			requestBody: `{"url":"https://practicum-yandex.ru"}`,
+			want: want{
+				code:        http.StatusCreated,
+				contentType: "application/json",
+				wantErr:     false,
+			},
+		},
+		{
+			name:        "negative case: invalid JSON",
+			requestBody: "{",
+			want: want{
+				code:        http.StatusInternalServerError,
+				contentType: "",
+				wantErr:     true,
+			},
+		},
+		{
+			name:        "negative case: empty URL",
+			requestBody: `{"url":""}`,
+			want: want{
+				code:        http.StatusBadRequest,
+				contentType: "",
+				wantErr:     true,
+			},
+		},
+	}
+
+	s, ts := testServer()
+	defer ts.Close()
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			resp, respStr := testRequest(t, ts, http.MethodPost, "/api/shorten", strings.NewReader(test.requestBody))
+			defer resp.Body.Close()
+
+			assert.Equal(t, test.want.code, resp.StatusCode, "Unexpected response code")
+			assert.Equal(t, test.want.contentType, resp.Header.Get("Content-Type"), "Unexpected content type")
+
+			if !test.want.wantErr {
+				var slug string
+				for k := range s.h.Storage().ListAll() {
+					slug = k
+					break
+				}
+
+				wantShortURL := fmt.Sprintf("%s/%s", s.config.BaseURL, slug)
+				wantBody := `{"result":"` + wantShortURL + `"}`
+				assert.JSONEq(t, wantBody, respStr)
+			}
+		})
+	}
+}
+
 func TestGetHandler(t *testing.T) {
 	type want struct {
 		code     int
