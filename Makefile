@@ -1,3 +1,5 @@
+ITER_COUNT = 9
+
 .PHONY: build
 build:
 	cd cmd/shortener && go build -o shortener *.go
@@ -5,6 +7,17 @@ build:
 .PHONY: run
 run:
 	./cmd/shortener/shortener
+
+.PHONY: test
+test:
+	for (( n = 1; n <= $(ITER_COUNT); n++ )) ; do \
+		make test_iter$$n; \
+		if [ $$? -ne 0 ]; then \
+			echo "Error on iteration $$n, exiting..."; \
+			exit 1; \
+		fi; \
+	done
+	echo "Tests completed."
 
 .PHONY: test_iter1
 test_iter1:
