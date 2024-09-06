@@ -8,28 +8,34 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/madatsci/urlshortener/internal/app/config"
+	"github.com/madatsci/urlshortener/internal/app/models"
 	"github.com/madatsci/urlshortener/internal/app/storage"
 )
 
-type Handlers struct {
-	s *storage.Storage
-	c *config.Config
-}
+type (
+	Handlers struct {
+		s Storage
+		c *config.Config
+	}
 
-type shortenRequest struct {
-	URL string `json:"url"`
-}
-
-type shortenResponse struct {
-	Result string `json:"result"`
-}
+	Storage interface {
+		Add(slug string, url string) error
+		Get(slug string) (string, error)
+		ListAll() map[string]string
+	}
+)
 
 // New creates new Handlers.
-func New(config *config.Config) *Handlers {
-	return &Handlers{c: config, s: storage.New()}
+func New(config *config.Config) (*Handlers, error) {
+	storage, err := storage.New(config.FileStoragePath)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Handlers{c: config, s: storage}, nil
 }
 
-// AddHandler handles adding a new URL.
+// AddHandler handles adding a new URL via text/plain request.
 func (h *Handlers) AddHandler(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -41,27 +47,24 @@ func (h *Handlers) AddHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	slug := generateSlug(slugLength)
-	shortURL := fmt.Sprintf("%s/%s", h.c.BaseURL, slug)
-
-	h.s.Add(slug, url)
+	shortURL, err := h.storeShortURL(url)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
 	w.Header().Set("content-type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
 	w.Write([]byte(shortURL))
 }
 
-// AddHandler handles adding a new URL via JSON request.
+// AddHandlerJSON handles adding a new URL via application/json request.
 func (h *Handlers) AddHandlerJSON(w http.ResponseWriter, r *http.Request) {
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		panic(err)
-	}
-
-	var request shortenRequest
-	err = json.Unmarshal(body, &request)
-	if err != nil {
-		panic(err)
+	var request models.ShortenRequest
+	dec := json.NewDecoder(r.Body)
+	if err := dec.Decode(&request); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
 	if request.URL == "" {
@@ -69,23 +72,23 @@ func (h *Handlers) AddHandlerJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	slug := generateSlug(slugLength)
-	shortURL := fmt.Sprintf("%s/%s", h.c.BaseURL, slug)
-
-	h.s.Add(slug, request.URL)
-
-	response := &shortenResponse{
-		Result: shortURL,
+	shortURL, err := h.storeShortURL(request.URL)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
-	res, err := json.Marshal(response)
-	if err != nil {
-		panic(err)
+	response := models.ShortenResponse{
+		Result: shortURL,
 	}
 
 	w.Header().Set("content-type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	w.Write(res)
+
+	enc := json.NewEncoder(w)
+	if err := enc.Encode(response); err != nil {
+		panic(err)
+	}
 }
 
 // GetHandler handles retrieving the URL by its slug.
@@ -103,6 +106,13 @@ func (h *Handlers) GetHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // Storage returns Handlers' storage.
-func (h *Handlers) Storage() *storage.Storage {
+func (h *Handlers) Storage() Storage {
 	return h.s
+}
+
+func (h *Handlers) storeShortURL(longURL string) (string, error) {
+	slug := generateSlug(slugLength)
+	shortURL := fmt.Sprintf("%s/%s", h.c.BaseURL, slug)
+
+	return shortURL, h.s.Add(slug, longURL)
 }

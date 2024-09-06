@@ -2,6 +2,10 @@
 build:
 	cd cmd/shortener && go build -o shortener *.go
 
+.PHONY: run
+run:
+	./cmd/shortener/shortener
+
 .PHONY: test_iter1
 test_iter1:
 	./shortenertestbeta -test.v -test.run=^TestIteration1$$ -binary-path=cmd/shortener/shortener -source-path=.
@@ -21,3 +25,19 @@ test_iter4:
 .PHONY: test_iter5
 test_iter5:
 	./shortenertestbeta -test.v -test.run=^TestIteration5$$ -binary-path=cmd/shortener/shortener -source-path=. -server-port=8081
+
+.PHONY: test_iter6
+test_iter6:
+	./shortenertestbeta -test.v -test.run=^TestIteration6$$ -binary-path=cmd/shortener/shortener -source-path=.
+
+.PHONY: test_iter7
+test_iter7:
+	./shortenertestbeta -test.v -test.run=^TestIteration7$$ -binary-path=cmd/shortener/shortener -source-path=.
+
+.PHONY: test_iter8
+test_iter8:
+	./shortenertestbeta -test.v -test.run=^TestIteration8$$ -binary-path=cmd/shortener/shortener -source-path=.
+
+.PHONY: test_iter9
+test_iter9:
+	./shortenertestbeta -test.v -test.run=^TestIteration9$$ -binary-path=cmd/shortener/shortener -source-path=. -file-storage-path=./tmp/storage.txt

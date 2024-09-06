@@ -11,8 +11,9 @@ import (
 )
 
 var (
-	serverAddr = "localhost:8080"
-	baseURL    = "http://localhost:8080"
+	serverAddr      = "localhost:8080"
+	baseURL         = "http://localhost:8080"
+	fileStoragePath = "./tmp/storage.txt"
 )
 
 func parseFlags() {
@@ -35,6 +36,15 @@ func parseFlags() {
 		return nil
 	})
 
+	flag.Func("f", "file storage path", func(flagValue string) error {
+		if flagValue == "" {
+			return errors.New("invalid file path")
+		}
+
+		fileStoragePath = flagValue
+		return nil
+	})
+
 	flag.Parse()
 
 	if envServerAddress := os.Getenv("SERVER_ADDRESS"); envServerAddress != "" {
@@ -43,6 +53,10 @@ func parseFlags() {
 
 	if envBaseURL := os.Getenv("BASE_URL"); envBaseURL != "" {
 		baseURL = envBaseURL
+	}
+
+	if envFileStoragePath := os.Getenv("FILE_STORAGE_PATH"); envFileStoragePath != "" {
+		fileStoragePath = envFileStoragePath
 	}
 }
 
