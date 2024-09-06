@@ -47,10 +47,11 @@ func (h *Handlers) AddHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	slug := generateSlug(slugLength)
-	shortURL := fmt.Sprintf("%s/%s", h.c.BaseURL, slug)
-
-	h.s.Add(slug, url)
+	shortURL, err := h.storeShortURL(url)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
 	w.Header().Set("content-type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
@@ -71,10 +72,11 @@ func (h *Handlers) AddHandlerJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	slug := generateSlug(slugLength)
-	shortURL := fmt.Sprintf("%s/%s", h.c.BaseURL, slug)
-
-	h.s.Add(slug, request.URL)
+	shortURL, err := h.storeShortURL(request.URL)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
 	response := models.ShortenResponse{
 		Result: shortURL,
@@ -106,4 +108,11 @@ func (h *Handlers) GetHandler(w http.ResponseWriter, r *http.Request) {
 // Storage returns Handlers' storage.
 func (h *Handlers) Storage() Storage {
 	return h.s
+}
+
+func (h *Handlers) storeShortURL(longURL string) (string, error) {
+	slug := generateSlug(slugLength)
+	shortURL := fmt.Sprintf("%s/%s", h.c.BaseURL, slug)
+
+	return shortURL, h.s.Add(slug, longURL)
 }
