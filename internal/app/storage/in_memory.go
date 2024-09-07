@@ -1,15 +1,13 @@
-package memstorage
-
-import "github.com/madatsci/urlshortener/internal/app/storage"
+package storage
 
 // Storage is an implementation of the URL storage which uses a map to store data in memory.
-type Storage struct {
+type InMemoryStorage struct {
 	urls map[string]string
 }
 
-// New creates a new in-memory storage.
-func New() (*Storage, error) {
-	s := &Storage{
+// NewInMemoryStorage creates a new in-memory storage.
+func NewInMemoryStorage() (*InMemoryStorage, error) {
+	s := &InMemoryStorage{
 		urls: make(map[string]string),
 	}
 
@@ -17,23 +15,23 @@ func New() (*Storage, error) {
 }
 
 // Add adds a new URL with its slug to the storage.
-func (s *Storage) Add(slug string, url string) error {
+func (s *InMemoryStorage) Add(slug string, url string) error {
 	s.urls[slug] = url
 
 	return nil
 }
 
 // Get retrieves a URL by its slug from the storage.
-func (s *Storage) Get(slug string) (string, error) {
+func (s *InMemoryStorage) Get(slug string) (string, error) {
 	url, ok := s.urls[slug]
 	if !ok {
-		return "", storage.ErrURLNotFound
+		return "", ErrURLNotFound
 	}
 
 	return url, nil
 }
 
 // ListAll returns the full map of stored URLs.
-func (s *Storage) ListAll() map[string]string {
+func (s *InMemoryStorage) ListAll() map[string]string {
 	return s.urls
 }

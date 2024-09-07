@@ -1,4 +1,4 @@
-package memstorage
+package storage
 
 import (
 	"testing"
@@ -24,7 +24,7 @@ func TestStorage(t *testing.T) {
 		},
 	}
 
-	s, err := New()
+	s, err := NewInMemoryStorage()
 	require.NoError(t, err)
 
 	for _, d := range urls {

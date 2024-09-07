@@ -1,4 +1,4 @@
-package filestorage
+package storage
 
 import (
 	"os"
@@ -26,7 +26,7 @@ func TestStorageWithEmptyFile(t *testing.T) {
 	}
 
 	filepath := "./test_storage.txt"
-	s, err := New(filepath)
+	s, err := NewFileStorage(filepath)
 	require.NoError(t, err)
 	defer func() {
 		err := os.Remove(filepath)

@@ -1,16 +1,14 @@
-package filestorage
+package storage
 
 import (
 	"encoding/json"
 	"io"
 	"os"
-
-	"github.com/madatsci/urlshortener/internal/app/storage"
 )
 
 type (
 	// Storage is an implementation of the URL storage which uses a file to save data on disk.
-	Storage struct {
+	FileStorage struct {
 		filepath string
 		urls     map[string]string
 	}
@@ -20,9 +18,9 @@ type (
 	}
 )
 
-// New creates a new file storage.
-func New(filepath string) (*Storage, error) {
-	s := &Storage{
+// NewFileStorage creates a new file storage.
+func NewFileStorage(filepath string) (*FileStorage, error) {
+	s := &FileStorage{
 		filepath: filepath,
 		urls:     make(map[string]string),
 	}
@@ -35,7 +33,7 @@ func New(filepath string) (*Storage, error) {
 }
 
 // Add adds a new URL with its slug to the storage.
-func (s *Storage) Add(slug string, url string) error {
+func (s *FileStorage) Add(slug string, url string) error {
 	s.urls[slug] = url
 
 	file, err := os.OpenFile(s.filepath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
@@ -53,21 +51,21 @@ func (s *Storage) Add(slug string, url string) error {
 }
 
 // Get retrieves a URL by its slug from the storage.
-func (s *Storage) Get(slug string) (string, error) {
+func (s *FileStorage) Get(slug string) (string, error) {
 	url, ok := s.urls[slug]
 	if !ok {
-		return "", storage.ErrURLNotFound
+		return "", ErrURLNotFound
 	}
 
 	return url, nil
 }
 
 // ListAll returns the full map of stored URLs.
-func (s *Storage) ListAll() map[string]string {
+func (s *FileStorage) ListAll() map[string]string {
 	return s.urls
 }
 
-func (s *Storage) load() error {
+func (s *FileStorage) load() error {
 	file, err := os.OpenFile(s.filepath, os.O_RDONLY|os.O_CREATE, 0666)
 	if err != nil {
 		return err

@@ -9,24 +9,18 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/madatsci/urlshortener/internal/app/config"
 	"github.com/madatsci/urlshortener/internal/app/models"
+	"github.com/madatsci/urlshortener/internal/app/storage"
 )
 
 type (
 	Handlers struct {
-		s Storage
+		s storage.Storage
 		c *config.Config
-	}
-
-	Storage interface {
-		// TODO We should return error if URL already exists.
-		Add(slug string, url string) error
-		Get(slug string) (string, error)
-		ListAll() map[string]string
 	}
 )
 
 // New creates new Handlers.
-func New(config *config.Config, storage Storage) (*Handlers, error) {
+func New(config *config.Config, storage storage.Storage) (*Handlers, error) {
 	return &Handlers{c: config, s: storage}, nil
 }
 
@@ -101,7 +95,7 @@ func (h *Handlers) GetHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // Storage returns Handlers' storage.
-func (h *Handlers) Storage() Storage {
+func (h *Handlers) Storage() storage.Storage {
 	return h.s
 }
 
