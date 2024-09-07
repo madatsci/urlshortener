@@ -9,7 +9,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/madatsci/urlshortener/internal/app/config"
 	"github.com/madatsci/urlshortener/internal/app/models"
-	"github.com/madatsci/urlshortener/internal/app/storage"
 )
 
 type (
@@ -26,12 +25,7 @@ type (
 )
 
 // New creates new Handlers.
-func New(config *config.Config) (*Handlers, error) {
-	storage, err := storage.New(config.FileStoragePath)
-	if err != nil {
-		return nil, err
-	}
-
+func New(config *config.Config, storage Storage) (*Handlers, error) {
 	return &Handlers{c: config, s: storage}, nil
 }
 

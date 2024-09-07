@@ -8,6 +8,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/madatsci/urlshortener/internal/app/config"
 	"github.com/madatsci/urlshortener/internal/app/handlers"
+	"github.com/madatsci/urlshortener/internal/app/storage/filestorage"
+	"github.com/madatsci/urlshortener/internal/app/storage/memstorage"
 	"go.uber.org/zap"
 )
 
@@ -27,12 +29,17 @@ func New(config *config.Config, logger *zap.SugaredLogger) (*Server, error) {
 		log:    logger,
 	}
 
-	r := chi.NewRouter()
-	h, err := handlers.New(config)
+	storage, err := storage(config)
 	if err != nil {
 		return nil, err
 	}
 
+	h, err := handlers.New(config, storage)
+	if err != nil {
+		return nil, err
+	}
+
+	r := chi.NewRouter()
 	r.Route("/", func(r chi.Router) {
 		r.Post("/", server.withMiddleware(h.AddHandler))
 		r.Post("/api/shorten", server.withMiddleware(h.AddHandlerJSON))
@@ -113,4 +120,12 @@ func gzipMiddleware(h http.HandlerFunc) http.HandlerFunc {
 
 		h.ServeHTTP(ow, r)
 	}
+}
+
+func storage(config *config.Config) (handlers.Storage, error) {
+	if config.FileStoragePath != "" {
+		return filestorage.New(config.FileStoragePath)
+	}
+
+	return memstorage.New()
 }

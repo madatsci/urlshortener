@@ -1,20 +1,15 @@
-package storage
+package filestorage
 
 import (
 	"encoding/json"
-	"errors"
 	"io"
 	"os"
+
+	"github.com/madatsci/urlshortener/internal/app/storage"
 )
 
-// URLStorager defines the interface for URL storage.
-type URLStorager interface {
-	Add(slug string, url string) error
-	Get(slug string) (string, error)
-}
-
-// Storage is an implementation of the URL storage which uses a map under the hood.
 type (
+	// Storage is an implementation of the URL storage which uses a file to save data on disk.
 	Storage struct {
 		filepath string
 		urls     map[string]string
@@ -25,9 +20,7 @@ type (
 	}
 )
 
-var ErrURLNotFound = errors.New("url was not found")
-
-// New creates a new storage.
+// New creates a new file storage.
 func New(filepath string) (*Storage, error) {
 	s := &Storage{
 		filepath: filepath,
@@ -64,7 +57,7 @@ func (s *Storage) Add(slug string, url string) error {
 func (s *Storage) Get(slug string) (string, error) {
 	url, ok := s.urls[slug]
 	if !ok {
-		return "", ErrURLNotFound
+		return "", storage.ErrURLNotFound
 	}
 
 	return url, nil
