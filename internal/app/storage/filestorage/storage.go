@@ -35,7 +35,6 @@ func New(filepath string) (*Storage, error) {
 }
 
 // Add adds a new URL with its slug to the storage.
-// TODO What if we already have this URL saved with other slug?
 func (s *Storage) Add(slug string, url string) error {
 	s.urls[slug] = url
 

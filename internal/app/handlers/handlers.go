@@ -18,6 +18,7 @@ type (
 	}
 
 	Storage interface {
+		// TODO We should return error if URL already exists.
 		Add(slug string, url string) error
 		Get(slug string) (string, error)
 		ListAll() map[string]string
