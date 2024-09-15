@@ -55,6 +55,8 @@ func New(ctx context.Context, config *config.Config, logger *zap.SugaredLogger) 
 
 // Start starts the server under the specified address.
 func (s *Server) Start() error {
+	s.log.Infof("starting server with config: %+v", s.config)
+
 	return http.ListenAndServe(s.config.ServerAddr, s.mux)
 }
 
