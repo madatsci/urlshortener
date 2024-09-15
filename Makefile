@@ -57,4 +57,4 @@ test_iter9:
 
 .PHONY: test_iter10
 test_iter10:
-	./shortenertestbeta -test.v -test.run=^TestIteration10$$ -binary-path=cmd/shortener/shortener -source-path=. -database-dsn='postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable'
+	./shortenertestbeta -test.v -test.run=^TestIteration10$$ -binary-path=cmd/shortener/shortener -source-path=. -database-dsn='postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable'
