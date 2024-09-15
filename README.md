@@ -24,6 +24,12 @@ git fetch template && git checkout template/main .github
 
 Подробнее про локальный и автоматический запуск читайте в [README автотестов](https://github.com/Yandex-Practicum/go-autotests).
 
+## Run Database
+
+```bash
+docker run --name yandex-practicum-go -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=praktikum -p 5432:5432 -d postgres
+```
+
 # API Examples
 
 ## Create short URL

@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"net/http"
 	"strings"
 	"time"
@@ -22,13 +23,13 @@ type (
 )
 
 // New creates a new HTTP server.
-func New(config *config.Config, logger *zap.SugaredLogger) (*Server, error) {
+func New(ctx context.Context, config *config.Config, logger *zap.SugaredLogger) (*Server, error) {
 	server := &Server{
 		config: config,
 		log:    logger,
 	}
 
-	storage, err := storage.New(config)
+	storage, err := storage.New(ctx, config)
 	if err != nil {
 		return nil, err
 	}
@@ -43,6 +44,7 @@ func New(config *config.Config, logger *zap.SugaredLogger) (*Server, error) {
 		r.Post("/", server.withMiddleware(h.AddHandler))
 		r.Post("/api/shorten", server.withMiddleware(h.AddHandlerJSON))
 		r.Get("/{slug}", server.withMiddleware(h.GetHandler))
+		r.Get("/ping", server.withMiddleware(h.PingHandler))
 	})
 
 	server.h = h

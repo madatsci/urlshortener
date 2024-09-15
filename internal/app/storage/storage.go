@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"errors"
 
 	"github.com/madatsci/urlshortener/internal/app/config"
@@ -11,13 +12,16 @@ type Storage interface {
 	Add(slug string, url string) error
 	Get(slug string) (string, error)
 	ListAll() map[string]string
+	Ping(ctx context.Context) error
 }
 
 var ErrURLNotFound = errors.New("url was not found")
 
-func New(config *config.Config) (Storage, error) {
+func New(ctx context.Context, config *config.Config) (Storage, error) {
 	if config.FileStoragePath != "" {
 		return NewFileStorage(config.FileStoragePath)
+	} else if config.DatabaseDSN != "" {
+		return NewDatabaseStorage(ctx, config.DatabaseDSN)
 	}
 
 	return NewInMemoryStorage()

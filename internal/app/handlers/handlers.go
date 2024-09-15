@@ -94,6 +94,16 @@ func (h *Handlers) GetHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusTemporaryRedirect)
 }
 
+// PingHandler handles storage health-check.
+func (h *Handlers) PingHandler(w http.ResponseWriter, r *http.Request) {
+	if err := h.s.Ping(r.Context()); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
 // Storage returns Handlers' storage.
 func (h *Handlers) Storage() storage.Storage {
 	return h.s

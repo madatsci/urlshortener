@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"os"
@@ -63,6 +64,10 @@ func (s *FileStorage) Get(slug string) (string, error) {
 // ListAll returns the full map of stored URLs.
 func (s *FileStorage) ListAll() map[string]string {
 	return s.urls
+}
+
+func (s *FileStorage) Ping(ctx context.Context) error {
+	return nil
 }
 
 func (s *FileStorage) load() error {

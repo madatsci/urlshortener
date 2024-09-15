@@ -11,9 +11,10 @@ import (
 )
 
 var (
-	serverAddr      = "localhost:8080"
-	baseURL         = "http://localhost:8080"
-	fileStoragePath = "./tmp/storage.txt"
+	serverAddr = "localhost:8080"
+	baseURL    = "http://localhost:8080"
+
+	fileStoragePath, databaseDSN string
 )
 
 func parseFlags() {
@@ -45,6 +46,15 @@ func parseFlags() {
 		return nil
 	})
 
+	flag.Func("d", "database DSN", func(flagValue string) error {
+		if flagValue == "" {
+			return errors.New("invalid database DSN")
+		}
+
+		databaseDSN = flagValue
+		return nil
+	})
+
 	flag.Parse()
 
 	if envServerAddress := os.Getenv("SERVER_ADDRESS"); envServerAddress != "" {
@@ -57,6 +67,10 @@ func parseFlags() {
 
 	if envFileStoragePath := os.Getenv("FILE_STORAGE_PATH"); envFileStoragePath != "" {
 		fileStoragePath = envFileStoragePath
+	}
+
+	if envDatabaseDSN := os.Getenv("DATABASE_DSN"); envDatabaseDSN != "" {
+		databaseDSN = envDatabaseDSN
 	}
 }
 

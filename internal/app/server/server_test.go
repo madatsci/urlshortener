@@ -3,6 +3,7 @@ package server
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -262,7 +263,7 @@ func testServer(t *testing.T) (*Server, *httptest.Server) {
 
 	logger := zap.NewNop().Sugar()
 
-	s, err := New(config, logger)
+	s, err := New(context.Background(), config, logger)
 	require.NoError(t, err)
 
 	return s, httptest.NewServer(s.Router())
