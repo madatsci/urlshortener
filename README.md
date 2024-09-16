@@ -46,7 +46,7 @@ http://localhost:8080/LeKRAJMW
 ### Via application/json request
 
 ```bash
-curl -X POST http://localhost:8080/api/shorten \
+curl -i -X POST http://localhost:8080/api/shorten \
     -H "Content-Type: application/json" \
     -d '{"url":"https://practicum-yandex.ru"}'
 
@@ -57,7 +57,7 @@ curl -X POST http://localhost:8080/api/shorten \
 ## Use short URL
 
 ```bash
-curl -I -X GET localhost:8080/LeKRAJMW
+curl -i -X GET localhost:8080/LeKRAJMW
 
 # Response:
 HTTP/1.1 307 Temporary Redirect
