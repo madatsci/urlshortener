@@ -9,9 +9,9 @@ import (
 
 type Storage interface {
 	// TODO We should return error if URL already exists.
-	Add(slug string, url string) error
-	Get(slug string) (string, error)
-	ListAll() map[string]string
+	Add(ctx context.Context, slug string, url string) error
+	Get(ctx context.Context, slug string) (string, error)
+	ListAll(ctx context.Context) map[string]string
 	Ping(ctx context.Context) error
 }
 

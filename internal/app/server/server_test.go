@@ -179,7 +179,8 @@ func TestGetHandler(t *testing.T) {
 
 	s, ts := testServer(t)
 	longURL := "https://practicum.yandex.ru/"
-	s.h.Storage().Add("shortURL", longURL)
+	ctx := context.Background()
+	s.h.Storage().Add(ctx, "shortURL", longURL)
 	defer ts.Close()
 
 	for _, test := range tests {
@@ -291,7 +292,7 @@ func sendRequest(t *testing.T, req *http.Request) *http.Response {
 
 func expectedShortURL(t *testing.T, s *Server, url string) string {
 	var slug string
-	for k, u := range s.h.Storage().ListAll() {
+	for k, u := range s.h.Storage().ListAll(context.Background()) {
 		if u == url {
 			slug = k
 			break

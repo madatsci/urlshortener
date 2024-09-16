@@ -34,7 +34,7 @@ func NewFileStorage(filepath string) (*FileStorage, error) {
 }
 
 // Add adds a new URL with its slug to the storage.
-func (s *FileStorage) Add(slug string, url string) error {
+func (s *FileStorage) Add(ctx context.Context, slug string, url string) error {
 	s.urls[slug] = url
 
 	file, err := os.OpenFile(s.filepath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
@@ -52,7 +52,7 @@ func (s *FileStorage) Add(slug string, url string) error {
 }
 
 // Get retrieves a URL by its slug from the storage.
-func (s *FileStorage) Get(slug string) (string, error) {
+func (s *FileStorage) Get(ctx context.Context, slug string) (string, error) {
 	url, ok := s.urls[slug]
 	if !ok {
 		return "", ErrURLNotFound
@@ -62,7 +62,7 @@ func (s *FileStorage) Get(slug string) (string, error) {
 }
 
 // ListAll returns the full map of stored URLs.
-func (s *FileStorage) ListAll() map[string]string {
+func (s *FileStorage) ListAll(ctx context.Context) map[string]string {
 	return s.urls
 }
 

@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -33,20 +34,22 @@ func TestStorageWithEmptyFile(t *testing.T) {
 		require.NoError(t, err)
 	}()
 
-	all := s.ListAll()
+	ctx := context.Background()
+
+	all := s.ListAll(ctx)
 	assert.Equal(t, 0, len(all))
 
 	for _, d := range urls {
-		err := s.Add(d.slug, d.url)
+		err := s.Add(ctx, d.slug, d.url)
 		require.NoError(t, err)
 	}
 
 	for _, d := range urls {
-		url, err := s.Get(d.slug)
+		url, err := s.Get(ctx, d.slug)
 		require.NoError(t, err)
 		assert.Equal(t, d.url, url)
 	}
 
-	all = s.ListAll()
+	all = s.ListAll(ctx)
 	require.Equal(t, 2, len(all))
 }

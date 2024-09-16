@@ -17,14 +17,14 @@ func NewInMemoryStorage() (*InMemoryStorage, error) {
 }
 
 // Add adds a new URL with its slug to the storage.
-func (s *InMemoryStorage) Add(slug string, url string) error {
+func (s *InMemoryStorage) Add(ctx context.Context, slug string, url string) error {
 	s.urls[slug] = url
 
 	return nil
 }
 
 // Get retrieves a URL by its slug from the storage.
-func (s *InMemoryStorage) Get(slug string) (string, error) {
+func (s *InMemoryStorage) Get(ctx context.Context, slug string) (string, error) {
 	url, ok := s.urls[slug]
 	if !ok {
 		return "", ErrURLNotFound
@@ -34,7 +34,7 @@ func (s *InMemoryStorage) Get(slug string) (string, error) {
 }
 
 // ListAll returns the full map of stored URLs.
-func (s *InMemoryStorage) ListAll() map[string]string {
+func (s *InMemoryStorage) ListAll(ctx context.Context) map[string]string {
 	return s.urls
 }
 

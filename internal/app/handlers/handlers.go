@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -36,7 +37,7 @@ func (h *Handlers) AddHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	shortURL, err := h.storeShortURL(url)
+	shortURL, err := h.storeShortURL(r.Context(), url)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -61,7 +62,7 @@ func (h *Handlers) AddHandlerJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	shortURL, err := h.storeShortURL(request.URL)
+	shortURL, err := h.storeShortURL(r.Context(), request.URL)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -84,7 +85,7 @@ func (h *Handlers) AddHandlerJSON(w http.ResponseWriter, r *http.Request) {
 func (h *Handlers) GetHandler(w http.ResponseWriter, r *http.Request) {
 	slug := chi.URLParam(r, "slug")
 
-	url, err := h.s.Get(slug)
+	url, err := h.s.Get(r.Context(), slug)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -109,9 +110,9 @@ func (h *Handlers) Storage() storage.Storage {
 	return h.s
 }
 
-func (h *Handlers) storeShortURL(longURL string) (string, error) {
+func (h *Handlers) storeShortURL(ctx context.Context, longURL string) (string, error) {
 	slug := generateSlug(slugLength)
 	shortURL := fmt.Sprintf("%s/%s", h.c.BaseURL, slug)
 
-	return shortURL, h.s.Add(slug, longURL)
+	return shortURL, h.s.Add(ctx, slug, longURL)
 }
