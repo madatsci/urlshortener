@@ -18,10 +18,10 @@ type Storage interface {
 var ErrURLNotFound = errors.New("url was not found")
 
 func New(ctx context.Context, config *config.Config) (Storage, error) {
-	if config.FileStoragePath != "" {
-		return NewFileStorage(config.FileStoragePath)
-	} else if config.DatabaseDSN != "" {
+	if config.DatabaseDSN != "" {
 		return NewDatabaseStorage(ctx, config.DatabaseDSN)
+	} else if config.FileStoragePath != "" {
+		return NewFileStorage(config.FileStoragePath)
 	}
 
 	return NewInMemoryStorage()
