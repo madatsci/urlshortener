@@ -11,18 +11,20 @@ import (
 	"github.com/madatsci/urlshortener/internal/app/config"
 	"github.com/madatsci/urlshortener/internal/app/models"
 	"github.com/madatsci/urlshortener/internal/app/storage"
+	"go.uber.org/zap"
 )
 
 type (
 	Handlers struct {
-		s storage.Storage
-		c *config.Config
+		s   storage.Storage
+		c   *config.Config
+		log *zap.SugaredLogger
 	}
 )
 
 // New creates new Handlers.
-func New(config *config.Config, storage storage.Storage) (*Handlers, error) {
-	return &Handlers{c: config, s: storage}, nil
+func New(config *config.Config, logger *zap.SugaredLogger, storage storage.Storage) (*Handlers, error) {
+	return &Handlers{c: config, s: storage, log: logger}, nil
 }
 
 // AddHandler handles adding a new URL via text/plain request.
@@ -39,6 +41,7 @@ func (h *Handlers) AddHandler(w http.ResponseWriter, r *http.Request) {
 
 	shortURL, err := h.storeShortURL(r.Context(), url)
 	if err != nil {
+		h.handleError("AddHandler", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -53,6 +56,7 @@ func (h *Handlers) AddHandlerJSON(w http.ResponseWriter, r *http.Request) {
 	var request models.ShortenRequest
 	dec := json.NewDecoder(r.Body)
 	if err := dec.Decode(&request); err != nil {
+		h.handleError("AddHandlerJSON", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -64,6 +68,7 @@ func (h *Handlers) AddHandlerJSON(w http.ResponseWriter, r *http.Request) {
 
 	shortURL, err := h.storeShortURL(r.Context(), request.URL)
 	if err != nil {
+		h.handleError("AddHandlerJSON", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -115,4 +120,8 @@ func (h *Handlers) storeShortURL(ctx context.Context, longURL string) (string, e
 	shortURL := fmt.Sprintf("%s/%s", h.c.BaseURL, slug)
 
 	return shortURL, h.s.Add(ctx, slug, longURL)
+}
+
+func (h *Handlers) handleError(method string, err error) {
+	h.log.Errorln("error handling request", "method", method, "err", err)
 }

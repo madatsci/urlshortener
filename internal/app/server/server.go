@@ -34,7 +34,7 @@ func New(ctx context.Context, config *config.Config, logger *zap.SugaredLogger) 
 		return nil, err
 	}
 
-	h, err := handlers.New(config, storage)
+	h, err := handlers.New(config, logger, storage)
 	if err != nil {
 		return nil, err
 	}
