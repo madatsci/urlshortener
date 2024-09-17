@@ -9,7 +9,7 @@ import (
 	"github.com/madatsci/urlshortener/internal/app/store"
 	"github.com/madatsci/urlshortener/internal/app/store/database"
 	fs "github.com/madatsci/urlshortener/internal/app/store/file"
-	"github.com/madatsci/urlshortener/internal/app/store/in_memory"
+	"github.com/madatsci/urlshortener/internal/app/store/memory"
 )
 
 func main() {
@@ -47,5 +47,5 @@ func newStore(ctx context.Context, config *config.Config) (store.Store, error) {
 		return fs.New(config.FileStoragePath)
 	}
 
-	return in_memory.New()
+	return memory.New()
 }

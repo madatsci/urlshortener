@@ -16,7 +16,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/madatsci/urlshortener/internal/app/config"
 	"github.com/madatsci/urlshortener/internal/app/store"
-	"github.com/madatsci/urlshortener/internal/app/store/in_memory"
+	"github.com/madatsci/urlshortener/internal/app/store/memory"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -275,7 +275,7 @@ func testServer(t *testing.T) (*Server, *httptest.Server) {
 
 	logger := zap.NewNop().Sugar()
 
-	store, err := in_memory.New()
+	store, err := memory.New()
 	if err != nil {
 		panic(err)
 	}
