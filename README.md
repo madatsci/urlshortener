@@ -68,6 +68,35 @@ curl -i -X POST http://localhost:8080/api/shorten \
 {"result":"http://localhost:8080/TANIJUrQ"}
 ```
 
+### Via application/json batch request
+
+```bash
+curl -i -X POST http://localhost:8080/api/shorten/batch \
+    -H "Content-Type: application/json" \
+    -d '[
+        {
+            "correlation_id":"mC9g8iasXW",
+            "original_url":"https://practicum-yandex.ru"
+        },
+        {
+            "correlation_id":"XFADu5Xlkw",
+            "original_url":"http://example.org"
+        }
+    ]'
+
+# Response:
+[
+    {
+        "correlation_id":"mC9g8iasXW",
+        "short_url":"http://localhost:8080/TANIJUrQ"
+    },
+    {
+        "correlation_id":"XFADu5Xlkw",
+        "short_url":"http://localhost:8080/HdgYTekl"
+    }
+]
+```
+
 ## Use short URL
 
 ```bash

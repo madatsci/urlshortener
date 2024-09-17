@@ -32,8 +32,9 @@ func New(ctx context.Context, databaseDSN string) (*Store, error) {
 func (s *Store) Add(ctx context.Context, url store.URL) error {
 	_, err := s.conn.ExecContext(
 		ctx,
-		"INSERT INTO urls (id, short_url, original_url, created_at) VALUES ($1, $2, $3, $4)",
+		"INSERT INTO urls (id, correlation_id, short_url, original_url, created_at) VALUES ($1, $2, $3, $4, $5)",
 		url.ID,
+		url.CorrelationID,
 		url.Short,
 		url.Original,
 		url.CreatedAt,
@@ -42,14 +43,40 @@ func (s *Store) Add(ctx context.Context, url store.URL) error {
 	return err
 }
 
+func (s *Store) AddBatch(ctx context.Context, urls []store.URL) error {
+	tx, err := s.conn.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.PrepareContext(
+		ctx,
+		"INSERT INTO urls (id, correlation_id, short_url, original_url, created_at) VALUES ($1, $2, $3, $4, $5)",
+	)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	for _, url := range urls {
+		_, err := stmt.ExecContext(ctx, url.ID, url.CorrelationID, url.Short, url.Original, url.CreatedAt)
+		if err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
+}
+
 func (s *Store) Get(ctx context.Context, slug string) (store.URL, error) {
 	var url store.URL
 
 	err := s.conn.QueryRowContext(
 		ctx,
-		"SELECT id, short_url, original_url, created_at FROM urls WHERE short_url = $1",
+		"SELECT id, correlation_id, short_url, original_url, created_at FROM urls WHERE short_url = $1",
 		slug,
-	).Scan(&url.ID, &url.Short, &url.Original, &url.CreatedAt)
+	).Scan(&url.ID, &url.CorrelationID, &url.Short, &url.Original, &url.CreatedAt)
 
 	if err != nil {
 		return url, err
@@ -78,6 +105,7 @@ func (s *Store) bootstrap(ctx context.Context) error {
 	tx.ExecContext(ctx, `
 		CREATE TABLE IF NOT EXISTS urls (
 			id uuid PRIMARY KEY,
+			correlation_id character varying(255) NOT NULL DEFAULT '',
 			short_url character varying(255) NOT NULL,
 			original_url text NOT NULL,
 			created_at timestamp without time zone NOT NULL
@@ -85,6 +113,7 @@ func (s *Store) bootstrap(ctx context.Context) error {
 	`)
 
 	tx.ExecContext(ctx, `CREATE UNIQUE INDEX IF NOT EXISTS urls_short_url ON urls (short_url)`)
+	tx.ExecContext(ctx, `CREATE UNIQUE INDEX IF NOT EXISTS urls_correlation_id ON urls (correlation_id)`)
 
 	return tx.Commit()
 }

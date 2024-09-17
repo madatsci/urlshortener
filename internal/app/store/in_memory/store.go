@@ -8,8 +8,9 @@ import (
 )
 
 // Store is an implementation of store.Store interface which stores data in memory.
+// TODO Handle possible race conditions.
 type Store struct {
-	// TODO Maybe it would be better to use pointer *store.URL
+	// TODO Maybe it would be better to use pointer *store.URL.
 	urls map[string]store.URL
 }
 
@@ -22,9 +23,19 @@ func New() (*Store, error) {
 	return s, nil
 }
 
-// Add adds a new URL with its slug to the storage.
+// Add adds a new URL to the storage.
 func (s *Store) Add(ctx context.Context, url store.URL) error {
 	s.urls[url.Short] = url
+
+	return nil
+}
+
+// AddBatch adds a batch of URLs to the storage.
+// TODO Add a test case for this.
+func (s *Store) AddBatch(ctx context.Context, urls []store.URL) error {
+	for _, url := range urls {
+		s.urls[url.Short] = url
+	}
 
 	return nil
 }

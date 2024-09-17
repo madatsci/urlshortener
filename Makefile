@@ -1,4 +1,4 @@
-ITER_COUNT = 11
+ITER_COUNT = 12
 
 .PHONY: build
 build:
@@ -7,6 +7,14 @@ build:
 .PHONY: run
 run:
 	./cmd/shortener/shortener
+
+.PHONY: run_with_file
+run_with_file:
+	./cmd/shortener/shortener -f './tmp/storage.txt'
+
+.PHONY: run_with_db
+run_with_db:
+	./cmd/shortener/shortener -d 'postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable'
 
 .PHONY: test
 test:
@@ -62,3 +70,7 @@ test_iter10:
 .PHONY: test_iter11
 test_iter11:
 	./shortenertestbeta -test.v -test.run=^TestIteration11$$ -binary-path=cmd/shortener/shortener -source-path=. -database-dsn='postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable'
+
+.PHONY: test_iter12
+test_iter12:
+	./shortenertestbeta -test.v -test.run=^TestIteration12$$ -binary-path=cmd/shortener/shortener -source-path=. -database-dsn='postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable'

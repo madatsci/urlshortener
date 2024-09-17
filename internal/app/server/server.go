@@ -38,6 +38,7 @@ func New(ctx context.Context, config *config.Config, store store.Store, logger *
 	r.Route("/", func(r chi.Router) {
 		r.Post("/", server.withMiddleware(h.AddHandler))
 		r.Post("/api/shorten", server.withMiddleware(h.AddHandlerJSON))
+		r.Post("/api/shorten/batch", server.withMiddleware(h.AddHandlerJSONBatch))
 		r.Get("/{slug}", server.withMiddleware(h.GetHandler))
 		r.Get("/ping", server.withMiddleware(h.PingHandler))
 	})

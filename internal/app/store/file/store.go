@@ -11,6 +11,7 @@ import (
 )
 
 // Store is an implementation of store.Store interface which uses a file to save data on disk.
+// TODO Handle possible race conditions.
 type Store struct {
 	filepath string
 	// TODO Maybe it would be better to use pointer *store.URL
@@ -31,7 +32,7 @@ func New(filepath string) (*Store, error) {
 	return s, nil
 }
 
-// Add adds a new URL with its slug to the storage.
+// Add adds a new URL to the storage.
 func (s *Store) Add(ctx context.Context, url store.URL) error {
 	s.urls[url.Short] = url
 
@@ -42,6 +43,28 @@ func (s *Store) Add(ctx context.Context, url store.URL) error {
 	defer file.Close()
 
 	return json.NewEncoder(file).Encode(&url)
+}
+
+// AddBatch adds a batch of URLs to the storage.
+// TODO Add a test case for this.
+func (s *Store) AddBatch(ctx context.Context, urls []store.URL) error {
+	file, err := os.OpenFile(s.filepath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	enc := json.NewEncoder(file)
+
+	for _, url := range urls {
+		s.urls[url.Short] = url
+
+		if err := enc.Encode(&url); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // Get retrieves a URL by its slug from the storage.

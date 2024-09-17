@@ -88,6 +88,64 @@ func (h *Handlers) AddHandlerJSON(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// TODO Add a test case for this.
+func (h *Handlers) AddHandlerJSONBatch(w http.ResponseWriter, r *http.Request) {
+	var request models.ShortenBatchRequest
+	dec := json.NewDecoder(r.Body)
+	if err := dec.Decode(&request); err != nil {
+		h.handleError("AddHandlerJSONBatch", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if len(request.URLs) == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	urls := make([]store.URL, 0, len(request.URLs))
+	responseURLs := make([]models.ShortenBatchResponseItem, 0, len(request.URLs))
+	for _, reqURL := range request.URLs {
+		// TODO Fix copy-paste (see h.storeShortURL()).
+		slug := generateSlug(slugLength)
+		shortURL := fmt.Sprintf("%s/%s", h.c.BaseURL, slug)
+
+		url := store.URL{
+			ID:            uuid.NewString(),
+			CorrelationID: reqURL.CorrelationID,
+			Short:         slug,
+			Original:      reqURL.OriginalURL,
+			CreatedAt:     time.Now(),
+		}
+		urls = append(urls, url)
+
+		responseURL := models.ShortenBatchResponseItem{
+			CorrelationID: reqURL.CorrelationID,
+			ShortURL:      shortURL,
+		}
+		responseURLs = append(responseURLs, responseURL)
+	}
+
+	err := h.s.AddBatch(r.Context(), urls)
+	if err != nil {
+		h.handleError("AddHandlerJSONBatch", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	response := &models.ShortenBatchRResponse{
+		URLs: responseURLs,
+	}
+
+	w.Header().Set("content-type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+
+	enc := json.NewEncoder(w)
+	if err := enc.Encode(response); err != nil {
+		panic(err)
+	}
+}
+
 // GetHandler handles retrieving the URL by its slug.
 func (h *Handlers) GetHandler(w http.ResponseWriter, r *http.Request) {
 	slug := chi.URLParam(r, "slug")
