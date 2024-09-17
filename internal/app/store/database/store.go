@@ -3,7 +3,10 @@ package database
 import (
 	"context"
 	"database/sql"
+	"errors"
 
+	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/madatsci/urlshortener/internal/app/database"
 	"github.com/madatsci/urlshortener/internal/app/store"
 )
@@ -40,7 +43,22 @@ func (s *Store) Add(ctx context.Context, url store.URL) error {
 		url.CreatedAt,
 	)
 
-	return err
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgerrcode.IsIntegrityConstraintViolation(pgErr.Code) {
+			originalURL, err := s.getByOriginalURL(ctx, url.Original)
+			if err != nil {
+				return err
+			}
+
+			return &store.AlreadyExistsError{
+				Err: pgErr,
+				URL: originalURL,
+			}
+		}
+	}
+
+	return nil
 }
 
 func (s *Store) AddBatch(ctx context.Context, urls []store.URL) error {
@@ -113,7 +131,23 @@ func (s *Store) bootstrap(ctx context.Context) error {
 	`)
 
 	tx.ExecContext(ctx, `CREATE UNIQUE INDEX IF NOT EXISTS urls_short_url ON urls (short_url)`)
-	tx.ExecContext(ctx, `CREATE UNIQUE INDEX IF NOT EXISTS urls_correlation_id ON urls (correlation_id)`)
+	tx.ExecContext(ctx, `CREATE UNIQUE INDEX IF NOT EXISTS urls_original_url ON urls (original_url)`)
 
 	return tx.Commit()
+}
+
+func (s *Store) getByOriginalURL(ctx context.Context, originalURL string) (store.URL, error) {
+	var url store.URL
+
+	err := s.conn.QueryRowContext(
+		ctx,
+		"SELECT id, correlation_id, short_url, original_url, created_at FROM urls WHERE original_url = $1",
+		originalURL,
+	).Scan(&url.ID, &url.CorrelationID, &url.Short, &url.Original, &url.CreatedAt)
+
+	if err != nil {
+		return url, err
+	}
+
+	return url, nil
 }

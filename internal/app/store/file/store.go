@@ -12,7 +12,6 @@ import (
 )
 
 // Store is an implementation of store.Store interface which uses a file to save data on disk.
-// TODO Handle possible race conditions.
 type Store struct {
 	filepath string
 	// TODO Maybe it would be better to use pointer *store.URL

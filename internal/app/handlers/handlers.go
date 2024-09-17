@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -44,6 +45,15 @@ func (h *Handlers) AddHandler(w http.ResponseWriter, r *http.Request) {
 	shortURL, err := h.storeShortURL(r.Context(), url)
 	if err != nil {
 		h.handleError("AddHandler", err)
+
+		var alreadyExists *store.AlreadyExistsError
+		if errors.As(err, &alreadyExists) {
+			w.Header().Set("content-type", "text/plain")
+			w.WriteHeader(http.StatusConflict)
+			shortURL = h.generateShortURLFromSlug(alreadyExists.URL.Short)
+			w.Write([]byte(shortURL))
+			return
+		}
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -71,6 +81,22 @@ func (h *Handlers) AddHandlerJSON(w http.ResponseWriter, r *http.Request) {
 	shortURL, err := h.storeShortURL(r.Context(), request.URL)
 	if err != nil {
 		h.handleError("AddHandlerJSON", err)
+
+		var alreadyExists *store.AlreadyExistsError
+		if errors.As(err, &alreadyExists) {
+			w.Header().Set("content-type", "application/json")
+			w.WriteHeader(http.StatusConflict)
+
+			response := models.ShortenResponse{
+				Result: h.generateShortURLFromSlug(alreadyExists.URL.Short),
+			}
+
+			enc := json.NewEncoder(w)
+			if err := enc.Encode(response); err != nil {
+				panic(err)
+			}
+			return
+		}
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -108,7 +134,7 @@ func (h *Handlers) AddHandlerJSONBatch(w http.ResponseWriter, r *http.Request) {
 	for _, reqURL := range request.URLs {
 		// TODO Fix copy-paste (see h.storeShortURL()).
 		slug := generateSlug(slugLength)
-		shortURL := fmt.Sprintf("%s/%s", h.c.BaseURL, slug)
+		shortURL := h.generateShortURLFromSlug(slug)
 
 		url := store.URL{
 			ID:            uuid.NewString(),
@@ -177,7 +203,7 @@ func (h *Handlers) Store() store.Store {
 
 func (h *Handlers) storeShortURL(ctx context.Context, longURL string) (string, error) {
 	slug := generateSlug(slugLength)
-	shortURL := fmt.Sprintf("%s/%s", h.c.BaseURL, slug)
+	shortURL := h.generateShortURLFromSlug(slug)
 
 	url := store.URL{
 		ID: uuid.NewString(),
@@ -190,6 +216,10 @@ func (h *Handlers) storeShortURL(ctx context.Context, longURL string) (string, e
 	}
 
 	return shortURL, h.s.Add(ctx, url)
+}
+
+func (h *Handlers) generateShortURLFromSlug(slug string) string {
+	return fmt.Sprintf("%s/%s", h.c.BaseURL, slug)
 }
 
 func (h *Handlers) handleError(method string, err error) {

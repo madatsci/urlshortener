@@ -21,3 +21,12 @@ type URL struct {
 	Original      string    `json:"original_url"`
 	CreatedAt     time.Time `json:"created_at"`
 }
+
+type AlreadyExistsError struct {
+	Err error
+	URL URL
+}
+
+func (e *AlreadyExistsError) Error() string {
+	return e.Err.Error()
+}
