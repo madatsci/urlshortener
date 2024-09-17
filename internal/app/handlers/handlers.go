@@ -6,25 +6,27 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"github.com/madatsci/urlshortener/internal/app/config"
 	"github.com/madatsci/urlshortener/internal/app/models"
-	"github.com/madatsci/urlshortener/internal/app/storage"
+	"github.com/madatsci/urlshortener/internal/app/store"
 	"go.uber.org/zap"
 )
 
 type (
 	Handlers struct {
-		s   storage.Storage
+		s   store.Store
 		c   *config.Config
 		log *zap.SugaredLogger
 	}
 )
 
 // New creates new Handlers.
-func New(config *config.Config, logger *zap.SugaredLogger, storage storage.Storage) (*Handlers, error) {
-	return &Handlers{c: config, s: storage, log: logger}, nil
+func New(config *config.Config, logger *zap.SugaredLogger, store store.Store) (*Handlers, error) {
+	return &Handlers{c: config, s: store, log: logger}, nil
 }
 
 // AddHandler handles adding a new URL via text/plain request.
@@ -96,7 +98,7 @@ func (h *Handlers) GetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("location", url)
+	w.Header().Set("location", url.Original)
 	w.WriteHeader(http.StatusTemporaryRedirect)
 }
 
@@ -110,8 +112,8 @@ func (h *Handlers) PingHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// Storage returns Handlers' storage.
-func (h *Handlers) Storage() storage.Storage {
+// Store returns Handlers' storage.
+func (h *Handlers) Store() store.Store {
 	return h.s
 }
 
@@ -119,7 +121,17 @@ func (h *Handlers) storeShortURL(ctx context.Context, longURL string) (string, e
 	slug := generateSlug(slugLength)
 	shortURL := fmt.Sprintf("%s/%s", h.c.BaseURL, slug)
 
-	return shortURL, h.s.Add(ctx, slug, longURL)
+	url := store.URL{
+		ID: uuid.NewString(),
+
+		// TODO fix naming ambiguity:
+		// slug is just a random string, while shortURL is the complete URL which contains the slug.
+		Short:     slug,
+		Original:  longURL,
+		CreatedAt: time.Now(),
+	}
+
+	return shortURL, h.s.Add(ctx, url)
 }
 
 func (h *Handlers) handleError(method string, err error) {

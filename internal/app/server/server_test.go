@@ -11,8 +11,12 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/madatsci/urlshortener/internal/app/config"
+	"github.com/madatsci/urlshortener/internal/app/store"
+	"github.com/madatsci/urlshortener/internal/app/store/in_memory"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -178,10 +182,17 @@ func TestGetHandler(t *testing.T) {
 	}
 
 	s, ts := testServer(t)
-	longURL := "https://practicum.yandex.ru/"
-	ctx := context.Background()
-	s.h.Storage().Add(ctx, "shortURL", longURL)
 	defer ts.Close()
+	ctx := context.Background()
+
+	longURL := "https://practicum.yandex.ru/"
+	url := store.URL{
+		ID:        uuid.NewString(),
+		Short:     "shortURL",
+		Original:  longURL,
+		CreatedAt: time.Now(),
+	}
+	s.h.Store().Add(ctx, url)
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -264,7 +275,12 @@ func testServer(t *testing.T) (*Server, *httptest.Server) {
 
 	logger := zap.NewNop().Sugar()
 
-	s, err := New(context.Background(), config, logger)
+	store, err := in_memory.New()
+	if err != nil {
+		panic(err)
+	}
+
+	s, err := New(context.Background(), config, store, logger)
 	require.NoError(t, err)
 
 	return s, httptest.NewServer(s.Router())
@@ -292,8 +308,8 @@ func sendRequest(t *testing.T, req *http.Request) *http.Response {
 
 func expectedShortURL(t *testing.T, s *Server, url string) string {
 	var slug string
-	for k, u := range s.h.Storage().ListAll(context.Background()) {
-		if u == url {
+	for k, u := range s.h.Store().ListAll(context.Background()) {
+		if u.Original == url {
 			slug = k
 			break
 		}

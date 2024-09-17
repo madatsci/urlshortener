@@ -30,6 +30,20 @@ git fetch template && git checkout template/main .github
 docker run --name yandex-practicum-go -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=praktikum -p 5432:5432 -d postgres
 ```
 
+## Run app
+
+### With database
+
+```bash
+./cmd/shortener/shortener -d 'postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable'
+```
+
+### With file storage
+
+```bash
+./cmd/shortener/shortener -f './tmp/storage.txt'
+```
+
 # API Examples
 
 ## Create short URL

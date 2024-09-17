@@ -4,7 +4,10 @@ import (
 	"context"
 	"os"
 	"testing"
+	"time"
 
+	"github.com/google/uuid"
+	"github.com/madatsci/urlshortener/internal/app/store"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -27,7 +30,7 @@ func TestStorageWithEmptyFile(t *testing.T) {
 	}
 
 	filepath := "./test_storage.txt"
-	s, err := NewFileStorage(filepath)
+	s, err := New(filepath)
 	require.NoError(t, err)
 	defer func() {
 		err := os.Remove(filepath)
@@ -40,14 +43,24 @@ func TestStorageWithEmptyFile(t *testing.T) {
 	assert.Equal(t, 0, len(all))
 
 	for _, d := range urls {
-		err := s.Add(ctx, d.slug, d.url)
+		url := store.URL{
+			ID:        uuid.NewString(),
+			Short:     d.slug,
+			Original:  d.url,
+			CreatedAt: time.Now(),
+		}
+
+		err := s.Add(ctx, url)
 		require.NoError(t, err)
 	}
 
 	for _, d := range urls {
-		url, err := s.Get(ctx, d.slug)
+		res, err := s.Get(ctx, d.slug)
 		require.NoError(t, err)
-		assert.Equal(t, d.url, url)
+		assert.Equal(t, d.url, res.Original)
+		assert.Equal(t, d.slug, res.Short)
+		assert.NotEmpty(t, res.ID)
+		assert.NotEmpty(t, res.CreatedAt)
 	}
 
 	all = s.ListAll(ctx)

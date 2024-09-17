@@ -9,7 +9,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/madatsci/urlshortener/internal/app/config"
 	"github.com/madatsci/urlshortener/internal/app/handlers"
-	"github.com/madatsci/urlshortener/internal/app/storage"
+	"github.com/madatsci/urlshortener/internal/app/store"
 	"go.uber.org/zap"
 )
 
@@ -23,18 +23,13 @@ type (
 )
 
 // New creates a new HTTP server.
-func New(ctx context.Context, config *config.Config, logger *zap.SugaredLogger) (*Server, error) {
+func New(ctx context.Context, config *config.Config, store store.Store, logger *zap.SugaredLogger) (*Server, error) {
 	server := &Server{
 		config: config,
 		log:    logger,
 	}
 
-	storage, err := storage.New(ctx, config)
-	if err != nil {
-		return nil, err
-	}
-
-	h, err := handlers.New(config, logger, storage)
+	h, err := handlers.New(config, logger, store)
 	if err != nil {
 		return nil, err
 	}
