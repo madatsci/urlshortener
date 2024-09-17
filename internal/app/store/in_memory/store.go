@@ -3,15 +3,16 @@ package in_memory
 import (
 	"context"
 	"errors"
+	"sync"
 
 	"github.com/madatsci/urlshortener/internal/app/store"
 )
 
 // Store is an implementation of store.Store interface which stores data in memory.
-// TODO Handle possible race conditions.
 type Store struct {
 	// TODO Maybe it would be better to use pointer *store.URL.
 	urls map[string]store.URL
+	mu   sync.Mutex
 }
 
 // New creates a new in-memory storage.
@@ -25,7 +26,9 @@ func New() (*Store, error) {
 
 // Add adds a new URL to the storage.
 func (s *Store) Add(ctx context.Context, url store.URL) error {
+	s.mu.Lock()
 	s.urls[url.Short] = url
+	s.mu.Unlock()
 
 	return nil
 }
@@ -33,9 +36,11 @@ func (s *Store) Add(ctx context.Context, url store.URL) error {
 // AddBatch adds a batch of URLs to the storage.
 // TODO Add a test case for this.
 func (s *Store) AddBatch(ctx context.Context, urls []store.URL) error {
+	s.mu.Lock()
 	for _, url := range urls {
 		s.urls[url.Short] = url
 	}
+	s.mu.Unlock()
 
 	return nil
 }

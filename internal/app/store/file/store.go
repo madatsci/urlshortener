@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 	"os"
+	"sync"
 
 	"github.com/madatsci/urlshortener/internal/app/store"
 )
@@ -16,6 +17,7 @@ type Store struct {
 	filepath string
 	// TODO Maybe it would be better to use pointer *store.URL
 	urls map[string]store.URL
+	mu   sync.Mutex
 }
 
 // New creates a new file storage.
@@ -34,6 +36,9 @@ func New(filepath string) (*Store, error) {
 
 // Add adds a new URL to the storage.
 func (s *Store) Add(ctx context.Context, url store.URL) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	s.urls[url.Short] = url
 
 	file, err := os.OpenFile(s.filepath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
@@ -48,6 +53,9 @@ func (s *Store) Add(ctx context.Context, url store.URL) error {
 // AddBatch adds a batch of URLs to the storage.
 // TODO Add a test case for this.
 func (s *Store) AddBatch(ctx context.Context, urls []store.URL) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	file, err := os.OpenFile(s.filepath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		return err
