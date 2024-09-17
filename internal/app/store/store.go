@@ -6,7 +6,6 @@ import (
 )
 
 type Store interface {
-	// TODO We should return error if URL already exists.
 	Add(ctx context.Context, url URL) error
 	AddBatch(ctx context.Context, urls []URL) error
 	Get(ctx context.Context, slug string) (URL, error)
