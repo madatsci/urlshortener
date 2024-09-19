@@ -4,6 +4,10 @@ ITER_COUNT = 13
 build:
 	cd cmd/shortener && go build -o shortener *.go
 
+.PHONY: lint
+lint:
+	docker run --rm -v $(shell pwd):/app -w /app golangci/golangci-lint:latest golangci-lint run -v
+
 .PHONY: run
 run:
 	./cmd/shortener/shortener
