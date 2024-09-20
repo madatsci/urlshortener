@@ -53,7 +53,7 @@ func TestAddHandler(t *testing.T) {
 		},
 	}
 
-	s, ts := testServer(t)
+	s, ts := testServer()
 	defer ts.Close()
 
 	for _, test := range tests {
@@ -117,7 +117,7 @@ func TestAddHandlerJSON(t *testing.T) {
 		},
 	}
 
-	s, ts := testServer(t)
+	s, ts := testServer()
 	defer ts.Close()
 
 	for _, test := range tests {
@@ -181,7 +181,7 @@ func TestGetHandler(t *testing.T) {
 		},
 	}
 
-	s, ts := testServer(t)
+	s, ts := testServer()
 	defer ts.Close()
 	ctx := context.Background()
 
@@ -210,7 +210,7 @@ func TestGetHandler(t *testing.T) {
 }
 
 func TestGzipCompression(t *testing.T) {
-	s, ts := testServer(t)
+	s, ts := testServer()
 	defer ts.Close()
 
 	t.Run("sends_gzip", func(t *testing.T) {
@@ -264,7 +264,7 @@ func TestGzipCompression(t *testing.T) {
 	})
 }
 
-func testServer(t *testing.T) (*Server, *httptest.Server) {
+func testServer() (*Server, *httptest.Server) {
 	filepath := "../../../tmp/test_storage.txt"
 	os.Remove(filepath)
 
@@ -276,13 +276,8 @@ func testServer(t *testing.T) (*Server, *httptest.Server) {
 
 	logger := zap.NewNop().Sugar()
 
-	store, err := memory.New()
-	if err != nil {
-		panic(err)
-	}
-
-	s, err := New(config, store, logger)
-	require.NoError(t, err)
+	store := memory.New()
+	s := New(config, store, logger)
 
 	return s, httptest.NewServer(s.Router())
 }

@@ -16,16 +16,14 @@ type Store struct {
 }
 
 // New creates a new in-memory storage.
-func New() (*Store, error) {
-	s := &Store{
+func New() *Store {
+	return &Store{
 		urls: make(map[string]store.URL),
 	}
-
-	return s, nil
 }
 
 // Add adds a new URL to the storage.
-func (s *Store) Add(ctx context.Context, url store.URL) error {
+func (s *Store) Add(_ context.Context, url store.URL) error {
 	s.mu.Lock()
 	s.urls[url.Short] = url
 	s.mu.Unlock()
@@ -35,7 +33,7 @@ func (s *Store) Add(ctx context.Context, url store.URL) error {
 
 // AddBatch adds a batch of URLs to the storage.
 // TODO Add a test case for this.
-func (s *Store) AddBatch(ctx context.Context, urls []store.URL) error {
+func (s *Store) AddBatch(_ context.Context, urls []store.URL) error {
 	s.mu.Lock()
 	for _, url := range urls {
 		s.urls[url.Short] = url
@@ -46,7 +44,7 @@ func (s *Store) AddBatch(ctx context.Context, urls []store.URL) error {
 }
 
 // Get retrieves a URL by its slug from the storage.
-func (s *Store) Get(ctx context.Context, slug string) (store.URL, error) {
+func (s *Store) Get(_ context.Context, slug string) (store.URL, error) {
 	var url store.URL
 
 	url, ok := s.urls[slug]
@@ -58,11 +56,11 @@ func (s *Store) Get(ctx context.Context, slug string) (store.URL, error) {
 }
 
 // ListAll returns the full map of stored URLs.
-func (s *Store) ListAll(ctx context.Context) map[string]store.URL {
+func (s *Store) ListAll(_ context.Context) map[string]store.URL {
 	return s.urls
 }
 
-func (s *Store) Ping(ctx context.Context) error {
+func (s *Store) Ping(_ context.Context) error {
 	// Nothing to ping here.
 	return nil
 }

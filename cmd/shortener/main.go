@@ -30,10 +30,7 @@ func main() {
 	}
 
 	// TODO Create app.go which incapsulates all deps (server, storage, logger, handlers, database client).
-	s, err := server.New(config, store, logger)
-	if err != nil {
-		panic(err)
-	}
+	s := server.New(config, store, logger)
 	if err := s.Start(); err != nil {
 		panic(err)
 	}
@@ -47,5 +44,5 @@ func newStore(ctx context.Context, config *config.Config) (store.Store, error) {
 		return fs.New(config.FileStoragePath)
 	}
 
-	return memory.New()
+	return memory.New(), nil
 }

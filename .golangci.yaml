@@ -10,3 +10,7 @@ linters:
     - staticcheck
     - unparam
     - unused
+
+linters-settings:
+  unparam:
+    check-exported: true

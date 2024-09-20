@@ -28,9 +28,7 @@ func TestInMemoryStorage(t *testing.T) {
 		},
 	}
 
-	s, err := New()
-	require.NoError(t, err)
-
+	s := New()
 	ctx := context.Background()
 
 	for _, d := range urls {

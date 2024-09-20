@@ -26,8 +26,8 @@ type (
 )
 
 // New creates new Handlers.
-func New(config *config.Config, logger *zap.SugaredLogger, store store.Store) (*Handlers, error) {
-	return &Handlers{c: config, s: store, log: logger}, nil
+func New(config *config.Config, logger *zap.SugaredLogger, store store.Store) *Handlers {
+	return &Handlers{c: config, s: store, log: logger}
 }
 
 // AddHandler handles adding a new URL via text/plain request.
