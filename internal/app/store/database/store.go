@@ -66,11 +66,7 @@ func (s *Store) AddBatch(ctx context.Context, urls []store.URL) error {
 	if err != nil {
 		return err
 	}
-	defer func() {
-		if err := tx.Rollback(); err != nil {
-			panic(err)
-		}
-	}()
+	defer tx.Rollback()
 
 	stmt, err := tx.PrepareContext(
 		ctx,
@@ -121,12 +117,7 @@ func (s *Store) bootstrap(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-
-	defer func() {
-		if err := tx.Rollback(); err != nil {
-			panic(err)
-		}
-	}()
+	defer tx.Rollback()
 
 	tx.ExecContext(ctx, `
 		CREATE TABLE IF NOT EXISTS urls (
