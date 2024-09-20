@@ -41,7 +41,8 @@ func TestInMemoryStorage(t *testing.T) {
 			CreatedAt: time.Now(),
 		}
 
-		s.Add(ctx, url)
+		err := s.Add(ctx, url)
+		require.NoError(t, err)
 	}
 
 	for _, d := range urls {

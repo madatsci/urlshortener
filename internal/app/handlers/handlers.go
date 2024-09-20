@@ -48,10 +48,14 @@ func (h *Handlers) AddHandler(w http.ResponseWriter, r *http.Request) {
 
 		var alreadyExists *store.AlreadyExistsError
 		if errors.As(err, &alreadyExists) {
+			shortURL = h.generateShortURLFromSlug(alreadyExists.URL.Short)
+
 			w.Header().Set("content-type", "text/plain")
 			w.WriteHeader(http.StatusConflict)
-			shortURL = h.generateShortURLFromSlug(alreadyExists.URL.Short)
-			w.Write([]byte(shortURL))
+			if _, err := w.Write([]byte(shortURL)); err != nil {
+				panic(err)
+			}
+
 			return
 		}
 		w.WriteHeader(http.StatusInternalServerError)
@@ -60,7 +64,9 @@ func (h *Handlers) AddHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("content-type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte(shortURL))
+	if _, err := w.Write([]byte(shortURL)); err != nil {
+		panic(err)
+	}
 }
 
 // AddHandlerJSON handles adding a new URL via application/json request.
