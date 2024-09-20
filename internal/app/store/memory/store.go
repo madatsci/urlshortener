@@ -23,7 +23,7 @@ func New() *Store {
 }
 
 // Add adds a new URL to the storage.
-func (s *Store) Add(_ context.Context, url store.URL) error {
+func (s *Store) Add(_ context.Context, url store.URL) error { //nolint:unparam
 	s.mu.Lock()
 	s.urls[url.Short] = url
 	s.mu.Unlock()
@@ -33,7 +33,7 @@ func (s *Store) Add(_ context.Context, url store.URL) error {
 
 // AddBatch adds a batch of URLs to the storage.
 // TODO Add a test case for this.
-func (s *Store) AddBatch(_ context.Context, urls []store.URL) error {
+func (s *Store) AddBatch(_ context.Context, urls []store.URL) error { //nolint:unparam
 	s.mu.Lock()
 	for _, url := range urls {
 		s.urls[url.Short] = url

@@ -71,7 +71,7 @@ func (s *Store) AddBatch(ctx context.Context, urls []store.URL) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer tx.Rollback() //nolint:errcheck
 
 	stmt, err := tx.PrepareContext(
 		ctx,
