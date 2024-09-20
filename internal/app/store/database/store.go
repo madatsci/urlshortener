@@ -3,13 +3,18 @@ package database
 import (
 	"context"
 	"database/sql"
+	"embed"
 	"errors"
 
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/madatsci/urlshortener/internal/app/database"
 	"github.com/madatsci/urlshortener/internal/app/store"
+	"github.com/pressly/goose/v3"
 )
+
+//go:embed migrations/*.sql
+var embedMigrations embed.FS
 
 // Store is an implementation of store.Store interface which interacts with database.
 type Store struct {
@@ -25,7 +30,7 @@ func New(ctx context.Context, databaseDSN string) (*Store, error) {
 	}
 
 	store := &Store{conn: conn}
-	if err = store.bootstrap(ctx); err != nil {
+	if err = store.bootstrap(); err != nil {
 		return nil, err
 	}
 
@@ -112,27 +117,18 @@ func (s *Store) Ping(ctx context.Context) error {
 	return s.conn.PingContext(ctx)
 }
 
-func (s *Store) bootstrap(ctx context.Context) error {
-	tx, err := s.conn.BeginTx(ctx, nil)
-	if err != nil {
+func (s *Store) bootstrap() error {
+	goose.SetBaseFS(embedMigrations)
+
+	if err := goose.SetDialect("postgres"); err != nil {
 		return err
 	}
-	defer tx.Rollback()
 
-	tx.ExecContext(ctx, `
-		CREATE TABLE IF NOT EXISTS urls (
-			id uuid PRIMARY KEY,
-			correlation_id character varying(255) NOT NULL DEFAULT '',
-			short_url character varying(255) NOT NULL,
-			original_url text NOT NULL,
-			created_at timestamp without time zone NOT NULL
-		)
-	`)
+	if err := goose.Up(s.conn, "migrations"); err != nil {
+		return err
+	}
 
-	tx.ExecContext(ctx, `CREATE UNIQUE INDEX IF NOT EXISTS urls_short_url ON urls (short_url)`)
-	tx.ExecContext(ctx, `CREATE UNIQUE INDEX IF NOT EXISTS urls_original_url ON urls (original_url)`)
-
-	return tx.Commit()
+	return nil
 }
 
 func (s *Store) getByOriginalURL(ctx context.Context, originalURL string) (store.URL, error) {
