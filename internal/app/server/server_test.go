@@ -280,7 +280,7 @@ func testServer(t *testing.T) (*Server, *httptest.Server) {
 		panic(err)
 	}
 
-	s, err := New(context.Background(), config, store, logger)
+	s, err := New(config, store, logger)
 	require.NoError(t, err)
 
 	return s, httptest.NewServer(s.Router())

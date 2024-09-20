@@ -1,7 +1,6 @@
 package server
 
 import (
-	"context"
 	"net/http"
 	"strings"
 	"time"
@@ -23,7 +22,7 @@ type (
 )
 
 // New creates a new HTTP server.
-func New(ctx context.Context, config *config.Config, store store.Store, logger *zap.SugaredLogger) (*Server, error) {
+func New(config *config.Config, store store.Store, logger *zap.SugaredLogger) (*Server, error) {
 	server := &Server{
 		config: config,
 		log:    logger,

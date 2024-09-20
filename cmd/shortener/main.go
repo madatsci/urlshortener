@@ -30,7 +30,7 @@ func main() {
 	}
 
 	// TODO Create app.go which incapsulates all deps (server, storage, logger, handlers, database client).
-	s, err := server.New(ctx, config, store, logger)
+	s, err := server.New(config, store, logger)
 	if err != nil {
 		panic(err)
 	}
