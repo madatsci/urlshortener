@@ -8,11 +8,7 @@ func New() (*zap.SugaredLogger, error) {
 		return nil, err
 	}
 
-	defer func() {
-		if err := logger.Sync(); err != nil {
-			panic(err)
-		}
-	}()
+	defer logger.Sync()
 
 	return logger.Sugar(), nil
 }
