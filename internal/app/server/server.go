@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/madatsci/urlshortener/internal/app/config"
 	"github.com/madatsci/urlshortener/internal/app/handlers"
+	"github.com/madatsci/urlshortener/internal/app/store"
 	"go.uber.org/zap"
 )
 
@@ -21,32 +22,33 @@ type (
 )
 
 // New creates a new HTTP server.
-func New(config *config.Config, logger *zap.SugaredLogger) (*Server, error) {
+func New(config *config.Config, store store.Store, logger *zap.SugaredLogger) *Server {
 	server := &Server{
 		config: config,
 		log:    logger,
 	}
 
-	r := chi.NewRouter()
-	h, err := handlers.New(config)
-	if err != nil {
-		return nil, err
-	}
+	h := handlers.New(config, logger, store)
 
+	r := chi.NewRouter()
 	r.Route("/", func(r chi.Router) {
 		r.Post("/", server.withMiddleware(h.AddHandler))
 		r.Post("/api/shorten", server.withMiddleware(h.AddHandlerJSON))
+		r.Post("/api/shorten/batch", server.withMiddleware(h.AddHandlerJSONBatch))
 		r.Get("/{slug}", server.withMiddleware(h.GetHandler))
+		r.Get("/ping", server.withMiddleware(h.PingHandler))
 	})
 
 	server.h = h
 	server.mux = r
 
-	return server, nil
+	return server
 }
 
 // Start starts the server under the specified address.
 func (s *Server) Start() error {
+	s.log.Infof("starting server with config: %+v", s.config)
+
 	return http.ListenAndServe(s.config.ServerAddr, s.mux)
 }
 

@@ -1,10 +1,35 @@
+ITER_COUNT = 13
+
 .PHONY: build
 build:
 	cd cmd/shortener && go build -o shortener *.go
 
+.PHONY: lint
+lint:
+	golangci-lint run
+
 .PHONY: run
 run:
 	./cmd/shortener/shortener
+
+.PHONY: run_with_file
+run_with_file:
+	./cmd/shortener/shortener -f './tmp/storage.txt'
+
+.PHONY: run_with_db
+run_with_db:
+	./cmd/shortener/shortener -d 'postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable'
+
+.PHONY: test
+test:
+	for (( n = 1; n <= $(ITER_COUNT); n++ )) ; do \
+		make test_iter$$n; \
+		if [ $$? -ne 0 ]; then \
+			echo "Error on iteration $$n, exiting..."; \
+			exit 1; \
+		fi; \
+	done
+	echo "Tests completed."
 
 .PHONY: test_iter1
 test_iter1:
@@ -41,3 +66,19 @@ test_iter8:
 .PHONY: test_iter9
 test_iter9:
 	./shortenertestbeta -test.v -test.run=^TestIteration9$$ -binary-path=cmd/shortener/shortener -source-path=. -file-storage-path=./tmp/storage.txt
+
+.PHONY: test_iter10
+test_iter10:
+	./shortenertestbeta -test.v -test.run=^TestIteration10$$ -binary-path=cmd/shortener/shortener -source-path=. -database-dsn='postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable'
+
+.PHONY: test_iter11
+test_iter11:
+	./shortenertestbeta -test.v -test.run=^TestIteration11$$ -binary-path=cmd/shortener/shortener -source-path=. -database-dsn='postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable'
+
+.PHONY: test_iter12
+test_iter12:
+	./shortenertestbeta -test.v -test.run=^TestIteration12$$ -binary-path=cmd/shortener/shortener -source-path=. -database-dsn='postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable'
+
+.PHONY: test_iter13
+test_iter13:
+	./shortenertestbeta -test.v -test.run=^TestIteration13$$ -binary-path=cmd/shortener/shortener -source-path=. -database-dsn='postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable'

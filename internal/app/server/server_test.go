@@ -3,6 +3,7 @@ package server
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -10,8 +11,12 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/madatsci/urlshortener/internal/app/config"
+	"github.com/madatsci/urlshortener/internal/app/store"
+	"github.com/madatsci/urlshortener/internal/app/store/memory"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -48,7 +53,7 @@ func TestAddHandler(t *testing.T) {
 		},
 	}
 
-	s, ts := testServer(t)
+	s, ts := testServer()
 	defer ts.Close()
 
 	for _, test := range tests {
@@ -112,7 +117,7 @@ func TestAddHandlerJSON(t *testing.T) {
 		},
 	}
 
-	s, ts := testServer(t)
+	s, ts := testServer()
 	defer ts.Close()
 
 	for _, test := range tests {
@@ -176,10 +181,19 @@ func TestGetHandler(t *testing.T) {
 		},
 	}
 
-	s, ts := testServer(t)
-	longURL := "https://practicum.yandex.ru/"
-	s.h.Storage().Add("shortURL", longURL)
+	s, ts := testServer()
 	defer ts.Close()
+	ctx := context.Background()
+
+	longURL := "https://practicum.yandex.ru/"
+	url := store.URL{
+		ID:        uuid.NewString(),
+		Short:     "shortURL",
+		Original:  longURL,
+		CreatedAt: time.Now(),
+	}
+	err := s.h.Store().Add(ctx, url)
+	require.NoError(t, err)
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -196,7 +210,7 @@ func TestGetHandler(t *testing.T) {
 }
 
 func TestGzipCompression(t *testing.T) {
-	s, ts := testServer(t)
+	s, ts := testServer()
 	defer ts.Close()
 
 	t.Run("sends_gzip", func(t *testing.T) {
@@ -250,7 +264,7 @@ func TestGzipCompression(t *testing.T) {
 	})
 }
 
-func testServer(t *testing.T) (*Server, *httptest.Server) {
+func testServer() (*Server, *httptest.Server) {
 	filepath := "../../../tmp/test_storage.txt"
 	os.Remove(filepath)
 
@@ -262,8 +276,8 @@ func testServer(t *testing.T) (*Server, *httptest.Server) {
 
 	logger := zap.NewNop().Sugar()
 
-	s, err := New(config, logger)
-	require.NoError(t, err)
+	store := memory.New()
+	s := New(config, store, logger)
 
 	return s, httptest.NewServer(s.Router())
 }
@@ -290,8 +304,8 @@ func sendRequest(t *testing.T, req *http.Request) *http.Response {
 
 func expectedShortURL(t *testing.T, s *Server, url string) string {
 	var slug string
-	for k, u := range s.h.Storage().ListAll() {
-		if u == url {
+	for k, u := range s.h.Store().ListAll(context.Background()) {
+		if u.Original == url {
 			slug = k
 			break
 		}
