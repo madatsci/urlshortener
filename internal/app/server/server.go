@@ -62,7 +62,7 @@ func (s *Server) withMiddleware(h http.HandlerFunc) http.HandlerFunc {
 }
 
 func (s *Server) withLogging(h http.HandlerFunc) http.HandlerFunc {
-	logFn := func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 
 		responseData := &responseData{
@@ -85,8 +85,6 @@ func (s *Server) withLogging(h http.HandlerFunc) http.HandlerFunc {
 			"size", responseData.size,
 		)
 	}
-
-	return logFn
 }
 
 func gzipMiddleware(h http.HandlerFunc) http.HandlerFunc {
