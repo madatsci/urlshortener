@@ -15,6 +15,7 @@ type Store interface {
 
 type URL struct {
 	ID            string    `json:"id"`
+	UserID        string    `json:"-"`
 	CorrelationID string    `json:"correlation_id"`
 	Short         string    `json:"short_url"`
 	Original      string    `json:"original_url"`

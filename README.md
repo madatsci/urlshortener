@@ -44,6 +44,21 @@ docker run --name yandex-practicum-go -e POSTGRES_PASSWORD=postgres -e POSTGRES_
 ./cmd/shortener/shortener -f './tmp/storage.txt'
 ```
 
+## Migrations
+
+Migrations are implemented with [goose](https://github.com/pressly/goose):
+
+```bash
+export GOOSE_DRIVER=postgres
+export GOOSE_DBSTRING=postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable
+
+goose -dir internal/app/store/database/migrations create add_some_column sql
+goose -dir internal/app/store/database/migrations up
+goose -dir internal/app/store/database/migrations status
+```
+
+Migrations are applied automatically when app starts with database DSN provided via flag or environment variable.
+
 # API Examples
 
 ## Create short URL
