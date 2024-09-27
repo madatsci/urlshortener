@@ -58,6 +58,11 @@ func (s *Server) Router() http.Handler {
 }
 
 func (s *Server) withMiddleware(h http.Handler) http.Handler {
+	// TODO EnsureAuth (not always)
+	//create a new request context containing the authenticated user
+	//ctxWithUser := context.WithValue(r.Context(), authenticatedUserKey, user)
+	//create a new request using that new context
+	//rWithUser := r.WithContext(ctxWithUser)
 	return s.withLogging(gzipMiddleware(h))
 }
 

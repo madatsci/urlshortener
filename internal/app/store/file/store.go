@@ -86,6 +86,17 @@ func (s *Store) Get(_ context.Context, slug string) (store.URL, error) {
 	return url, nil
 }
 
+func (s *Store) ListByUserID(_ context.Context, userID string) ([]store.URL, error) {
+	res := make([]store.URL, 0)
+	for _, url := range s.urls {
+		if url.UserID == userID {
+			res = append(res, url)
+		}
+	}
+
+	return res, nil
+}
+
 // ListAll returns the full map of stored URLs.
 func (s *Store) ListAll(_ context.Context) map[string]store.URL {
 	return s.urls

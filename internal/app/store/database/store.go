@@ -108,6 +108,35 @@ func (s *Store) Get(ctx context.Context, slug string) (store.URL, error) {
 	return url, nil
 }
 
+func (s *Store) ListByUserID(ctx context.Context, userID string) ([]store.URL, error) {
+	res := make([]store.URL, 0)
+
+	rows, err := s.conn.QueryContext(
+		ctx,
+		"SELECT id, correlation_id, short_url, original_url, created_at FROM urls WHERE user_id = $1",
+		userID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var url store.URL
+		err = rows.Scan(&url.ID, &url.CorrelationID, &url.Short, &url.Original, &url.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, url)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
 func (s *Store) ListAll(ctx context.Context) map[string]store.URL {
 	// TODO implement later (currently this is used only for testing purposes)
 	return nil
