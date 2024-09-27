@@ -14,7 +14,7 @@ import (
 
 type (
 	Server struct {
-		mux    *chi.Mux
+		mux    http.Handler
 		config *config.Config
 		h      *handlers.Handlers
 		log    *zap.SugaredLogger
@@ -32,15 +32,15 @@ func New(config *config.Config, store store.Store, logger *zap.SugaredLogger) *S
 
 	r := chi.NewRouter()
 	r.Route("/", func(r chi.Router) {
-		r.Post("/", server.withMiddleware(h.AddHandler))
-		r.Post("/api/shorten", server.withMiddleware(h.AddHandlerJSON))
-		r.Post("/api/shorten/batch", server.withMiddleware(h.AddHandlerJSONBatch))
-		r.Get("/{slug}", server.withMiddleware(h.GetHandler))
-		r.Get("/ping", server.withMiddleware(h.PingHandler))
+		r.Post("/", h.AddHandler)
+		r.Post("/api/shorten", h.AddHandlerJSON)
+		r.Post("/api/shorten/batch", h.AddHandlerJSONBatch)
+		r.Get("/{slug}", h.GetHandler)
+		r.Get("/ping", h.PingHandler)
 	})
 
 	server.h = h
-	server.mux = r
+	server.mux = server.withMiddleware(r)
 
 	return server
 }
@@ -53,16 +53,16 @@ func (s *Server) Start() error {
 }
 
 // Router returns server router for usage in tests.
-func (s *Server) Router() *chi.Mux {
+func (s *Server) Router() http.Handler {
 	return s.mux
 }
 
-func (s *Server) withMiddleware(h http.HandlerFunc) http.HandlerFunc {
+func (s *Server) withMiddleware(h http.Handler) http.Handler {
 	return s.withLogging(gzipMiddleware(h))
 }
 
-func (s *Server) withLogging(h http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func (s *Server) withLogging(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 
 		responseData := &responseData{
@@ -84,11 +84,11 @@ func (s *Server) withLogging(h http.HandlerFunc) http.HandlerFunc {
 			"duration", duration,
 			"size", responseData.size,
 		)
-	}
+	})
 }
 
-func gzipMiddleware(h http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func gzipMiddleware(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ow := w
 
 		acceptEncoding := r.Header.Get("Accept-Encoding")
@@ -112,5 +112,5 @@ func gzipMiddleware(h http.HandlerFunc) http.HandlerFunc {
 		}
 
 		h.ServeHTTP(ow, r)
-	}
+	})
 }
