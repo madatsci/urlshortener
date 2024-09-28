@@ -2,12 +2,12 @@ package server
 
 import (
 	"net/http"
-	"strings"
-	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/madatsci/urlshortener/internal/app/config"
 	"github.com/madatsci/urlshortener/internal/app/handlers"
+	mw "github.com/madatsci/urlshortener/internal/app/server/middleware"
 	"github.com/madatsci/urlshortener/internal/app/store"
 	"go.uber.org/zap"
 )
@@ -31,6 +31,12 @@ func New(config *config.Config, store store.Store, logger *zap.SugaredLogger) *S
 	h := handlers.New(config, logger, store)
 
 	r := chi.NewRouter()
+
+	loggerMiddleware := mw.NewLogger(server.log)
+	r.Use(loggerMiddleware.Logger)
+	r.Use(mw.Gzip)
+	r.Use(middleware.Recoverer)
+
 	r.Route("/", func(r chi.Router) {
 		r.Post("/", h.AddHandler)
 		r.Post("/api/shorten", h.AddHandlerJSON)
@@ -39,8 +45,14 @@ func New(config *config.Config, store store.Store, logger *zap.SugaredLogger) *S
 		r.Get("/ping", h.PingHandler)
 	})
 
+	// TODO EnsureAuth (not always)
+	//create a new request context containing the authenticated user
+	//ctxWithUser := context.WithValue(r.Context(), authenticatedUserKey, user)
+	//create a new request using that new context
+	//rWithUser := r.WithContext(ctxWithUser)
+
 	server.h = h
-	server.mux = server.withMiddleware(r)
+	server.mux = r
 
 	return server
 }
@@ -55,67 +67,4 @@ func (s *Server) Start() error {
 // Router returns server router for usage in tests.
 func (s *Server) Router() http.Handler {
 	return s.mux
-}
-
-func (s *Server) withMiddleware(h http.Handler) http.Handler {
-	// TODO EnsureAuth (not always)
-	//create a new request context containing the authenticated user
-	//ctxWithUser := context.WithValue(r.Context(), authenticatedUserKey, user)
-	//create a new request using that new context
-	//rWithUser := r.WithContext(ctxWithUser)
-	return s.withLogging(gzipMiddleware(h))
-}
-
-func (s *Server) withLogging(h http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-
-		responseData := &responseData{
-			status: 0,
-			size:   0,
-		}
-		lw := loggingResponseWriter{
-			ResponseWriter: w,
-			responseData:   responseData,
-		}
-		h.ServeHTTP(&lw, r)
-
-		duration := time.Since(start)
-
-		s.log.Infoln(
-			"uri", r.RequestURI,
-			"method", r.Method,
-			"status", responseData.status,
-			"duration", duration,
-			"size", responseData.size,
-		)
-	})
-}
-
-func gzipMiddleware(h http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ow := w
-
-		acceptEncoding := r.Header.Get("Accept-Encoding")
-		supportsGzip := strings.Contains(acceptEncoding, "gzip")
-		if supportsGzip {
-			cw := newCompressWriter(w)
-			ow = cw
-			defer cw.Close()
-		}
-
-		contentEncoding := r.Header.Get("Content-Encoding")
-		sendsGzip := strings.Contains(contentEncoding, "gzip")
-		if sendsGzip {
-			cr, err := newCompressReader(r.Body)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-			r.Body = cr
-			defer cr.Close()
-		}
-
-		h.ServeHTTP(ow, r)
-	})
 }
