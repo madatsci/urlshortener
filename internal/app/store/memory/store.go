@@ -22,7 +22,6 @@ func New() *Store {
 	}
 }
 
-// Add adds a new URL to the storage.
 func (s *Store) Add(_ context.Context, url store.URL) error { //nolint:unparam
 	s.mu.Lock()
 	s.urls[url.Short] = url
@@ -31,7 +30,6 @@ func (s *Store) Add(_ context.Context, url store.URL) error { //nolint:unparam
 	return nil
 }
 
-// AddBatch adds a batch of URLs to the storage.
 // TODO Add a test case for this.
 func (s *Store) AddBatch(_ context.Context, urls []store.URL) error { //nolint:unparam
 	s.mu.Lock()
@@ -43,7 +41,6 @@ func (s *Store) AddBatch(_ context.Context, urls []store.URL) error { //nolint:u
 	return nil
 }
 
-// Get retrieves a URL by its slug from the storage.
 func (s *Store) Get(_ context.Context, slug string) (store.URL, error) {
 	var url store.URL
 
@@ -55,7 +52,6 @@ func (s *Store) Get(_ context.Context, slug string) (store.URL, error) {
 	return url, nil
 }
 
-// ListByUserID returns all URLs created by specified user.
 func (s *Store) ListByUserID(_ context.Context, userID string) ([]store.URL, error) {
 	res := make([]store.URL, 0)
 	for _, url := range s.urls {
@@ -67,7 +63,6 @@ func (s *Store) ListByUserID(_ context.Context, userID string) ([]store.URL, err
 	return res, nil
 }
 
-// ListAll returns the full map of stored URLs.
 func (s *Store) ListAll(_ context.Context) map[string]store.URL {
 	return s.urls
 }
