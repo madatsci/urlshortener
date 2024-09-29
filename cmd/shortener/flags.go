@@ -8,16 +8,20 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var (
 	serverAddr = "localhost:8080"
 	baseURL    = "http://localhost:8080"
 
+	tokenSecret   = []byte("secret_key")
+	tokenDuration = time.Hour
+
 	fileStoragePath, databaseDSN string
 )
 
-func parseFlags() {
+func parseFlags() error {
 	flag.Func("a", "address and port to run server in the form of host:port", func(flagValue string) error {
 		if err := validateAddress(flagValue); err != nil {
 			return fmt.Errorf("invalid server address: %s", err)
@@ -55,6 +59,29 @@ func parseFlags() {
 		return nil
 	})
 
+	flag.Func("token-secret", "authentication token secret key", func(flagValue string) error {
+		if flagValue == "" {
+			return errors.New("invalid secret key")
+		}
+
+		tokenSecret = []byte(flagValue)
+		return nil
+	})
+
+	flag.Func("token-duration", "authentication token duration", func(flagValue string) error {
+		if flagValue == "" {
+			return errors.New("invalid duration")
+		}
+
+		duration, err := time.ParseDuration(flagValue)
+		if err != nil {
+			return errors.New("invalid duration")
+		}
+
+		tokenDuration = duration
+		return nil
+	})
+
 	flag.Parse()
 
 	if envServerAddress := os.Getenv("SERVER_ADDRESS"); envServerAddress != "" {
@@ -72,6 +99,21 @@ func parseFlags() {
 	if envDatabaseDSN := os.Getenv("DATABASE_DSN"); envDatabaseDSN != "" {
 		databaseDSN = envDatabaseDSN
 	}
+
+	if envTokenSecretKey := os.Getenv("TOKEN_SECRET_KEY"); envTokenSecretKey != "" {
+		tokenSecret = []byte(envTokenSecretKey)
+	}
+
+	if envTokenDuration := os.Getenv("TOKEN_DURATION"); envTokenDuration != "" {
+		duration, err := time.ParseDuration(envTokenDuration)
+		if err != nil {
+			return fmt.Errorf("invalid TOKEN_DURATION: %s", envTokenDuration)
+		}
+
+		tokenDuration = duration
+	}
+
+	return nil
 }
 
 func validateAddress(value string) error {

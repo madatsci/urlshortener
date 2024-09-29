@@ -2,7 +2,6 @@ package server
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -41,10 +40,9 @@ func New(config *config.Config, store store.Store, logger *zap.SugaredLogger) *S
 
 	authMiddleware := mw.NewAuth(mw.Options{
 		JWT: jwt.New(jwt.Options{
-			// TODO get secret key and duration from config
-			Secret:   []byte("secret_key"),
-			Duration: time.Hour,
-			Issuer:   "urlshortener",
+			Secret:   config.TokenSecret,
+			Duration: config.TokenDuration,
+			Issuer:   config.TokenIssuer,
 		}),
 		Log: logger,
 	})

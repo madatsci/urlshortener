@@ -13,9 +13,11 @@ import (
 )
 
 func main() {
-	parseFlags()
+	if err := parseFlags(); err != nil {
+		panic(err)
+	}
 
-	config := config.New(serverAddr, baseURL, fileStoragePath, databaseDSN)
+	config := config.New(serverAddr, baseURL, fileStoragePath, databaseDSN, tokenSecret, tokenDuration)
 
 	logger, err := logger.New()
 	if err != nil {
