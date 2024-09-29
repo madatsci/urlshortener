@@ -32,6 +32,8 @@ docker run --name yandex-practicum-go -e POSTGRES_PASSWORD=postgres -e POSTGRES_
 
 ## Run app
 
+Some examples of how you can run the app (see Configuration below):
+
 ### With database
 
 ```bash
@@ -43,6 +45,34 @@ docker run --name yandex-practicum-go -e POSTGRES_PASSWORD=postgres -e POSTGRES_
 ```bash
 ./cmd/shortener/shortener -f './tmp/storage.txt'
 ```
+
+### Configure authentication token
+
+```bash
+./cmd/shortener/shortener --token-secret="my_secret_key" --token-duration="1h"
+```
+
+## Configuration
+
+App can be configured via flags and/or environment variables. If both flag and environment variable are set for the same parameter, environment variable prevails.
+
+### `-a`, `SERVER_ADDRESS`
+Address and port to run server in the form of host:port.
+
+### `-b`, `BASE_URL`
+Base URL of the generated short URL.
+
+### `-d`, `DATABASE_DSN`
+Database DSN (in case you want to store data in database).
+
+### `-f`, `FILE_STORAGE_PATH`
+File storage path (in case you want to store data on disk).
+
+### `--token-secret`, `TOKEN_SECRET_KEY`
+Authentication token secret key.
+
+### `--token-duration`, `TOKEN_DURATION`
+Authentication token duration (in the format of Golang duration string).
 
 ## Migrations
 
