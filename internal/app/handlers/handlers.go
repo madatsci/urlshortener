@@ -23,8 +23,6 @@ type (
 		s   store.Store
 		c   *config.Config
 		log *zap.SugaredLogger
-
-		userID string
 	}
 )
 
@@ -35,7 +33,7 @@ func New(config *config.Config, logger *zap.SugaredLogger, store store.Store) *H
 
 // AddHandler handles adding a new URL via text/plain request.
 func (h *Handlers) AddHandler(w http.ResponseWriter, r *http.Request) {
-	h.parseUserID(r)
+	userID := parseUserID(r)
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -47,7 +45,7 @@ func (h *Handlers) AddHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	shortURL, err := h.storeShortURL(r.Context(), url)
+	shortURL, err := h.storeShortURL(r.Context(), url, userID)
 	if err != nil {
 		h.handleError("AddHandler", err)
 
@@ -67,7 +65,7 @@ func (h *Handlers) AddHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.log.With("userID", h.userID).Info("new URL created")
+	h.log.With("userID", userID).Info("new URL created")
 
 	w.Header().Set("content-type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
@@ -78,7 +76,7 @@ func (h *Handlers) AddHandler(w http.ResponseWriter, r *http.Request) {
 
 // AddHandlerJSON handles adding a new URL via application/json request.
 func (h *Handlers) AddHandlerJSON(w http.ResponseWriter, r *http.Request) {
-	h.parseUserID(r)
+	userID := parseUserID(r)
 
 	var request models.ShortenRequest
 	dec := json.NewDecoder(r.Body)
@@ -93,7 +91,7 @@ func (h *Handlers) AddHandlerJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	shortURL, err := h.storeShortURL(r.Context(), request.URL)
+	shortURL, err := h.storeShortURL(r.Context(), request.URL, userID)
 	if err != nil {
 		h.handleError("AddHandlerJSON", err)
 
@@ -120,7 +118,7 @@ func (h *Handlers) AddHandlerJSON(w http.ResponseWriter, r *http.Request) {
 		Result: shortURL,
 	}
 
-	h.log.With("userID", h.userID).Info("new URL created")
+	h.log.With("userID", userID).Info("new URL created")
 
 	w.Header().Set("content-type", "application/json")
 	w.WriteHeader(http.StatusCreated)
@@ -133,7 +131,7 @@ func (h *Handlers) AddHandlerJSON(w http.ResponseWriter, r *http.Request) {
 
 // TODO Add a test case for this.
 func (h *Handlers) AddHandlerJSONBatch(w http.ResponseWriter, r *http.Request) {
-	h.parseUserID(r)
+	userID := parseUserID(r)
 
 	var request models.ShortenBatchRequest
 	dec := json.NewDecoder(r.Body)
@@ -157,7 +155,7 @@ func (h *Handlers) AddHandlerJSONBatch(w http.ResponseWriter, r *http.Request) {
 
 		url := store.URL{
 			ID:            uuid.NewString(),
-			UserID:        h.userID,
+			UserID:        userID,
 			CorrelationID: reqURL.CorrelationID,
 			Short:         slug,
 			Original:      reqURL.OriginalURL,
@@ -179,7 +177,7 @@ func (h *Handlers) AddHandlerJSONBatch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.log.With("userID", h.userID, "count", len(urls)).Info("new URLs created via batch request")
+	h.log.With("userID", userID, "count", len(urls)).Info("new URLs created via batch request")
 
 	response := &models.ShortenBatchResponse{
 		URLs: responseURLs,
@@ -209,7 +207,7 @@ func (h *Handlers) GetHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) GetUserURLsHandler(w http.ResponseWriter, r *http.Request) {
-	userID, err := h.ensureUserID(r)
+	userID, err := ensureUserID(r)
 	if err != nil {
 		h.log.With("handler", "GetUserURLsHandler").Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
@@ -266,13 +264,13 @@ func (h *Handlers) Store() store.Store {
 	return h.s
 }
 
-func (h *Handlers) storeShortURL(ctx context.Context, longURL string) (string, error) {
+func (h *Handlers) storeShortURL(ctx context.Context, longURL, userID string) (string, error) {
 	slug := generateSlug(slugLength)
 	shortURL := h.generateShortURLFromSlug(slug)
 
 	url := store.URL{
 		ID:     uuid.NewString(),
-		UserID: h.userID,
+		UserID: userID,
 
 		// TODO fix naming ambiguity:
 		// slug is just a random string, while shortURL is the complete URL which contains the slug.
@@ -292,14 +290,16 @@ func (h *Handlers) handleError(method string, err error) {
 	h.log.Errorln("error handling request", "method", method, "err", err)
 }
 
-func (h *Handlers) parseUserID(r *http.Request) {
+func parseUserID(r *http.Request) string {
 	userIDCtx := r.Context().Value(middleware.AuthenticatedUserKey)
 	if userID, ok := userIDCtx.(string); ok {
-		h.userID = userID
+		return userID
 	}
+
+	return ""
 }
 
-func (h *Handlers) ensureUserID(r *http.Request) (string, error) {
+func ensureUserID(r *http.Request) (string, error) {
 	userIDCtx := r.Context().Value(middleware.AuthenticatedUserKey)
 	userID, ok := userIDCtx.(string)
 	if !ok {
