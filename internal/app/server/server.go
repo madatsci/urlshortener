@@ -2,6 +2,7 @@ package server
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -9,6 +10,7 @@ import (
 	"github.com/madatsci/urlshortener/internal/app/handlers"
 	mw "github.com/madatsci/urlshortener/internal/app/server/middleware"
 	"github.com/madatsci/urlshortener/internal/app/store"
+	"github.com/madatsci/urlshortener/pkg/jwt"
 	"go.uber.org/zap"
 )
 
@@ -37,19 +39,34 @@ func New(config *config.Config, store store.Store, logger *zap.SugaredLogger) *S
 	r.Use(mw.Gzip)
 	r.Use(middleware.Recoverer)
 
-	r.Route("/", func(r chi.Router) {
-		r.Post("/", h.AddHandler)
-		r.Post("/api/shorten", h.AddHandlerJSON)
-		r.Post("/api/shorten/batch", h.AddHandlerJSONBatch)
-		r.Get("/{slug}", h.GetHandler)
-		r.Get("/ping", h.PingHandler)
+	authMiddleware := mw.NewAuth(mw.Options{
+		JWT: jwt.New(jwt.Options{
+			// TODO get secret key and duration from config
+			Secret:   []byte("secret_key"),
+			Duration: time.Hour,
+			Issuer:   "urlshortener",
+		}),
+		Log: logger,
 	})
 
-	// TODO EnsureAuth (not always)
-	//create a new request context containing the authenticated user
-	//ctxWithUser := context.WithValue(r.Context(), authenticatedUserKey, user)
-	//create a new request using that new context
-	//rWithUser := r.WithContext(ctxWithUser)
+	r.Route("/", func(r chi.Router) {
+		r.Post("/", h.AddHandler)
+		r.Get("/{slug}", h.GetHandler)
+		r.Get("/ping", h.PingHandler)
+
+		// Public API
+		r.Route("/api", func(r chi.Router) {
+			r.Use(authMiddleware.PublicAPIAuth)
+			r.Post("/shorten", h.AddHandlerJSON)
+			r.Post("/shorten/batch", h.AddHandlerJSONBatch)
+		})
+
+		// Private API
+		r.Route("/api/user", func(r chi.Router) {
+			r.Use(authMiddleware.PrivateAPIAuth)
+			r.Get("/urls", h.GetUserURLsHandler)
+		})
+	})
 
 	server.h = h
 	server.mux = r

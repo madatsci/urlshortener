@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/madatsci/urlshortener/internal/app/config"
 	"github.com/madatsci/urlshortener/internal/app/models"
+	"github.com/madatsci/urlshortener/internal/app/server/middleware"
 	"github.com/madatsci/urlshortener/internal/app/store"
 	"go.uber.org/zap"
 )
@@ -22,6 +23,8 @@ type (
 		s   store.Store
 		c   *config.Config
 		log *zap.SugaredLogger
+
+		userID string
 	}
 )
 
@@ -32,6 +35,8 @@ func New(config *config.Config, logger *zap.SugaredLogger, store store.Store) *H
 
 // AddHandler handles adding a new URL via text/plain request.
 func (h *Handlers) AddHandler(w http.ResponseWriter, r *http.Request) {
+	h.parseUserID(r)
+
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		panic(err)
@@ -62,6 +67,8 @@ func (h *Handlers) AddHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	h.log.With("userID", h.userID).Info("new URL created")
+
 	w.Header().Set("content-type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
 	if _, err := w.Write([]byte(shortURL)); err != nil {
@@ -71,6 +78,8 @@ func (h *Handlers) AddHandler(w http.ResponseWriter, r *http.Request) {
 
 // AddHandlerJSON handles adding a new URL via application/json request.
 func (h *Handlers) AddHandlerJSON(w http.ResponseWriter, r *http.Request) {
+	h.parseUserID(r)
+
 	var request models.ShortenRequest
 	dec := json.NewDecoder(r.Body)
 	if err := dec.Decode(&request); err != nil {
@@ -111,6 +120,8 @@ func (h *Handlers) AddHandlerJSON(w http.ResponseWriter, r *http.Request) {
 		Result: shortURL,
 	}
 
+	h.log.With("userID", h.userID).Info("new URL created")
+
 	w.Header().Set("content-type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 
@@ -122,6 +133,8 @@ func (h *Handlers) AddHandlerJSON(w http.ResponseWriter, r *http.Request) {
 
 // TODO Add a test case for this.
 func (h *Handlers) AddHandlerJSONBatch(w http.ResponseWriter, r *http.Request) {
+	h.parseUserID(r)
+
 	var request models.ShortenBatchRequest
 	dec := json.NewDecoder(r.Body)
 	if err := dec.Decode(&request); err != nil {
@@ -144,6 +157,7 @@ func (h *Handlers) AddHandlerJSONBatch(w http.ResponseWriter, r *http.Request) {
 
 		url := store.URL{
 			ID:            uuid.NewString(),
+			UserID:        h.userID,
 			CorrelationID: reqURL.CorrelationID,
 			Short:         slug,
 			Original:      reqURL.OriginalURL,
@@ -165,7 +179,9 @@ func (h *Handlers) AddHandlerJSONBatch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := &models.ShortenBatchRResponse{
+	h.log.With("userID", h.userID, "count", len(urls)).Info("new URLs created via batch request")
+
+	response := &models.ShortenBatchResponse{
 		URLs: responseURLs,
 	}
 
@@ -192,6 +208,49 @@ func (h *Handlers) GetHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusTemporaryRedirect)
 }
 
+func (h *Handlers) GetUserURLsHandler(w http.ResponseWriter, r *http.Request) {
+	userID, err := h.ensureUserID(r)
+	if err != nil {
+		h.log.With("handler", "GetUserURLsHandler").Error(err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	h.log.With("userID", userID).Debug("fetching user urls")
+
+	urls, err := h.s.ListByUserID(r.Context(), userID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if len(urls) == 0 {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	responseURLs := make([]models.UserURLItem, 0, len(urls))
+	for _, url := range urls {
+		responseURL := models.UserURLItem{
+			ShortURL:    url.Short,
+			OriginalURL: url.Original,
+		}
+		responseURLs = append(responseURLs, responseURL)
+	}
+
+	response := &models.ListByUserIDResponse{
+		URLs: responseURLs,
+	}
+
+	w.Header().Set("content-type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	enc := json.NewEncoder(w)
+	if err := enc.Encode(response); err != nil {
+		panic(err)
+	}
+}
+
 // PingHandler handles storage health-check.
 func (h *Handlers) PingHandler(w http.ResponseWriter, r *http.Request) {
 	if err := h.s.Ping(r.Context()); err != nil {
@@ -212,7 +271,8 @@ func (h *Handlers) storeShortURL(ctx context.Context, longURL string) (string, e
 	shortURL := h.generateShortURLFromSlug(slug)
 
 	url := store.URL{
-		ID: uuid.NewString(),
+		ID:     uuid.NewString(),
+		UserID: h.userID,
 
 		// TODO fix naming ambiguity:
 		// slug is just a random string, while shortURL is the complete URL which contains the slug.
@@ -230,4 +290,21 @@ func (h *Handlers) generateShortURLFromSlug(slug string) string {
 
 func (h *Handlers) handleError(method string, err error) {
 	h.log.Errorln("error handling request", "method", method, "err", err)
+}
+
+func (h *Handlers) parseUserID(r *http.Request) {
+	userIDCtx := r.Context().Value(middleware.AuthenticatedUserKey)
+	if userID, ok := userIDCtx.(string); ok {
+		h.userID = userID
+	}
+}
+
+func (h *Handlers) ensureUserID(r *http.Request) (string, error) {
+	userIDCtx := r.Context().Value(middleware.AuthenticatedUserKey)
+	userID, ok := userIDCtx.(string)
+	if !ok {
+		return "", errors.New("authenticated user is required")
+	}
+
+	return userID, nil
 }
