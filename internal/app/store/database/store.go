@@ -8,7 +8,6 @@ import (
 
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/madatsci/urlshortener/internal/app/database"
 	"github.com/madatsci/urlshortener/internal/app/store"
 	"github.com/pressly/goose/v3"
 )
@@ -21,16 +20,10 @@ type Store struct {
 	conn *sql.DB
 }
 
-// TODO pass database connection as an argument (perhaps should be created in app.go).
 // New creates a new database-driven storage.
-func New(ctx context.Context, databaseDSN string) (*Store, error) {
-	conn, err := database.NewClient(ctx, databaseDSN)
-	if err != nil {
-		return nil, err
-	}
-
+func New(ctx context.Context, conn *sql.DB) (*Store, error) {
 	store := &Store{conn: conn}
-	if err = store.bootstrap(); err != nil {
+	if err := store.bootstrap(); err != nil {
 		return nil, err
 	}
 

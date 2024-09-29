@@ -5,12 +5,13 @@ import (
 	"time"
 
 	"github.com/madatsci/urlshortener/internal/app/config"
+	"github.com/madatsci/urlshortener/internal/app/database"
 	"github.com/madatsci/urlshortener/internal/app/logger"
 	"github.com/madatsci/urlshortener/internal/app/server"
 	"github.com/madatsci/urlshortener/internal/app/store"
-	"github.com/madatsci/urlshortener/internal/app/store/database"
-	fs "github.com/madatsci/urlshortener/internal/app/store/file"
-	"github.com/madatsci/urlshortener/internal/app/store/memory"
+	dbstore "github.com/madatsci/urlshortener/internal/app/store/database"
+	fstore "github.com/madatsci/urlshortener/internal/app/store/file"
+	memstore "github.com/madatsci/urlshortener/internal/app/store/memory"
 	"go.uber.org/zap"
 )
 
@@ -65,10 +66,14 @@ func (a *App) Start() error {
 
 func newStore(ctx context.Context, config *config.Config) (store.Store, error) {
 	if config.DatabaseDSN != "" {
-		return database.New(ctx, config.DatabaseDSN)
+		conn, err := database.NewClient(ctx, config.DatabaseDSN)
+		if err != nil {
+			return nil, err
+		}
+		return dbstore.New(ctx, conn)
 	} else if config.FileStoragePath != "" {
-		return fs.New(config.FileStoragePath)
+		return fstore.New(config.FileStoragePath)
 	}
 
-	return memory.New(), nil
+	return memstore.New(), nil
 }
