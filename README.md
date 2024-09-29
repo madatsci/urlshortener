@@ -69,7 +69,12 @@ Migrations are applied automatically when app starts with database DSN provided 
 curl -X POST http://localhost:8080 -H "Content-Type: text/plain" -d "https://practicum-yandex.ru"
 
 # Response:
-http://localhost:8080/LeKRAJMW
+HTTP/1.1 201 Created
+Content-Type: text/plain
+Date: Sun, 29 Sep 2024 09:50:29 GMT
+Content-Length: 30
+
+http://localhost:8080/fLMxbXUF
 ```
 
 ### Via application/json request
@@ -80,7 +85,13 @@ curl -i -X POST http://localhost:8080/api/shorten \
     -d '{"url":"https://practicum-yandex.ru"}'
 
 # Response:
-{"result":"http://localhost:8080/TANIJUrQ"}
+HTTP/1.1 201 Created
+Content-Type: application/json
+Set-Cookie: auth_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ1cmxzaG9ydGVuZXIiLCJleHAiOjE3Mjc2MDY5NzAsIlVzZXJJRCI6Ijc4MDA3NmU1LTg3M2UtNGQyMC1hM2ZiLWJjNmJlYjVjMGNjNCJ9.LvTerlx2D-jkOuvQqdTKLhrOsS_Op7eglSOLfs3eV4M
+Date: Sun, 29 Sep 2024 09:49:35 GMT
+Content-Length: 44
+
+{"result":"http://localhost:8080/bnwMHuSR"}
 ```
 
 ### Via application/json batch request
@@ -100,16 +111,39 @@ curl -i -X POST http://localhost:8080/api/shorten/batch \
     ]'
 
 # Response:
-[
-    {
-        "correlation_id":"mC9g8iasXW",
-        "short_url":"http://localhost:8080/TANIJUrQ"
-    },
-    {
-        "correlation_id":"XFADu5Xlkw",
-        "short_url":"http://localhost:8080/HdgYTekl"
-    }
-]
+HTTP/1.1 201 Created
+Content-Type: application/json
+Set-Cookie: auth_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ1cmxzaG9ydGVuZXIiLCJleHAiOjE3Mjc2MDY5NzAsIlVzZXJJRCI6ImM1ZDE5ZDZmLTA0YWItNDliOC05NmJlLTVkYjg3YzRhNTgwOSJ9.Na3rNxg9oDxTrQ_h-jsiZbcEd9UCEHrhqrdhWVklW-w
+Date: Sun, 29 Sep 2024 09:51:07 GMT
+Content-Length: 156
+
+[{"correlation_id":"mC9g8iasXW","short_url":"http://localhost:8080/FgPTdjAI"},{"correlation_id":"XFADu5Xlkw","short_url":"http://localhost:8080/TsHogqxz"}]
+```
+
+## Get list of your URLs
+
+### Previously created URLs
+
+```bash
+curl -i -X GET -b "auth_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ1cmxzaG9ydGVuZXIiLCJleHAiOjE3Mjc2MDg4MDAsIlVzZXJJRCI6ImI1ZDI4ODdlLTQ0ZWItNGQ4My05OTYzLTI5ZDAxMDBjZTc0ZiJ9.ESKBSqmChOUSpHnxKM42vxANw_atlaArfMtkPWVUndw" http://localhost:8080/api/user/urls
+
+# Response:
+HTTP/1.1 200 OK
+Content-Type: application/json
+Date: Sun, 29 Sep 2024 10:20:26 GMT
+Content-Length: 133
+
+[{"short_url":"LduvFKkQ","original_url":"https://practicum-yandex.ru"},{"short_url":"hVKwFYrF","original_url":"http://example.org"}]
+```
+
+### No content
+
+```bash
+curl -i -X GET -b "auth_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ1cmxzaG9ydGVuZXIiLCJleHAiOjE3Mjc2MDY5NzAsIlVzZXJJRCI6ImM1ZDE5ZDZmLTA0YWItNDliOC05NmJlLTVkYjg3YzRhNTgwOSJ9.Na3rNxg9oDxTrQ_h-jsiZbcEd9UCEHrhqrdhWVklW-w" http://localhost:8080/api/user/urls
+
+# Response:
+HTTP/1.1 204 No Content
+Date: Sun, 29 Sep 2024 09:53:02 GMT
 ```
 
 ## Use short URL
