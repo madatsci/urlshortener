@@ -19,6 +19,7 @@ type (
 		cookieName string
 		jwt        *jwt.JWT
 		log        *zap.SugaredLogger
+		userID     string
 	}
 
 	Options struct {
@@ -51,7 +52,7 @@ func (a *Auth) PublicAPIAuth(next http.Handler) http.Handler {
 		cookie, err := r.Cookie(a.cookieName)
 		if err != nil {
 			if err == http.ErrNoCookie {
-				a.log.Debug("cookie header not found")
+				a.log.Debug("cookie header not found, issue new token")
 				userID, err = a.registerNewUser(w)
 				if err != nil {
 					w.WriteHeader(http.StatusInternalServerError)
@@ -75,9 +76,8 @@ func (a *Auth) PublicAPIAuth(next http.Handler) http.Handler {
 			}
 		}
 
-		a.log.With("userID", userID).Debug("add userID to request context")
-		ctx := context.WithValue(r.Context(), AuthenticatedUserKey, userID)
-		next.ServeHTTP(w, r.WithContext(ctx))
+		a.userID = userID
+		a.continueWithUser(w, r, next)
 	})
 }
 
@@ -100,8 +100,8 @@ func (a *Auth) PrivateAPIAuth(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), AuthenticatedUserKey, userID)
-		next.ServeHTTP(w, r.WithContext(ctx))
+		a.userID = userID
+		a.continueWithUser(w, r, next)
 	})
 }
 
@@ -121,4 +121,10 @@ func (a *Auth) registerNewUser(w http.ResponseWriter) (string, error) {
 func (a *Auth) handleUnauthorized(w http.ResponseWriter) {
 	a.log.Debug("unauthorized attempt to access private API")
 	w.WriteHeader(http.StatusUnauthorized)
+}
+
+func (a *Auth) continueWithUser(w http.ResponseWriter, r *http.Request, next http.Handler) {
+	a.log.With("userID", a.userID).Debug("add userID to request context")
+	ctx := context.WithValue(r.Context(), AuthenticatedUserKey, a.userID)
+	next.ServeHTTP(w, r.WithContext(ctx))
 }
