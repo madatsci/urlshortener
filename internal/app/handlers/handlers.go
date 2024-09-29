@@ -206,6 +206,7 @@ func (h *Handlers) GetHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusTemporaryRedirect)
 }
 
+// GetUserURLsHandler handles retrieving all URLs created by the authorized user.
 func (h *Handlers) GetUserURLsHandler(w http.ResponseWriter, r *http.Request) {
 	userID, err := ensureUserID(r)
 	if err != nil {
@@ -230,7 +231,7 @@ func (h *Handlers) GetUserURLsHandler(w http.ResponseWriter, r *http.Request) {
 	responseURLs := make([]models.UserURLItem, 0, len(urls))
 	for _, url := range urls {
 		responseURL := models.UserURLItem{
-			ShortURL:    url.Short,
+			ShortURL:    h.generateShortURLFromSlug(url.Short),
 			OriginalURL: url.Original,
 		}
 		responseURLs = append(responseURLs, responseURL)
