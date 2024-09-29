@@ -48,15 +48,13 @@ func New(config *config.Config, store store.Store, logger *zap.SugaredLogger) *S
 	})
 
 	r.Route("/", func(r chi.Router) {
-		r.Post("/", h.AddHandler)
-		r.Get("/{slug}", h.GetHandler)
-		r.Get("/ping", h.PingHandler)
-
 		// Public API
-		r.Route("/api", func(r chi.Router) {
+		r.Route("/", func(r chi.Router) {
 			r.Use(authMiddleware.PublicAPIAuth)
-			r.Post("/shorten", h.AddHandlerJSON)
-			r.Post("/shorten/batch", h.AddHandlerJSONBatch)
+			r.Post("/", h.AddHandler)
+			r.Get("/{slug}", h.GetHandler)
+			r.Post("/api/shorten", h.AddHandlerJSON)
+			r.Post("/api/shorten/batch", h.AddHandlerJSONBatch)
 		})
 
 		// Private API
@@ -64,6 +62,8 @@ func New(config *config.Config, store store.Store, logger *zap.SugaredLogger) *S
 			r.Use(authMiddleware.PrivateAPIAuth)
 			r.Get("/urls", h.GetUserURLsHandler)
 		})
+
+		r.Get("/ping", h.PingHandler)
 	})
 
 	server.h = h
