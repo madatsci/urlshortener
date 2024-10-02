@@ -109,7 +109,6 @@ func (s *Store) Get(ctx context.Context, slug string) (store.URL, error) {
 func (s *Store) ListByUserID(ctx context.Context, userID string) ([]store.URL, error) {
 	res := make([]store.URL, 0)
 
-	// TODO check that query works
 	rows, err := s.conn.QueryContext(
 		ctx,
 		"SELECT id, user_id, correlation_id, short_url, original_url, created_at, is_deleted FROM urls WHERE user_id = $1 AND NOT is_deleted",
