@@ -1,6 +1,6 @@
 -- +goose Up
 -- +goose StatementBegin
-ALTER TABLE urls ADD COLUMN is_deleted bool;
+ALTER TABLE urls ADD COLUMN is_deleted bool DEFAULT false;
 -- +goose StatementEnd
 
 -- +goose Down
