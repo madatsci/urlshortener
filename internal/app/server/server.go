@@ -61,6 +61,7 @@ func New(config *config.Config, store store.Store, logger *zap.SugaredLogger) *S
 		r.Route("/api/user", func(r chi.Router) {
 			r.Use(authMiddleware.PrivateAPIAuth)
 			r.Get("/urls", h.GetUserURLsHandler)
+			r.Delete("/urls", h.DeleteUserURLsHandler)
 		})
 
 		r.Get("/ping", h.PingHandler)

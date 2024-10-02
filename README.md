@@ -187,3 +187,17 @@ Location: https://practicum-yandex.ru
 Date: Mon, 02 Sep 2024 17:52:57 GMT
 Content-Length: 0
 ```
+
+## Delete of your URLs
+
+```bash
+curl -i -X DELETE http://localhost:8080/api/user/urls \
+    -b "auth_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ1cmxzaG9ydGVuZXIiLCJleHAiOjE3Mjc2MDg4MDAsIlVzZXJJRCI6ImI1ZDI4ODdlLTQ0ZWItNGQ4My05OTYzLTI5ZDAxMDBjZTc0ZiJ9.ESKBSqmChOUSpHnxKM42vxANw_atlaArfMtkPWVUndw" \
+    -H "Content-Type: application/json" \
+    -d '["LduvFKkQ", "hVKwFYrF"]'
+
+# Response:
+HTTP/1.1 202 Accepted
+Date: Wed, 02 Oct 2024 13:34:20 GMT
+Content-Length: 0
+```

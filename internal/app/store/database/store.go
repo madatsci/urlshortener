@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"embed"
 	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -140,6 +142,28 @@ func (s *Store) ListByUserID(ctx context.Context, userID string) ([]store.URL, e
 func (s *Store) ListAll(ctx context.Context) map[string]store.URL {
 	// TODO implement later (currently this is used only for testing purposes)
 	return nil
+}
+
+func (s *Store) SoftDelete(ctx context.Context, userID string, slugs []string) error {
+	inArgs := make([]string, len(slugs))
+	for i := 0; i < len(slugs); i++ {
+		inArgs[i] = fmt.Sprintf("$%d", i+2)
+	}
+	inArg := strings.Join(inArgs, ",")
+
+	args := make([]interface{}, len(slugs)+1)
+	args[0] = userID
+	for i, slug := range slugs {
+		args[i+1] = slug
+	}
+
+	_, err := s.conn.ExecContext(
+		ctx,
+		"UPDATE urls SET is_deleted = true WHERE user_id = $1 and short_url IN("+inArg+")",
+		args...,
+	)
+
+	return err
 }
 
 func (s *Store) Ping(ctx context.Context) error {

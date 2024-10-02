@@ -21,6 +21,9 @@ type Store interface {
 	// ListAll returns the full map of stored URLs.
 	ListAll(ctx context.Context) map[string]URL
 
+	// ListAll marks URLs as deleted.
+	SoftDelete(ctx context.Context, userID string, slugs []string) error
+
 	// Ping is a storage healthcheck.
 	Ping(ctx context.Context) error
 }

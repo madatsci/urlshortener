@@ -82,3 +82,11 @@ type UserURLItem struct {
 	ShortURL    string `json:"short_url"`
 	OriginalURL string `json:"original_url"`
 }
+
+type DeleteByUserIDRequest struct {
+	Slugs []string
+}
+
+func (r *DeleteByUserIDRequest) UnmarshalJSON(data []byte) error {
+	return json.Unmarshal(data, &r.Slugs)
+}

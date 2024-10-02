@@ -255,6 +255,39 @@ func (h *Handlers) GetUserURLsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// DeleteUserURLsHandler deletes URLs with specified slugs created by the authorized user.
+func (h *Handlers) DeleteUserURLsHandler(w http.ResponseWriter, r *http.Request) {
+	userID, err := ensureUserID(r)
+	if err != nil {
+		h.log.With("handler", "DeleteUserURLsHandler").Error(err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	h.log.With("userID", userID).Debug("deleting user urls")
+
+	var request models.DeleteByUserIDRequest
+	dec := json.NewDecoder(r.Body)
+	if err := dec.Decode(&request); err != nil {
+		h.handleError("DeleteUserURLsHandler", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if len(request.Slugs) == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if err = h.s.SoftDelete(r.Context(), userID, request.Slugs); err != nil {
+		h.handleError("DeleteUserURLsHandler", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusAccepted)
+}
+
 // PingHandler handles storage health-check.
 func (h *Handlers) PingHandler(w http.ResponseWriter, r *http.Request) {
 	if err := h.s.Ping(r.Context()); err != nil {

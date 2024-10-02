@@ -98,6 +98,11 @@ func (s *Store) ListAll(_ context.Context) map[string]store.URL {
 	return s.urls
 }
 
+func (s *Store) SoftDelete(_ context.Context, userID string, slugs []string) error {
+	// TODO implement
+	return nil
+}
+
 func (s *Store) Ping(_ context.Context) error {
 	// Nothing to ping here.
 	return nil
