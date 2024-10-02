@@ -45,6 +45,7 @@ func (s *Store) Add(ctx context.Context, url store.URL) error {
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgerrcode.IsIntegrityConstraintViolation(pgErr.Code) {
+			// TODO Handle the case when URL is deleted.
 			originalURL, err := s.getByOriginalURL(ctx, url.Original)
 			if err != nil {
 				return err
@@ -92,9 +93,9 @@ func (s *Store) Get(ctx context.Context, slug string) (store.URL, error) {
 
 	err := s.conn.QueryRowContext(
 		ctx,
-		"SELECT id, user_id, correlation_id, short_url, original_url, created_at FROM urls WHERE short_url = $1",
+		"SELECT id, user_id, correlation_id, short_url, original_url, created_at, is_deleted FROM urls WHERE short_url = $1",
 		slug,
-	).Scan(&url.ID, &userID, &url.CorrelationID, &url.Short, &url.Original, &url.CreatedAt)
+	).Scan(&url.ID, &userID, &url.CorrelationID, &url.Short, &url.Original, &url.CreatedAt, &url.Deleted)
 
 	if err != nil {
 		return url, err
@@ -108,9 +109,10 @@ func (s *Store) Get(ctx context.Context, slug string) (store.URL, error) {
 func (s *Store) ListByUserID(ctx context.Context, userID string) ([]store.URL, error) {
 	res := make([]store.URL, 0)
 
+	// TODO check that query works
 	rows, err := s.conn.QueryContext(
 		ctx,
-		"SELECT id, user_id, correlation_id, short_url, original_url, created_at FROM urls WHERE user_id = $1",
+		"SELECT id, user_id, correlation_id, short_url, original_url, created_at, is_deleted FROM urls WHERE user_id = $1 AND NOT is_deleted",
 		userID,
 	)
 	if err != nil {
@@ -121,7 +123,7 @@ func (s *Store) ListByUserID(ctx context.Context, userID string) ([]store.URL, e
 	for rows.Next() {
 		var url store.URL
 		var userID sql.NullString
-		err = rows.Scan(&url.ID, &userID, &url.CorrelationID, &url.Short, &url.Original, &url.CreatedAt)
+		err = rows.Scan(&url.ID, &userID, &url.CorrelationID, &url.Short, &url.Original, &url.CreatedAt, &url.Deleted)
 		if err != nil {
 			return nil, err
 		}
@@ -165,9 +167,9 @@ func (s *Store) getByOriginalURL(ctx context.Context, originalURL string) (store
 
 	err := s.conn.QueryRowContext(
 		ctx,
-		"SELECT id, user_id, correlation_id, short_url, original_url, created_at FROM urls WHERE original_url = $1",
+		"SELECT id, user_id, correlation_id, short_url, original_url, created_at, is_deleted FROM urls WHERE original_url = $1",
 		originalURL,
-	).Scan(&url.ID, &userID, &url.CorrelationID, &url.Short, &url.Original, &url.CreatedAt)
+	).Scan(&url.ID, &userID, &url.CorrelationID, &url.Short, &url.Original, &url.CreatedAt, &url.Deleted)
 
 	if err != nil {
 		return url, err

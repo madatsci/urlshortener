@@ -198,7 +198,12 @@ func (h *Handlers) GetHandler(w http.ResponseWriter, r *http.Request) {
 
 	url, err := h.s.Get(r.Context(), slug)
 	if err != nil {
+		h.handleError("GetHandler", err)
 		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	if url.Deleted {
+		w.WriteHeader(http.StatusGone)
 		return
 	}
 
