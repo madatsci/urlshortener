@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -86,7 +87,7 @@ func (a *Auth) PrivateAPIAuth(next http.Handler) http.Handler {
 		cookie, err := r.Cookie(a.cookieName)
 		if err != nil {
 			if err == http.ErrNoCookie {
-				a.handleUnauthorized(w)
+				a.handleUnauthorized(w, errors.New("no authorisation cookie"))
 				return
 			} else {
 				w.WriteHeader(http.StatusInternalServerError)
@@ -95,8 +96,12 @@ func (a *Auth) PrivateAPIAuth(next http.Handler) http.Handler {
 		}
 
 		userID, err := a.jwt.GetUserID(cookie.Value)
-		if err != nil || userID == "" {
-			a.handleUnauthorized(w)
+		if err != nil {
+			a.handleUnauthorized(w, err)
+			return
+		}
+		if userID == "" {
+			a.handleUnauthorized(w, errors.New("token does not contain user ID"))
 			return
 		}
 
@@ -118,8 +123,8 @@ func (a *Auth) registerNewUser(w http.ResponseWriter) (string, error) {
 	return userID, nil
 }
 
-func (a *Auth) handleUnauthorized(w http.ResponseWriter) {
-	a.log.Debug("unauthorized attempt to access private API")
+func (a *Auth) handleUnauthorized(w http.ResponseWriter, err error) {
+	a.log.Debugf("unauthorized attempt to access private API: %s", err)
 	w.WriteHeader(http.StatusUnauthorized)
 }
 

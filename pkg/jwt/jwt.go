@@ -1,11 +1,11 @@
 package jwt
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/pkg/errors"
 )
 
 var errInvalidToken = errors.New("invalid JWT token")
@@ -64,7 +64,7 @@ func (j *JWT) GetUserID(tokenString string) (string, error) {
 		return j.Secret, nil
 	})
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "token parsing error")
 	}
 
 	if !token.Valid {
