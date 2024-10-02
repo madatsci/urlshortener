@@ -32,6 +32,7 @@ type URL struct {
 	Short         string    `json:"short_url"`
 	Original      string    `json:"original_url"`
 	CreatedAt     time.Time `json:"created_at"`
+	Deleted       bool      `json:"is_deleted"`
 }
 
 type AlreadyExistsError struct {
