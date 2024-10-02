@@ -118,7 +118,7 @@ func (a *Auth) registerNewUser(w http.ResponseWriter) (string, error) {
 	}
 	http.SetCookie(w, &http.Cookie{Name: a.cookieName, Value: token})
 
-	a.log.With("userID", userID).Debug("registered new user")
+	a.log.With("userID", userID).Info("registered new user")
 
 	return userID, nil
 }
