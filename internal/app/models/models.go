@@ -39,11 +39,11 @@ type ShortenBatchRequestItem struct {
 	OriginalURL   string `json:"original_url"`
 }
 
-type ShortenBatchRResponse struct {
+type ShortenBatchResponse struct {
 	URLs []ShortenBatchResponseItem
 }
 
-func (r *ShortenBatchRResponse) MarshalJSON() ([]byte, error) {
+func (r *ShortenBatchResponse) MarshalJSON() ([]byte, error) {
 	list := make([]json.RawMessage, 0, len(r.URLs))
 	for _, url := range r.URLs {
 		encoded, err := json.Marshal(url)
@@ -59,4 +59,34 @@ func (r *ShortenBatchRResponse) MarshalJSON() ([]byte, error) {
 type ShortenBatchResponseItem struct {
 	CorrelationID string `json:"correlation_id"`
 	ShortURL      string `json:"short_url"`
+}
+
+type ListByUserIDResponse struct {
+	URLs []UserURLItem
+}
+
+func (r *ListByUserIDResponse) MarshalJSON() ([]byte, error) {
+	list := make([]json.RawMessage, 0, len(r.URLs))
+	for _, url := range r.URLs {
+		encoded, err := json.Marshal(url)
+		if err != nil {
+			return nil, err
+		}
+		list = append(list, encoded)
+	}
+
+	return json.Marshal(list)
+}
+
+type UserURLItem struct {
+	ShortURL    string `json:"short_url"`
+	OriginalURL string `json:"original_url"`
+}
+
+type DeleteByUserIDRequest struct {
+	Slugs []string
+}
+
+func (r *DeleteByUserIDRequest) UnmarshalJSON(data []byte) error {
+	return json.Unmarshal(data, &r.Slugs)
 }

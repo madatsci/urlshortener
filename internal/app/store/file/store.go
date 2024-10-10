@@ -33,7 +33,6 @@ func New(filepath string) (*Store, error) {
 	return s, nil
 }
 
-// Add adds a new URL to the storage.
 func (s *Store) Add(_ context.Context, url store.URL) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -49,7 +48,6 @@ func (s *Store) Add(_ context.Context, url store.URL) error {
 	return json.NewEncoder(file).Encode(&url)
 }
 
-// AddBatch adds a batch of URLs to the storage.
 // TODO Add a test case for this.
 func (s *Store) AddBatch(_ context.Context, urls []store.URL) error {
 	s.mu.Lock()
@@ -74,7 +72,6 @@ func (s *Store) AddBatch(_ context.Context, urls []store.URL) error {
 	return nil
 }
 
-// Get retrieves a URL by its slug from the storage.
 func (s *Store) Get(_ context.Context, slug string) (store.URL, error) {
 	var url store.URL
 
@@ -86,9 +83,24 @@ func (s *Store) Get(_ context.Context, slug string) (store.URL, error) {
 	return url, nil
 }
 
-// ListAll returns the full map of stored URLs.
+func (s *Store) ListByUserID(_ context.Context, userID string) ([]store.URL, error) {
+	res := make([]store.URL, 0)
+	for _, url := range s.urls {
+		if url.UserID == userID {
+			res = append(res, url)
+		}
+	}
+
+	return res, nil
+}
+
 func (s *Store) ListAll(_ context.Context) map[string]store.URL {
 	return s.urls
+}
+
+func (s *Store) SoftDelete(_ context.Context, userID string, slugs []string) error {
+	// TODO implement
+	return nil
 }
 
 func (s *Store) Ping(_ context.Context) error {

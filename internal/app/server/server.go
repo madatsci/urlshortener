@@ -2,19 +2,20 @@ package server
 
 import (
 	"net/http"
-	"strings"
-	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/madatsci/urlshortener/internal/app/config"
 	"github.com/madatsci/urlshortener/internal/app/handlers"
+	mw "github.com/madatsci/urlshortener/internal/app/server/middleware"
 	"github.com/madatsci/urlshortener/internal/app/store"
+	"github.com/madatsci/urlshortener/pkg/jwt"
 	"go.uber.org/zap"
 )
 
 type (
 	Server struct {
-		mux    *chi.Mux
+		mux    http.Handler
 		config *config.Config
 		h      *handlers.Handlers
 		log    *zap.SugaredLogger
@@ -31,12 +32,39 @@ func New(config *config.Config, store store.Store, logger *zap.SugaredLogger) *S
 	h := handlers.New(config, logger, store)
 
 	r := chi.NewRouter()
+
+	loggerMiddleware := mw.NewLogger(server.log)
+	r.Use(loggerMiddleware.Logger)
+	r.Use(mw.Gzip)
+	r.Use(middleware.Recoverer)
+
+	authMiddleware := mw.NewAuth(mw.Options{
+		JWT: jwt.New(jwt.Options{
+			Secret:   config.TokenSecret,
+			Duration: config.TokenDuration,
+			Issuer:   config.TokenIssuer,
+		}),
+		Log: logger,
+	})
+
 	r.Route("/", func(r chi.Router) {
-		r.Post("/", server.withMiddleware(h.AddHandler))
-		r.Post("/api/shorten", server.withMiddleware(h.AddHandlerJSON))
-		r.Post("/api/shorten/batch", server.withMiddleware(h.AddHandlerJSONBatch))
-		r.Get("/{slug}", server.withMiddleware(h.GetHandler))
-		r.Get("/ping", server.withMiddleware(h.PingHandler))
+		// Public API
+		r.Route("/", func(r chi.Router) {
+			r.Use(authMiddleware.PublicAPIAuth)
+			r.Post("/", h.AddHandler)
+			r.Get("/{slug}", h.GetHandler)
+			r.Post("/api/shorten", h.AddHandlerJSON)
+			r.Post("/api/shorten/batch", h.AddHandlerJSONBatch)
+		})
+
+		// Private API
+		r.Route("/api/user", func(r chi.Router) {
+			r.Use(authMiddleware.PrivateAPIAuth)
+			r.Get("/urls", h.GetUserURLsHandler)
+			r.Delete("/urls", h.DeleteUserURLsHandler)
+		})
+
+		r.Get("/ping", h.PingHandler)
 	})
 
 	server.h = h
@@ -53,66 +81,6 @@ func (s *Server) Start() error {
 }
 
 // Router returns server router for usage in tests.
-func (s *Server) Router() *chi.Mux {
+func (s *Server) Router() http.Handler {
 	return s.mux
-}
-
-func (s *Server) withMiddleware(h http.HandlerFunc) http.HandlerFunc {
-	return s.withLogging(gzipMiddleware(h))
-}
-
-func (s *Server) withLogging(h http.HandlerFunc) http.HandlerFunc {
-	logFn := func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-
-		responseData := &responseData{
-			status: 0,
-			size:   0,
-		}
-		lw := loggingResponseWriter{
-			ResponseWriter: w,
-			responseData:   responseData,
-		}
-		h.ServeHTTP(&lw, r)
-
-		duration := time.Since(start)
-
-		s.log.Infoln(
-			"uri", r.RequestURI,
-			"method", r.Method,
-			"status", responseData.status,
-			"duration", duration,
-			"size", responseData.size,
-		)
-	}
-
-	return logFn
-}
-
-func gzipMiddleware(h http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ow := w
-
-		acceptEncoding := r.Header.Get("Accept-Encoding")
-		supportsGzip := strings.Contains(acceptEncoding, "gzip")
-		if supportsGzip {
-			cw := newCompressWriter(w)
-			ow = cw
-			defer cw.Close()
-		}
-
-		contentEncoding := r.Header.Get("Content-Encoding")
-		sendsGzip := strings.Contains(contentEncoding, "gzip")
-		if sendsGzip {
-			cr, err := newCompressReader(r.Body)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-			r.Body = cr
-			defer cr.Close()
-		}
-
-		h.ServeHTTP(ow, r)
-	}
 }
