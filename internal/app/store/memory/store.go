@@ -9,19 +9,20 @@ import (
 	"github.com/madatsci/urlshortener/internal/app/models"
 )
 
-// TODO Add support for user_urls.
 // Store is an implementation of store.Store interface which stores data in memory.
 type Store struct {
-	urls  map[string]models.URL
-	users map[string]models.User
-	mu    sync.Mutex
+	urls      map[string]models.URL
+	users     map[string]models.User
+	user_urls map[string][]string
+	mu        sync.Mutex
 }
 
 // New creates a new in-memory storage.
 func New() *Store {
 	return &Store{
-		urls:  make(map[string]models.URL),
-		users: make(map[string]models.User),
+		urls:      make(map[string]models.URL),
+		users:     make(map[string]models.User),
+		user_urls: make(map[string][]string),
 	}
 }
 
@@ -43,8 +44,10 @@ func (s *Store) GetUser(_ context.Context, userID string) (models.User, error) {
 
 func (s *Store) CreateURL(_ context.Context, url models.URL) error { //nolint:unparam
 	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	s.urls[url.Slug] = url
-	s.mu.Unlock()
+	s.user_urls[url.UserID] = append(s.user_urls[url.UserID], url.Slug)
 
 	return nil
 }
@@ -52,10 +55,12 @@ func (s *Store) CreateURL(_ context.Context, url models.URL) error { //nolint:un
 // TODO Add a test case for this.
 func (s *Store) BatchCreateURL(_ context.Context, urls []models.URL) error { //nolint:unparam
 	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	for _, url := range urls {
 		s.urls[url.Slug] = url
+		s.user_urls[url.UserID] = append(s.user_urls[url.UserID], url.Slug)
 	}
-	s.mu.Unlock()
 
 	return nil
 }
@@ -72,9 +77,13 @@ func (s *Store) GetURL(_ context.Context, slug string) (models.URL, error) {
 }
 
 func (s *Store) ListURLsByUserID(_ context.Context, userID string) ([]models.URL, error) {
+	slugs := s.user_urls[userID]
+	if len(slugs) == 0 {
+		return []models.URL{}, nil
+	}
 	res := make([]models.URL, 0)
-	for _, url := range s.urls {
-		if url.UserID == userID {
+	for _, slug := range slugs {
+		if url, ok := s.urls[slug]; ok {
 			res = append(res, url)
 		}
 	}
