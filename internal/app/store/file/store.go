@@ -14,9 +14,8 @@ import (
 // Store is an implementation of store.Store interface which uses a file to save data on disk.
 type Store struct {
 	filepath string
-	// TODO Maybe it would be better to use pointer *store.URL
-	urls map[string]models.URL
-	mu   sync.Mutex
+	urls     map[string]models.URL
+	mu       sync.Mutex
 }
 
 // New creates a new file storage.
