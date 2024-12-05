@@ -10,9 +10,9 @@ import (
 
 // Store is an implementation of store.Store interface which stores data in memory.
 type Store struct {
-	// TODO Maybe it would be better to use pointer *store.URL.
-	urls map[string]models.URL
-	mu   sync.Mutex
+	urls  map[string]models.URL
+	users map[string]models.User
+	mu    sync.Mutex
 }
 
 // New creates a new in-memory storage.
@@ -20,6 +20,14 @@ func New() *Store {
 	return &Store{
 		urls: make(map[string]models.URL),
 	}
+}
+
+func (s *Store) CreateUser(_ context.Context, user models.User) error {
+	if _, ok := s.users[user.ID]; !ok {
+		s.users[user.ID] = user
+	}
+
+	return nil
 }
 
 func (s *Store) Add(_ context.Context, url models.URL) error { //nolint:unparam

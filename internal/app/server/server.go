@@ -44,7 +44,8 @@ func New(config *config.Config, store store.Store, logger *zap.SugaredLogger) *S
 			Duration: config.TokenDuration,
 			Issuer:   config.TokenIssuer,
 		}),
-		Log: logger,
+		Store: store,
+		Log:   logger,
 	})
 
 	r.Route("/", func(r chi.Router) {

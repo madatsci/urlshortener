@@ -33,6 +33,17 @@ func New(ctx context.Context, conn *sql.DB) (*Store, error) {
 	return store, nil
 }
 
+func (s *Store) CreateUser(ctx context.Context, user models.User) error {
+	_, err := s.conn.ExecContext(
+		ctx,
+		"INSERT INTO users (id, created_at) VALUES ($1, $2)",
+		user.ID,
+		user.CreatedAt,
+	)
+
+	return err
+}
+
 func (s *Store) Add(ctx context.Context, url models.URL) error {
 	_, err := s.conn.ExecContext(
 		ctx,

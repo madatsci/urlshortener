@@ -15,6 +15,7 @@ import (
 type Store struct {
 	filepath string
 	urls     map[string]models.URL
+	users    map[string]models.User
 	mu       sync.Mutex
 }
 
@@ -23,6 +24,7 @@ func New(filepath string) (*Store, error) {
 	s := &Store{
 		filepath: filepath,
 		urls:     make(map[string]models.URL),
+		users:    make(map[string]models.User),
 	}
 
 	if err := s.load(); err != nil {
@@ -30,6 +32,14 @@ func New(filepath string) (*Store, error) {
 	}
 
 	return s, nil
+}
+
+func (s *Store) CreateUser(_ context.Context, user models.User) error {
+	if _, ok := s.users[user.ID]; !ok {
+		s.users[user.ID] = user
+	}
+
+	return nil
 }
 
 func (s *Store) Add(_ context.Context, url models.URL) error {

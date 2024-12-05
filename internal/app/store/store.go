@@ -7,6 +7,9 @@ import (
 )
 
 type Store interface {
+	// CreateUser registers new user.
+	CreateUser(ctx context.Context, user models.User) error
+
 	// Add adds a new URL to the storage.
 	Add(ctx context.Context, url models.URL) error
 
