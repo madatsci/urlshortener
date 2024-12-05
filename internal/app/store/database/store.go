@@ -44,6 +44,22 @@ func (s *Store) CreateUser(ctx context.Context, user models.User) error {
 	return err
 }
 
+func (s *Store) GetUser(ctx context.Context, userID string) (models.User, error) {
+	var user models.User
+
+	err := s.conn.QueryRowContext(
+		ctx,
+		"SELECT id, created_at FROM users WHERE id = $1",
+		userID,
+	).Scan(&user.ID, &user.CreatedAt)
+
+	if err != nil {
+		return user, err
+	}
+
+	return user, nil
+}
+
 func (s *Store) Add(ctx context.Context, url models.URL) error {
 	_, err := s.conn.ExecContext(
 		ctx,

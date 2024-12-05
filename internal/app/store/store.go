@@ -10,6 +10,9 @@ type Store interface {
 	// CreateUser registers new user.
 	CreateUser(ctx context.Context, user models.User) error
 
+	// GetUser fetches user by ID.
+	GetUser(ctx context.Context, userID string) (models.User, error)
+
 	// Add adds a new URL to the storage.
 	Add(ctx context.Context, url models.URL) error
 

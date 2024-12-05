@@ -3,6 +3,7 @@ package memory
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 
 	"github.com/madatsci/urlshortener/internal/app/models"
@@ -18,7 +19,8 @@ type Store struct {
 // New creates a new in-memory storage.
 func New() *Store {
 	return &Store{
-		urls: make(map[string]models.URL),
+		urls:  make(map[string]models.URL),
+		users: make(map[string]models.User),
 	}
 }
 
@@ -28,6 +30,14 @@ func (s *Store) CreateUser(_ context.Context, user models.User) error {
 	}
 
 	return nil
+}
+
+func (s *Store) GetUser(_ context.Context, userID string) (models.User, error) {
+	if user, ok := s.users[userID]; ok {
+		return user, nil
+	}
+
+	return models.User{}, fmt.Errorf("user with id %s not found", userID)
 }
 
 func (s *Store) Add(_ context.Context, url models.URL) error { //nolint:unparam

@@ -81,6 +81,11 @@ func (a *Auth) PublicAPIAuth(next http.Handler) http.Handler {
 					return
 				}
 			}
+
+			if _, err := a.store.GetUser(r.Context(), userID); err != nil {
+				a.handleUnauthorized(w, errors.New("got unregistered user from auth token"))
+				return
+			}
 		}
 
 		a.userID = userID
@@ -108,6 +113,10 @@ func (a *Auth) PrivateAPIAuth(next http.Handler) http.Handler {
 		}
 		if userID == "" {
 			a.handleUnauthorized(w, errors.New("token does not contain user ID"))
+			return
+		}
+		if _, err := a.store.GetUser(r.Context(), userID); err != nil {
+			a.handleUnauthorized(w, errors.New("got unregistered user from auth token"))
 			return
 		}
 

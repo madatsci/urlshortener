@@ -12,6 +12,26 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestCreateUser(t *testing.T) {
+	s, err := New("./test_storage.txt")
+	require.NoError(t, err)
+
+	ctx := context.Background()
+
+	user := models.User{
+		ID:        uuid.NewString(),
+		CreatedAt: time.Now(),
+	}
+
+	err = s.CreateUser(ctx, user)
+	require.NoError(t, err)
+
+	res, err := s.GetUser(ctx, user.ID)
+	require.NoError(t, err)
+	assert.Equal(t, user.ID, res.ID)
+	assert.Equal(t, user.CreatedAt, res.CreatedAt)
+}
+
 func TestStorageWithEmptyFile(t *testing.T) {
 	type urlData struct {
 		slug string
