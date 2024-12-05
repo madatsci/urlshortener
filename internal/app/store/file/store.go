@@ -12,22 +12,31 @@ import (
 	"github.com/madatsci/urlshortener/internal/app/models"
 )
 
-// Store is an implementation of store.Store interface which uses a file to save data on disk.
-type Store struct {
-	filepath string
-	urls     map[string]models.URL
-	users    map[string]models.User
-	mu       sync.Mutex
-}
+type (
+	// Store is an implementation of store.Store interface which uses a file to save data on disk.
+	Store struct {
+		filepath  string
+		urls      map[string]models.URL
+		users     map[string]models.User
+		user_urls map[string][]string
+		mu        sync.Mutex
+	}
 
-// TODO Store users in file.
-// TODO Add support for user_urls.
+	// ServiceState is used to store service state in file.
+	ServiceState struct {
+		URLs     map[string]models.URL  `json:"urls"`
+		Users    map[string]models.User `json:"users"`
+		UserURLs map[string][]string    `json:"user_urls"`
+	}
+)
+
 // New creates a new file storage.
 func New(filepath string) (*Store, error) {
 	s := &Store{
-		filepath: filepath,
-		urls:     make(map[string]models.URL),
-		users:    make(map[string]models.User),
+		filepath:  filepath,
+		urls:      make(map[string]models.URL),
+		users:     make(map[string]models.User),
+		user_urls: make(map[string][]string),
 	}
 
 	if err := s.load(); err != nil {
@@ -42,7 +51,7 @@ func (s *Store) CreateUser(_ context.Context, user models.User) error {
 		s.users[user.ID] = user
 	}
 
-	return nil
+	return s.save()
 }
 
 func (s *Store) GetUser(_ context.Context, userID string) (models.User, error) {
@@ -58,14 +67,9 @@ func (s *Store) CreateURL(_ context.Context, url models.URL) error {
 	defer s.mu.Unlock()
 
 	s.urls[url.Slug] = url
+	s.user_urls[url.UserID] = append(s.user_urls[url.UserID], url.Slug)
 
-	file, err := os.OpenFile(s.filepath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	return json.NewEncoder(file).Encode(&url)
+	return s.save()
 }
 
 // TODO Add a test case for this.
@@ -73,23 +77,12 @@ func (s *Store) BatchCreateURL(_ context.Context, urls []models.URL) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	file, err := os.OpenFile(s.filepath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	enc := json.NewEncoder(file)
-
 	for _, url := range urls {
 		s.urls[url.Slug] = url
-
-		if err := enc.Encode(&url); err != nil {
-			return err
-		}
+		s.user_urls[url.UserID] = append(s.user_urls[url.UserID], url.Slug)
 	}
 
-	return nil
+	return s.save()
 }
 
 func (s *Store) GetURL(_ context.Context, slug string) (models.URL, error) {
@@ -104,9 +97,13 @@ func (s *Store) GetURL(_ context.Context, slug string) (models.URL, error) {
 }
 
 func (s *Store) ListURLsByUserID(_ context.Context, userID string) ([]models.URL, error) {
+	slugs := s.user_urls[userID]
+	if len(slugs) == 0 {
+		return []models.URL{}, nil
+	}
 	res := make([]models.URL, 0)
-	for _, url := range s.urls {
-		if url.UserID == userID {
+	for _, slug := range slugs {
+		if url, ok := s.urls[slug]; ok {
 			res = append(res, url)
 		}
 	}
@@ -128,6 +125,22 @@ func (s *Store) Ping(_ context.Context) error {
 	return nil
 }
 
+func (s *Store) save() error {
+	state := &ServiceState{
+		URLs:     s.urls,
+		Users:    s.users,
+		UserURLs: s.user_urls,
+	}
+
+	file, err := os.OpenFile(s.filepath, os.O_WRONLY|os.O_CREATE, 0666)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	return json.NewEncoder(file).Encode(&state)
+}
+
 func (s *Store) load() error {
 	file, err := os.OpenFile(s.filepath, os.O_RDONLY|os.O_CREATE, 0666)
 	if err != nil {
@@ -136,19 +149,18 @@ func (s *Store) load() error {
 	defer file.Close()
 
 	decoder := json.NewDecoder(file)
-	urls := make(map[string]models.URL)
+	var state *ServiceState
 
-	for {
-		url := &models.URL{}
-		if err := decoder.Decode(&url); err != nil {
-			if err == io.EOF {
-				break
-			}
-			return err
+	if err := decoder.Decode(&state); err != nil {
+		if err == io.EOF {
+			return nil
 		}
-		urls[url.Slug] = *url
+		return err
 	}
 
-	s.urls = urls
+	s.urls = state.URLs
+	s.users = state.Users
+	s.user_urls = state.UserURLs
+
 	return nil
 }

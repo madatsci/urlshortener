@@ -265,7 +265,7 @@ func TestGzipCompression(t *testing.T) {
 }
 
 func testServer() (*Server, *httptest.Server) {
-	filepath := "../../../tmp/test_storage.txt"
+	filepath := "../../../tmp/test_storage.json"
 	os.Remove(filepath)
 
 	config := &config.Config{

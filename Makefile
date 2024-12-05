@@ -14,7 +14,7 @@ run:
 
 .PHONY: run_with_file
 run_with_file:
-	./cmd/shortener/shortener -f './tmp/storage.txt'
+	./cmd/shortener/shortener -f './tmp/storage.json'
 
 .PHONY: run_with_db
 run_with_db:
@@ -65,7 +65,7 @@ test_iter8:
 
 .PHONY: test_iter9
 test_iter9:
-	./shortenertestbeta -test.v -test.run=^TestIteration9$$ -binary-path=cmd/shortener/shortener -source-path=. -file-storage-path=./tmp/storage.txt
+	./shortenertestbeta -test.v -test.run=^TestIteration9$$ -binary-path=cmd/shortener/shortener -source-path=. -file-storage-path=./tmp/storage.json
 
 .PHONY: test_iter10
 test_iter10:

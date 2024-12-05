@@ -43,7 +43,7 @@ Some examples of how you can run the app (see Configuration below):
 ### With file storage
 
 ```bash
-./cmd/shortener/shortener -f './tmp/storage.txt'
+./cmd/shortener/shortener -f './tmp/storage.json'
 ```
 
 ### Configure authentication token

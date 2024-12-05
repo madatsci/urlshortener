@@ -13,7 +13,7 @@ import (
 )
 
 func TestCreateUser(t *testing.T) {
-	s, err := New("./test_storage.txt")
+	s, err := New("./test_storage.json")
 	require.NoError(t, err)
 
 	ctx := context.Background()
@@ -49,7 +49,7 @@ func TestStorageWithEmptyFile(t *testing.T) {
 		},
 	}
 
-	filepath := "./test_storage.txt"
+	filepath := "./test_storage.json"
 	s, err := New(filepath)
 	require.NoError(t, err)
 	defer func() {
@@ -119,7 +119,7 @@ func TestListByUserID(t *testing.T) {
 		},
 	}
 
-	filepath := "./test_storage.txt"
+	filepath := "./test_storage.json"
 	s, err := New(filepath)
 	require.NoError(t, err)
 	defer func() {
