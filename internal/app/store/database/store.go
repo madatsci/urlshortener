@@ -63,11 +63,11 @@ func (s *Store) GetUser(ctx context.Context, userID string) (models.User, error)
 func (s *Store) CreateURL(ctx context.Context, url models.URL) error {
 	_, err := s.conn.ExecContext(
 		ctx,
-		"INSERT INTO urls (id, user_id, correlation_id, short_url, original_url, created_at) VALUES ($1, $2, $3, $4, $5, $6)",
+		"INSERT INTO urls (id, user_id, correlation_id, slug, original_url, created_at) VALUES ($1, $2, $3, $4, $5, $6)",
 		url.ID,
 		newNullString(url.UserID),
 		url.CorrelationID,
-		url.Short,
+		url.Slug,
 		url.Original,
 		url.CreatedAt,
 	)
@@ -100,7 +100,7 @@ func (s *Store) BatchCreateURL(ctx context.Context, urls []models.URL) error {
 
 	stmt, err := tx.PrepareContext(
 		ctx,
-		"INSERT INTO urls (id, user_id, correlation_id, short_url, original_url, created_at) VALUES ($1, $2, $3, $4, $5, $6)",
+		"INSERT INTO urls (id, user_id, correlation_id, slug, original_url, created_at) VALUES ($1, $2, $3, $4, $5, $6)",
 	)
 	if err != nil {
 		return err
@@ -108,7 +108,7 @@ func (s *Store) BatchCreateURL(ctx context.Context, urls []models.URL) error {
 	defer stmt.Close()
 
 	for _, url := range urls {
-		_, err := stmt.ExecContext(ctx, url.ID, newNullString(url.UserID), url.CorrelationID, url.Short, url.Original, url.CreatedAt)
+		_, err := stmt.ExecContext(ctx, url.ID, newNullString(url.UserID), url.CorrelationID, url.Slug, url.Original, url.CreatedAt)
 		if err != nil {
 			return err
 		}
@@ -123,9 +123,9 @@ func (s *Store) GetURL(ctx context.Context, slug string) (models.URL, error) {
 
 	err := s.conn.QueryRowContext(
 		ctx,
-		"SELECT id, user_id, correlation_id, short_url, original_url, created_at, is_deleted FROM urls WHERE short_url = $1",
+		"SELECT id, user_id, correlation_id, slug, original_url, created_at, is_deleted FROM urls WHERE slug = $1",
 		slug,
-	).Scan(&url.ID, &userID, &url.CorrelationID, &url.Short, &url.Original, &url.CreatedAt, &url.Deleted)
+	).Scan(&url.ID, &userID, &url.CorrelationID, &url.Slug, &url.Original, &url.CreatedAt, &url.Deleted)
 
 	if err != nil {
 		return url, err
@@ -141,7 +141,7 @@ func (s *Store) ListURLsByUserID(ctx context.Context, userID string) ([]models.U
 
 	rows, err := s.conn.QueryContext(
 		ctx,
-		"SELECT id, user_id, correlation_id, short_url, original_url, created_at, is_deleted FROM urls WHERE user_id = $1 AND NOT is_deleted",
+		"SELECT id, user_id, correlation_id, slug, original_url, created_at, is_deleted FROM urls WHERE user_id = $1 AND NOT is_deleted",
 		userID,
 	)
 	if err != nil {
@@ -152,7 +152,7 @@ func (s *Store) ListURLsByUserID(ctx context.Context, userID string) ([]models.U
 	for rows.Next() {
 		var url models.URL
 		var userID sql.NullString
-		err = rows.Scan(&url.ID, &userID, &url.CorrelationID, &url.Short, &url.Original, &url.CreatedAt, &url.Deleted)
+		err = rows.Scan(&url.ID, &userID, &url.CorrelationID, &url.Slug, &url.Original, &url.CreatedAt, &url.Deleted)
 		if err != nil {
 			return nil, err
 		}
@@ -187,7 +187,7 @@ func (s *Store) SoftDeleteURL(ctx context.Context, userID string, slugs []string
 
 	_, err := s.conn.ExecContext(
 		ctx,
-		"UPDATE urls SET is_deleted = true WHERE user_id = $1 and short_url IN("+inArg+")",
+		"UPDATE urls SET is_deleted = true WHERE user_id = $1 and slug IN("+inArg+")",
 		args...,
 	)
 
@@ -218,9 +218,9 @@ func (s *Store) getByOriginalURL(ctx context.Context, originalURL string) (model
 
 	err := s.conn.QueryRowContext(
 		ctx,
-		"SELECT id, user_id, correlation_id, short_url, original_url, created_at, is_deleted FROM urls WHERE original_url = $1",
+		"SELECT id, user_id, correlation_id, slug, original_url, created_at, is_deleted FROM urls WHERE original_url = $1",
 		originalURL,
-	).Scan(&url.ID, &userID, &url.CorrelationID, &url.Short, &url.Original, &url.CreatedAt, &url.Deleted)
+	).Scan(&url.ID, &userID, &url.CorrelationID, &url.Slug, &url.Original, &url.CreatedAt, &url.Deleted)
 
 	if err != nil {
 		return url, err

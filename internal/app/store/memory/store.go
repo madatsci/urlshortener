@@ -42,7 +42,7 @@ func (s *Store) GetUser(_ context.Context, userID string) (models.User, error) {
 
 func (s *Store) CreateURL(_ context.Context, url models.URL) error { //nolint:unparam
 	s.mu.Lock()
-	s.urls[url.Short] = url
+	s.urls[url.Slug] = url
 	s.mu.Unlock()
 
 	return nil
@@ -52,7 +52,7 @@ func (s *Store) CreateURL(_ context.Context, url models.URL) error { //nolint:un
 func (s *Store) BatchCreateURL(_ context.Context, urls []models.URL) error { //nolint:unparam
 	s.mu.Lock()
 	for _, url := range urls {
-		s.urls[url.Short] = url
+		s.urls[url.Slug] = url
 	}
 	s.mu.Unlock()
 

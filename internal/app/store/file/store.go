@@ -20,6 +20,7 @@ type Store struct {
 	mu       sync.Mutex
 }
 
+// TODO store users in file.
 // New creates a new file storage.
 func New(filepath string) (*Store, error) {
 	s := &Store{
@@ -55,7 +56,7 @@ func (s *Store) CreateURL(_ context.Context, url models.URL) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.urls[url.Short] = url
+	s.urls[url.Slug] = url
 
 	file, err := os.OpenFile(s.filepath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
@@ -80,7 +81,7 @@ func (s *Store) BatchCreateURL(_ context.Context, urls []models.URL) error {
 	enc := json.NewEncoder(file)
 
 	for _, url := range urls {
-		s.urls[url.Short] = url
+		s.urls[url.Slug] = url
 
 		if err := enc.Encode(&url); err != nil {
 			return err
@@ -144,7 +145,7 @@ func (s *Store) load() error {
 			}
 			return err
 		}
-		urls[url.Short] = *url
+		urls[url.Slug] = *url
 	}
 
 	s.urls = urls

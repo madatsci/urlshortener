@@ -65,7 +65,7 @@ func TestStorageWithEmptyFile(t *testing.T) {
 	for _, d := range urls {
 		url := models.URL{
 			ID:        uuid.NewString(),
-			Short:     d.slug,
+			Slug:      d.slug,
 			Original:  d.url,
 			CreatedAt: time.Now(),
 		}
@@ -78,7 +78,7 @@ func TestStorageWithEmptyFile(t *testing.T) {
 		res, err := s.GetURL(ctx, d.slug)
 		require.NoError(t, err)
 		assert.Equal(t, d.url, res.Original)
-		assert.Equal(t, d.slug, res.Short)
+		assert.Equal(t, d.slug, res.Slug)
 		assert.NotEmpty(t, res.ID)
 		assert.NotEmpty(t, res.CreatedAt)
 	}
@@ -136,7 +136,7 @@ func TestListByUserID(t *testing.T) {
 		url := models.URL{
 			ID:        uuid.NewString(),
 			UserID:    d.userID,
-			Short:     d.slug,
+			Slug:      d.slug,
 			Original:  d.url,
 			CreatedAt: time.Now(),
 		}

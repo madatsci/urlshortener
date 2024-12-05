@@ -188,7 +188,7 @@ func TestGetHandler(t *testing.T) {
 	longURL := "https://practicum.yandex.ru/"
 	url := models.URL{
 		ID:        uuid.NewString(),
-		Short:     "shortURL",
+		Slug:      "shortURL",
 		Original:  longURL,
 		CreatedAt: time.Now(),
 	}

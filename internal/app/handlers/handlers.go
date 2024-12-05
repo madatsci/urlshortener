@@ -51,7 +51,7 @@ func (h *Handlers) AddHandler(w http.ResponseWriter, r *http.Request) {
 
 		var alreadyExists *store.AlreadyExistsError
 		if errors.As(err, &alreadyExists) {
-			shortURL = h.generateShortURLFromSlug(alreadyExists.URL.Short)
+			shortURL = h.generateShortURLFromSlug(alreadyExists.URL.Slug)
 
 			w.Header().Set("content-type", "text/plain")
 			w.WriteHeader(http.StatusConflict)
@@ -101,7 +101,7 @@ func (h *Handlers) AddHandlerJSON(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusConflict)
 
 			response := models.ShortenResponse{
-				Result: h.generateShortURLFromSlug(alreadyExists.URL.Short),
+				Result: h.generateShortURLFromSlug(alreadyExists.URL.Slug),
 			}
 
 			enc := json.NewEncoder(w)
@@ -157,7 +157,7 @@ func (h *Handlers) AddHandlerJSONBatch(w http.ResponseWriter, r *http.Request) {
 			ID:            uuid.NewString(),
 			UserID:        userID,
 			CorrelationID: reqURL.CorrelationID,
-			Short:         slug,
+			Slug:          slug,
 			Original:      reqURL.OriginalURL,
 			CreatedAt:     time.Now(),
 		}
@@ -236,7 +236,7 @@ func (h *Handlers) GetUserURLsHandler(w http.ResponseWriter, r *http.Request) {
 	responseURLs := make([]models.UserURLItem, 0, len(urls))
 	for _, url := range urls {
 		responseURL := models.UserURLItem{
-			ShortURL:    h.generateShortURLFromSlug(url.Short),
+			ShortURL:    h.generateShortURLFromSlug(url.Slug),
 			OriginalURL: url.Original,
 		}
 		responseURLs = append(responseURLs, responseURL)
@@ -308,12 +308,9 @@ func (h *Handlers) storeShortURL(ctx context.Context, longURL, userID string) (s
 	shortURL := h.generateShortURLFromSlug(slug)
 
 	url := models.URL{
-		ID:     uuid.NewString(),
-		UserID: userID,
-
-		// TODO fix naming ambiguity:
-		// slug is just a random string, while shortURL is the complete URL which contains the slug.
-		Short:     slug,
+		ID:        uuid.NewString(),
+		UserID:    userID,
+		Slug:      slug,
 		Original:  longURL,
 		CreatedAt: time.Now(),
 	}

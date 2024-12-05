@@ -3,12 +3,12 @@
 CREATE TABLE urls (
     id uuid PRIMARY KEY,
     correlation_id character varying(255) NOT NULL DEFAULT '',
-    short_url character varying(255) NOT NULL,
+    slug character varying(255) NOT NULL,
     original_url text NOT NULL,
     created_at timestamp without time zone NOT NULL
 );
 
-CREATE UNIQUE INDEX urls_short_url ON urls (short_url);
+CREATE UNIQUE INDEX urls_slug ON urls (slug);
 CREATE UNIQUE INDEX urls_original_url ON urls (original_url)
 -- +goose StatementEnd
 
