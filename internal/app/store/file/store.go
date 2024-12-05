@@ -20,7 +20,8 @@ type Store struct {
 	mu       sync.Mutex
 }
 
-// TODO store users in file.
+// TODO Store users in file.
+// TODO Add support for user_urls.
 // New creates a new file storage.
 func New(filepath string) (*Store, error) {
 	s := &Store{

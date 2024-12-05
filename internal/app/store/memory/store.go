@@ -9,6 +9,7 @@ import (
 	"github.com/madatsci/urlshortener/internal/app/models"
 )
 
+// TODO Add support for user_urls.
 // Store is an implementation of store.Store interface which stores data in memory.
 type Store struct {
 	urls  map[string]models.URL

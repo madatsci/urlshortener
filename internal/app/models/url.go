@@ -5,7 +5,7 @@ import "time"
 type URL struct {
 	ID string `json:"id"`
 
-	// Deprecated
+	// Deprecated: exists for backwards compatibility.
 	UserID string `json:"user_id"`
 
 	CorrelationID string    `json:"correlation_id"`
