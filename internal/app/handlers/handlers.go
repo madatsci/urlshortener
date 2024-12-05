@@ -15,6 +15,7 @@ import (
 	"github.com/madatsci/urlshortener/internal/app/models"
 	"github.com/madatsci/urlshortener/internal/app/server/middleware"
 	"github.com/madatsci/urlshortener/internal/app/store"
+	"github.com/madatsci/urlshortener/pkg/randomstr"
 	"go.uber.org/zap"
 )
 
@@ -25,6 +26,8 @@ type (
 		log *zap.SugaredLogger
 	}
 )
+
+const slugLength = 8
 
 // New creates new Handlers.
 func New(config *config.Config, logger *zap.SugaredLogger, store store.Store) *Handlers {
@@ -150,7 +153,7 @@ func (h *Handlers) AddHandlerJSONBatch(w http.ResponseWriter, r *http.Request) {
 	responseURLs := make([]models.ShortenBatchResponseItem, 0, len(request.URLs))
 	for _, reqURL := range request.URLs {
 		// TODO Fix copy-paste (see h.storeShortURL()).
-		slug := generateSlug(slugLength)
+		slug := randomstr.GenerateSlug(slugLength)
 		shortURL := h.generateShortURLFromSlug(slug)
 
 		url := models.URL{
@@ -304,7 +307,7 @@ func (h *Handlers) Store() store.Store {
 }
 
 func (h *Handlers) storeShortURL(ctx context.Context, longURL, userID string) (string, error) {
-	slug := generateSlug(slugLength)
+	slug := randomstr.GenerateSlug(slugLength)
 	shortURL := h.generateShortURLFromSlug(slug)
 
 	url := models.URL{

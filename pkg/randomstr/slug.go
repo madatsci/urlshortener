@@ -1,4 +1,4 @@
-package handlers
+package randomstr
 
 import (
 	"math/rand"
@@ -6,9 +6,8 @@ import (
 )
 
 const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-const slugLength = 8
 
-func generateSlug(length int) string {
+func GenerateSlug(length int) string {
 	rand := rand.New(rand.NewSource(time.Now().UnixNano()))
 	b := make([]byte, length)
 	for i := range b {
