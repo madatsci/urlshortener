@@ -6,12 +6,12 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/madatsci/urlshortener/internal/app/store"
+	"github.com/madatsci/urlshortener/internal/app/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestInMemoryStorage(t *testing.T) {
+func TestAdd(t *testing.T) {
 	type urlData struct {
 		slug string
 		url  string
@@ -32,7 +32,7 @@ func TestInMemoryStorage(t *testing.T) {
 	ctx := context.Background()
 
 	for _, d := range urls {
-		url := store.URL{
+		url := models.URL{
 			ID:        uuid.NewString(),
 			Short:     d.slug,
 			Original:  d.url,
@@ -92,7 +92,7 @@ func TestListByUserID(t *testing.T) {
 	ctx := context.Background()
 
 	for _, d := range urls {
-		url := store.URL{
+		url := models.URL{
 			ID:        uuid.NewString(),
 			UserID:    d.userID,
 			Short:     d.slug,

@@ -5,24 +5,24 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/madatsci/urlshortener/internal/app/store"
+	"github.com/madatsci/urlshortener/internal/app/models"
 )
 
 // Store is an implementation of store.Store interface which stores data in memory.
 type Store struct {
 	// TODO Maybe it would be better to use pointer *store.URL.
-	urls map[string]store.URL
+	urls map[string]models.URL
 	mu   sync.Mutex
 }
 
 // New creates a new in-memory storage.
 func New() *Store {
 	return &Store{
-		urls: make(map[string]store.URL),
+		urls: make(map[string]models.URL),
 	}
 }
 
-func (s *Store) Add(_ context.Context, url store.URL) error { //nolint:unparam
+func (s *Store) Add(_ context.Context, url models.URL) error { //nolint:unparam
 	s.mu.Lock()
 	s.urls[url.Short] = url
 	s.mu.Unlock()
@@ -31,7 +31,7 @@ func (s *Store) Add(_ context.Context, url store.URL) error { //nolint:unparam
 }
 
 // TODO Add a test case for this.
-func (s *Store) AddBatch(_ context.Context, urls []store.URL) error { //nolint:unparam
+func (s *Store) AddBatch(_ context.Context, urls []models.URL) error { //nolint:unparam
 	s.mu.Lock()
 	for _, url := range urls {
 		s.urls[url.Short] = url
@@ -41,8 +41,8 @@ func (s *Store) AddBatch(_ context.Context, urls []store.URL) error { //nolint:u
 	return nil
 }
 
-func (s *Store) Get(_ context.Context, slug string) (store.URL, error) {
-	var url store.URL
+func (s *Store) Get(_ context.Context, slug string) (models.URL, error) {
+	var url models.URL
 
 	url, ok := s.urls[slug]
 	if !ok {
@@ -52,8 +52,8 @@ func (s *Store) Get(_ context.Context, slug string) (store.URL, error) {
 	return url, nil
 }
 
-func (s *Store) ListByUserID(_ context.Context, userID string) ([]store.URL, error) {
-	res := make([]store.URL, 0)
+func (s *Store) ListByUserID(_ context.Context, userID string) ([]models.URL, error) {
+	res := make([]models.URL, 0)
 	for _, url := range s.urls {
 		if url.UserID == userID {
 			res = append(res, url)
@@ -63,7 +63,7 @@ func (s *Store) ListByUserID(_ context.Context, userID string) ([]store.URL, err
 	return res, nil
 }
 
-func (s *Store) ListAll(_ context.Context) map[string]store.URL {
+func (s *Store) ListAll(_ context.Context) map[string]models.URL {
 	return s.urls
 }
 

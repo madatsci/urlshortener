@@ -146,14 +146,14 @@ func (h *Handlers) AddHandlerJSONBatch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	urls := make([]store.URL, 0, len(request.URLs))
+	urls := make([]models.URL, 0, len(request.URLs))
 	responseURLs := make([]models.ShortenBatchResponseItem, 0, len(request.URLs))
 	for _, reqURL := range request.URLs {
 		// TODO Fix copy-paste (see h.storeShortURL()).
 		slug := generateSlug(slugLength)
 		shortURL := h.generateShortURLFromSlug(slug)
 
-		url := store.URL{
+		url := models.URL{
 			ID:            uuid.NewString(),
 			UserID:        userID,
 			CorrelationID: reqURL.CorrelationID,
@@ -307,7 +307,7 @@ func (h *Handlers) storeShortURL(ctx context.Context, longURL, userID string) (s
 	slug := generateSlug(slugLength)
 	shortURL := h.generateShortURLFromSlug(slug)
 
-	url := store.URL{
+	url := models.URL{
 		ID:     uuid.NewString(),
 		UserID: userID,
 

@@ -2,24 +2,25 @@ package store
 
 import (
 	"context"
-	"time"
+
+	"github.com/madatsci/urlshortener/internal/app/models"
 )
 
 type Store interface {
 	// Add adds a new URL to the storage.
-	Add(ctx context.Context, url URL) error
+	Add(ctx context.Context, url models.URL) error
 
 	// AddBatch adds a batch of URLs to the storage.
-	AddBatch(ctx context.Context, urls []URL) error
+	AddBatch(ctx context.Context, urls []models.URL) error
 
 	// Get retrieves a URL by its slug from the storage.
-	Get(ctx context.Context, slug string) (URL, error)
+	Get(ctx context.Context, slug string) (models.URL, error)
 
 	// ListByUserID returns all URLs created by the specified user.
-	ListByUserID(ctx context.Context, userID string) ([]URL, error)
+	ListByUserID(ctx context.Context, userID string) ([]models.URL, error)
 
 	// ListAll returns the full map of stored URLs.
-	ListAll(ctx context.Context) map[string]URL
+	ListAll(ctx context.Context) map[string]models.URL
 
 	// ListAll marks URLs as deleted.
 	SoftDelete(ctx context.Context, userID string, slugs []string) error
@@ -28,19 +29,9 @@ type Store interface {
 	Ping(ctx context.Context) error
 }
 
-type URL struct {
-	ID            string    `json:"id"`
-	UserID        string    `json:"user_id"`
-	CorrelationID string    `json:"correlation_id"`
-	Short         string    `json:"short_url"`
-	Original      string    `json:"original_url"`
-	CreatedAt     time.Time `json:"created_at"`
-	Deleted       bool      `json:"is_deleted"`
-}
-
 type AlreadyExistsError struct {
 	Err error
-	URL URL
+	URL models.URL
 }
 
 func (e *AlreadyExistsError) Error() string {

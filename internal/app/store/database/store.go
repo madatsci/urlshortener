@@ -10,6 +10,7 @@ import (
 
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/madatsci/urlshortener/internal/app/models"
 	"github.com/madatsci/urlshortener/internal/app/store"
 	"github.com/pressly/goose/v3"
 )
@@ -32,7 +33,7 @@ func New(ctx context.Context, conn *sql.DB) (*Store, error) {
 	return store, nil
 }
 
-func (s *Store) Add(ctx context.Context, url store.URL) error {
+func (s *Store) Add(ctx context.Context, url models.URL) error {
 	_, err := s.conn.ExecContext(
 		ctx,
 		"INSERT INTO urls (id, user_id, correlation_id, short_url, original_url, created_at) VALUES ($1, $2, $3, $4, $5, $6)",
@@ -63,7 +64,7 @@ func (s *Store) Add(ctx context.Context, url store.URL) error {
 	return nil
 }
 
-func (s *Store) AddBatch(ctx context.Context, urls []store.URL) error {
+func (s *Store) AddBatch(ctx context.Context, urls []models.URL) error {
 	tx, err := s.conn.Begin()
 	if err != nil {
 		return err
@@ -89,8 +90,8 @@ func (s *Store) AddBatch(ctx context.Context, urls []store.URL) error {
 	return tx.Commit()
 }
 
-func (s *Store) Get(ctx context.Context, slug string) (store.URL, error) {
-	var url store.URL
+func (s *Store) Get(ctx context.Context, slug string) (models.URL, error) {
+	var url models.URL
 	var userID sql.NullString
 
 	err := s.conn.QueryRowContext(
@@ -108,8 +109,8 @@ func (s *Store) Get(ctx context.Context, slug string) (store.URL, error) {
 	return url, nil
 }
 
-func (s *Store) ListByUserID(ctx context.Context, userID string) ([]store.URL, error) {
-	res := make([]store.URL, 0)
+func (s *Store) ListByUserID(ctx context.Context, userID string) ([]models.URL, error) {
+	res := make([]models.URL, 0)
 
 	rows, err := s.conn.QueryContext(
 		ctx,
@@ -122,7 +123,7 @@ func (s *Store) ListByUserID(ctx context.Context, userID string) ([]store.URL, e
 	defer rows.Close()
 
 	for rows.Next() {
-		var url store.URL
+		var url models.URL
 		var userID sql.NullString
 		err = rows.Scan(&url.ID, &userID, &url.CorrelationID, &url.Short, &url.Original, &url.CreatedAt, &url.Deleted)
 		if err != nil {
@@ -139,7 +140,7 @@ func (s *Store) ListByUserID(ctx context.Context, userID string) ([]store.URL, e
 	return res, nil
 }
 
-func (s *Store) ListAll(ctx context.Context) map[string]store.URL {
+func (s *Store) ListAll(ctx context.Context) map[string]models.URL {
 	// TODO implement later (currently this is used only for testing purposes)
 	return nil
 }
@@ -184,8 +185,8 @@ func (s *Store) bootstrap() error {
 	return nil
 }
 
-func (s *Store) getByOriginalURL(ctx context.Context, originalURL string) (store.URL, error) {
-	var url store.URL
+func (s *Store) getByOriginalURL(ctx context.Context, originalURL string) (models.URL, error) {
+	var url models.URL
 	var userID sql.NullString
 
 	err := s.conn.QueryRowContext(

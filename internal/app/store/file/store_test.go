@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/madatsci/urlshortener/internal/app/store"
+	"github.com/madatsci/urlshortener/internal/app/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -43,7 +43,7 @@ func TestStorageWithEmptyFile(t *testing.T) {
 	require.Equal(t, 0, len(all))
 
 	for _, d := range urls {
-		url := store.URL{
+		url := models.URL{
 			ID:        uuid.NewString(),
 			Short:     d.slug,
 			Original:  d.url,
@@ -113,7 +113,7 @@ func TestListByUserID(t *testing.T) {
 	require.Equal(t, 0, len(all))
 
 	for _, d := range urls {
-		url := store.URL{
+		url := models.URL{
 			ID:        uuid.NewString(),
 			UserID:    d.userID,
 			Short:     d.slug,

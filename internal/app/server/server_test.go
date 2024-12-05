@@ -15,7 +15,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/madatsci/urlshortener/internal/app/config"
-	"github.com/madatsci/urlshortener/internal/app/store"
+	"github.com/madatsci/urlshortener/internal/app/models"
 	"github.com/madatsci/urlshortener/internal/app/store/memory"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -186,7 +186,7 @@ func TestGetHandler(t *testing.T) {
 	ctx := context.Background()
 
 	longURL := "https://practicum.yandex.ru/"
-	url := store.URL{
+	url := models.URL{
 		ID:        uuid.NewString(),
 		Short:     "shortURL",
 		Original:  longURL,
