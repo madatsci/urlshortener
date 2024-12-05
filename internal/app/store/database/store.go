@@ -60,7 +60,7 @@ func (s *Store) GetUser(ctx context.Context, userID string) (models.User, error)
 	return user, nil
 }
 
-func (s *Store) Add(ctx context.Context, url models.URL) error {
+func (s *Store) CreateURL(ctx context.Context, url models.URL) error {
 	_, err := s.conn.ExecContext(
 		ctx,
 		"INSERT INTO urls (id, user_id, correlation_id, short_url, original_url, created_at) VALUES ($1, $2, $3, $4, $5, $6)",
@@ -91,7 +91,7 @@ func (s *Store) Add(ctx context.Context, url models.URL) error {
 	return nil
 }
 
-func (s *Store) AddBatch(ctx context.Context, urls []models.URL) error {
+func (s *Store) BatchCreateURL(ctx context.Context, urls []models.URL) error {
 	tx, err := s.conn.Begin()
 	if err != nil {
 		return err
@@ -117,7 +117,7 @@ func (s *Store) AddBatch(ctx context.Context, urls []models.URL) error {
 	return tx.Commit()
 }
 
-func (s *Store) Get(ctx context.Context, slug string) (models.URL, error) {
+func (s *Store) GetURL(ctx context.Context, slug string) (models.URL, error) {
 	var url models.URL
 	var userID sql.NullString
 
@@ -136,7 +136,7 @@ func (s *Store) Get(ctx context.Context, slug string) (models.URL, error) {
 	return url, nil
 }
 
-func (s *Store) ListByUserID(ctx context.Context, userID string) ([]models.URL, error) {
+func (s *Store) ListURLsByUserID(ctx context.Context, userID string) ([]models.URL, error) {
 	res := make([]models.URL, 0)
 
 	rows, err := s.conn.QueryContext(
@@ -167,12 +167,12 @@ func (s *Store) ListByUserID(ctx context.Context, userID string) ([]models.URL, 
 	return res, nil
 }
 
-func (s *Store) ListAll(ctx context.Context) map[string]models.URL {
+func (s *Store) ListAllUrls(ctx context.Context) map[string]models.URL {
 	// TODO implement later (currently this is used only for testing purposes)
 	return nil
 }
 
-func (s *Store) SoftDelete(ctx context.Context, userID string, slugs []string) error {
+func (s *Store) SoftDeleteURL(ctx context.Context, userID string, slugs []string) error {
 	inArgs := make([]string, len(slugs))
 	for i := 0; i < len(slugs); i++ {
 		inArgs[i] = fmt.Sprintf("$%d", i+2)

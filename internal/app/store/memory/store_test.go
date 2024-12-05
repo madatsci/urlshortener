@@ -57,12 +57,12 @@ func TestAdd(t *testing.T) {
 			CreatedAt: time.Now(),
 		}
 
-		err := s.Add(ctx, url)
+		err := s.CreateURL(ctx, url)
 		require.NoError(t, err)
 	}
 
 	for _, d := range urls {
-		res, err := s.Get(ctx, d.slug)
+		res, err := s.GetURL(ctx, d.slug)
 		require.NoError(t, err)
 		assert.Equal(t, d.url, res.Original)
 		assert.Equal(t, d.slug, res.Short)
@@ -70,7 +70,7 @@ func TestAdd(t *testing.T) {
 		assert.NotEmpty(t, res.CreatedAt)
 	}
 
-	all := s.ListAll(ctx)
+	all := s.ListAllUrls(ctx)
 	require.Equal(t, 2, len(all))
 }
 
@@ -118,11 +118,11 @@ func TestListByUserID(t *testing.T) {
 			CreatedAt: time.Now(),
 		}
 
-		err := s.Add(ctx, url)
+		err := s.CreateURL(ctx, url)
 		require.NoError(t, err)
 	}
 
-	resURLs, err := s.ListByUserID(ctx, userID)
+	resURLs, err := s.ListURLsByUserID(ctx, userID)
 	require.NoError(t, err)
 	assert.Equal(t, 2, len(resURLs))
 }

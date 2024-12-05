@@ -40,7 +40,7 @@ func (s *Store) GetUser(_ context.Context, userID string) (models.User, error) {
 	return models.User{}, fmt.Errorf("user with id %s not found", userID)
 }
 
-func (s *Store) Add(_ context.Context, url models.URL) error { //nolint:unparam
+func (s *Store) CreateURL(_ context.Context, url models.URL) error { //nolint:unparam
 	s.mu.Lock()
 	s.urls[url.Short] = url
 	s.mu.Unlock()
@@ -49,7 +49,7 @@ func (s *Store) Add(_ context.Context, url models.URL) error { //nolint:unparam
 }
 
 // TODO Add a test case for this.
-func (s *Store) AddBatch(_ context.Context, urls []models.URL) error { //nolint:unparam
+func (s *Store) BatchCreateURL(_ context.Context, urls []models.URL) error { //nolint:unparam
 	s.mu.Lock()
 	for _, url := range urls {
 		s.urls[url.Short] = url
@@ -59,7 +59,7 @@ func (s *Store) AddBatch(_ context.Context, urls []models.URL) error { //nolint:
 	return nil
 }
 
-func (s *Store) Get(_ context.Context, slug string) (models.URL, error) {
+func (s *Store) GetURL(_ context.Context, slug string) (models.URL, error) {
 	var url models.URL
 
 	url, ok := s.urls[slug]
@@ -70,7 +70,7 @@ func (s *Store) Get(_ context.Context, slug string) (models.URL, error) {
 	return url, nil
 }
 
-func (s *Store) ListByUserID(_ context.Context, userID string) ([]models.URL, error) {
+func (s *Store) ListURLsByUserID(_ context.Context, userID string) ([]models.URL, error) {
 	res := make([]models.URL, 0)
 	for _, url := range s.urls {
 		if url.UserID == userID {
@@ -81,11 +81,11 @@ func (s *Store) ListByUserID(_ context.Context, userID string) ([]models.URL, er
 	return res, nil
 }
 
-func (s *Store) ListAll(_ context.Context) map[string]models.URL {
+func (s *Store) ListAllUrls(_ context.Context) map[string]models.URL {
 	return s.urls
 }
 
-func (s *Store) SoftDelete(_ context.Context, userID string, slugs []string) error {
+func (s *Store) SoftDeleteURL(_ context.Context, userID string, slugs []string) error {
 	// TODO implement
 	return nil
 }

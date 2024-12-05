@@ -170,7 +170,7 @@ func (h *Handlers) AddHandlerJSONBatch(w http.ResponseWriter, r *http.Request) {
 		responseURLs = append(responseURLs, responseURL)
 	}
 
-	err := h.s.AddBatch(r.Context(), urls)
+	err := h.s.BatchCreateURL(r.Context(), urls)
 	if err != nil {
 		h.handleError("AddHandlerJSONBatch", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -196,7 +196,7 @@ func (h *Handlers) AddHandlerJSONBatch(w http.ResponseWriter, r *http.Request) {
 func (h *Handlers) GetHandler(w http.ResponseWriter, r *http.Request) {
 	slug := chi.URLParam(r, "slug")
 
-	url, err := h.s.Get(r.Context(), slug)
+	url, err := h.s.GetURL(r.Context(), slug)
 	if err != nil {
 		h.handleError("GetHandler", err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -222,7 +222,7 @@ func (h *Handlers) GetUserURLsHandler(w http.ResponseWriter, r *http.Request) {
 
 	h.log.With("userID", userID).Debug("fetching user urls")
 
-	urls, err := h.s.ListByUserID(r.Context(), userID)
+	urls, err := h.s.ListURLsByUserID(r.Context(), userID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -279,7 +279,7 @@ func (h *Handlers) DeleteUserURLsHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if err = h.s.SoftDelete(r.Context(), userID, request.Slugs); err != nil {
+	if err = h.s.SoftDeleteURL(r.Context(), userID, request.Slugs); err != nil {
 		h.handleError("DeleteUserURLsHandler", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -318,7 +318,7 @@ func (h *Handlers) storeShortURL(ctx context.Context, longURL, userID string) (s
 		CreatedAt: time.Now(),
 	}
 
-	return shortURL, h.s.Add(ctx, url)
+	return shortURL, h.s.CreateURL(ctx, url)
 }
 
 func (h *Handlers) generateShortURLFromSlug(slug string) string {

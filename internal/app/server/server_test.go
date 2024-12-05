@@ -192,7 +192,7 @@ func TestGetHandler(t *testing.T) {
 		Original:  longURL,
 		CreatedAt: time.Now(),
 	}
-	err := s.h.Store().Add(ctx, url)
+	err := s.h.Store().CreateURL(ctx, url)
 	require.NoError(t, err)
 
 	for _, test := range tests {
@@ -304,7 +304,7 @@ func sendRequest(t *testing.T, req *http.Request) *http.Response {
 
 func expectedShortURL(t *testing.T, s *Server, url string) string {
 	var slug string
-	for k, u := range s.h.Store().ListAll(context.Background()) {
+	for k, u := range s.h.Store().ListAllUrls(context.Background()) {
 		if u.Original == url {
 			slug = k
 			break

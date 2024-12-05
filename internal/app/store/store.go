@@ -13,23 +13,23 @@ type Store interface {
 	// GetUser fetches user by ID.
 	GetUser(ctx context.Context, userID string) (models.User, error)
 
-	// Add adds a new URL to the storage.
-	Add(ctx context.Context, url models.URL) error
+	// CreateURL adds a new URL to the storage.
+	CreateURL(ctx context.Context, url models.URL) error
 
-	// AddBatch adds a batch of URLs to the storage.
-	AddBatch(ctx context.Context, urls []models.URL) error
+	// BatchCreateURL adds a batch of URLs to the storage.
+	BatchCreateURL(ctx context.Context, urls []models.URL) error
 
-	// Get retrieves a URL by its slug from the storage.
-	Get(ctx context.Context, slug string) (models.URL, error)
+	// GetURL retrieves a URL by its slug from the storage.
+	GetURL(ctx context.Context, slug string) (models.URL, error)
 
-	// ListByUserID returns all URLs created by the specified user.
-	ListByUserID(ctx context.Context, userID string) ([]models.URL, error)
+	// ListURLsByUserID returns all URLs created by the specified user.
+	ListURLsByUserID(ctx context.Context, userID string) ([]models.URL, error)
 
-	// ListAll returns the full map of stored URLs.
-	ListAll(ctx context.Context) map[string]models.URL
+	// ListAllUrls returns the full map of stored URLs.
+	ListAllUrls(ctx context.Context) map[string]models.URL
 
-	// ListAll marks URLs as deleted.
-	SoftDelete(ctx context.Context, userID string, slugs []string) error
+	// SoftDeleteURL marks URLs as deleted.
+	SoftDeleteURL(ctx context.Context, userID string, slugs []string) error
 
 	// Ping is a storage healthcheck.
 	Ping(ctx context.Context) error
