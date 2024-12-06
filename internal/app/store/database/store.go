@@ -128,6 +128,7 @@ func (s *Store) BatchCreateURL(ctx context.Context, userID string, urls []models
 			return err
 		}
 
+		// TODO Handle integrity violation.
 		_, err = userUrlStmt.ExecContext(ctx, uuid.NewString(), userID, url.ID, false, time.Now())
 		if err != nil {
 			return err
