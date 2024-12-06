@@ -163,7 +163,7 @@ func (s *Store) ListURLsByUserID(ctx context.Context, userID string) ([]models.U
 
 	rows, err := s.conn.QueryContext(
 		ctx,
-		"SELECT id, user_id, correlation_id, slug, original_url, created_at, is_deleted FROM urls WHERE user_id = $1 AND NOT is_deleted",
+		"SELECT id, user_id, correlation_id, slug, original_url, created_at, is_deleted FROM urls WHERE id IN (SELECT url_id FROM user_urls WHERE user_id = $1 AND NOT is_deleted)",
 		userID,
 	)
 	if err != nil {
