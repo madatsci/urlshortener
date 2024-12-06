@@ -53,7 +53,6 @@ func New(config *config.Config, store store.Store, logger *zap.SugaredLogger) *S
 		r.Route("/", func(r chi.Router) {
 			r.Use(authMiddleware.PublicAPIAuth)
 			r.Post("/", h.AddHandler)
-			r.Get("/{slug}", h.GetHandler)
 			r.Post("/api/shorten", h.AddHandlerJSON)
 			r.Post("/api/shorten/batch", h.AddHandlerJSONBatch)
 		})
@@ -66,6 +65,7 @@ func New(config *config.Config, store store.Store, logger *zap.SugaredLogger) *S
 		})
 
 		r.Get("/ping", h.PingHandler)
+		r.Get("/{slug}", h.GetHandler)
 	})
 
 	server.h = h
