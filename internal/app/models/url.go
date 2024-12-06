@@ -3,11 +3,7 @@ package models
 import "time"
 
 type URL struct {
-	ID string `json:"id"`
-
-	// Deprecated: exists for backwards compatibility.
-	UserID string `json:"user_id"`
-
+	ID            string    `json:"id"`
 	CorrelationID string    `json:"correlation_id"`
 	Slug          string    `json:"slug"`
 	Original      string    `json:"original_url"`

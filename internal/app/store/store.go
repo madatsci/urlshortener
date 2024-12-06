@@ -14,10 +14,10 @@ type Store interface {
 	GetUser(ctx context.Context, userID string) (models.User, error)
 
 	// CreateURL adds a new URL to the storage.
-	CreateURL(ctx context.Context, url models.URL) error
+	CreateURL(ctx context.Context, userID string, url models.URL) error
 
 	// BatchCreateURL adds a batch of URLs to the storage.
-	BatchCreateURL(ctx context.Context, urls []models.URL) error
+	BatchCreateURL(ctx context.Context, userID string, urls []models.URL) error
 
 	// GetURL retrieves a URL by its slug from the storage.
 	GetURL(ctx context.Context, slug string) (models.URL, error)

@@ -173,7 +173,6 @@ func (h *Handlers) AddHandlerJSONBatch(w http.ResponseWriter, r *http.Request) {
 
 		url := models.URL{
 			ID:            uuid.NewString(),
-			UserID:        userID,
 			CorrelationID: reqURL.CorrelationID,
 			Slug:          slug,
 			Original:      reqURL.OriginalURL,
@@ -188,7 +187,7 @@ func (h *Handlers) AddHandlerJSONBatch(w http.ResponseWriter, r *http.Request) {
 		responseURLs = append(responseURLs, responseURL)
 	}
 
-	err = h.s.BatchCreateURL(r.Context(), urls)
+	err = h.s.BatchCreateURL(r.Context(), userID, urls)
 	if err != nil {
 		h.handleError("AddHandlerJSONBatch", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -329,13 +328,12 @@ func (h *Handlers) storeShortURL(ctx context.Context, longURL, userID string) (s
 
 	url := models.URL{
 		ID:        uuid.NewString(),
-		UserID:    userID,
 		Slug:      slug,
 		Original:  longURL,
 		CreatedAt: time.Now(),
 	}
 
-	return shortURL, h.s.CreateURL(ctx, url)
+	return shortURL, h.s.CreateURL(ctx, userID, url)
 }
 
 func (h *Handlers) generateShortURLFromSlug(slug string) string {

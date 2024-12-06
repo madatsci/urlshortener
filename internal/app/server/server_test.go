@@ -192,7 +192,7 @@ func TestGetHandler(t *testing.T) {
 		Original:  longURL,
 		CreatedAt: time.Now(),
 	}
-	err := s.h.Store().CreateURL(ctx, url)
+	err := s.h.Store().CreateURL(ctx, uuid.NewString(), url)
 	require.NoError(t, err)
 
 	for _, test := range tests {

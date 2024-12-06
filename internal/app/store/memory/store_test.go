@@ -57,7 +57,7 @@ func TestAdd(t *testing.T) {
 			CreatedAt: time.Now(),
 		}
 
-		err := s.CreateURL(ctx, url)
+		err := s.CreateURL(ctx, uuid.NewString(), url)
 		require.NoError(t, err)
 	}
 
@@ -112,13 +112,12 @@ func TestListByUserID(t *testing.T) {
 	for _, d := range urls {
 		url := models.URL{
 			ID:        uuid.NewString(),
-			UserID:    d.userID,
 			Slug:      d.slug,
 			Original:  d.url,
 			CreatedAt: time.Now(),
 		}
 
-		err := s.CreateURL(ctx, url)
+		err := s.CreateURL(ctx, d.userID, url)
 		require.NoError(t, err)
 	}
 

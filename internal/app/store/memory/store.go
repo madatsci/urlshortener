@@ -42,24 +42,24 @@ func (s *Store) GetUser(_ context.Context, userID string) (models.User, error) {
 	return models.User{}, fmt.Errorf("user with id %s not found", userID)
 }
 
-func (s *Store) CreateURL(_ context.Context, url models.URL) error { //nolint:unparam
+func (s *Store) CreateURL(_ context.Context, userID string, url models.URL) error { //nolint:unparam
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	s.urls[url.Slug] = url
-	s.user_urls[url.UserID] = append(s.user_urls[url.UserID], url.Slug)
+	s.user_urls[userID] = append(s.user_urls[userID], url.Slug)
 
 	return nil
 }
 
 // TODO Add a test case for this.
-func (s *Store) BatchCreateURL(_ context.Context, urls []models.URL) error { //nolint:unparam
+func (s *Store) BatchCreateURL(_ context.Context, userID string, urls []models.URL) error { //nolint:unparam
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	for _, url := range urls {
 		s.urls[url.Slug] = url
-		s.user_urls[url.UserID] = append(s.user_urls[url.UserID], url.Slug)
+		s.user_urls[userID] = append(s.user_urls[userID], url.Slug)
 	}
 
 	return nil

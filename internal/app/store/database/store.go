@@ -60,15 +60,14 @@ func (s *Store) GetUser(ctx context.Context, userID string) (models.User, error)
 	return user, nil
 }
 
-func (s *Store) CreateURL(ctx context.Context, url models.URL) error {
+func (s *Store) CreateURL(ctx context.Context, userID string, url models.URL) error {
 	originalURL, err := s.getURLByOriginal(ctx, url.Original)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			_, err = s.conn.ExecContext(
 				ctx,
-				"INSERT INTO urls (id, user_id, correlation_id, slug, original_url, created_at) VALUES ($1, $2, $3, $4, $5, $6)",
+				"INSERT INTO urls (id, correlation_id, slug, original_url, created_at) VALUES ($1, $2, $3, $4, $5)",
 				url.ID,
-				newNullString(url.UserID),
 				url.CorrelationID,
 				url.Slug,
 				url.Original,
@@ -78,13 +77,13 @@ func (s *Store) CreateURL(ctx context.Context, url models.URL) error {
 				return err
 			}
 
-			return s.linkURLtoUser(ctx, url, url.UserID)
+			return s.linkURLtoUser(ctx, url, userID)
 		}
 
 		return err
 	}
 
-	if err = s.linkURLtoUser(ctx, originalURL, url.UserID); err != nil {
+	if err = s.linkURLtoUser(ctx, originalURL, userID); err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgerrcode.IsIntegrityConstraintViolation(pgErr.Code) {
 			return &store.AlreadyExistsError{
@@ -97,7 +96,7 @@ func (s *Store) CreateURL(ctx context.Context, url models.URL) error {
 	return err
 }
 
-func (s *Store) BatchCreateURL(ctx context.Context, urls []models.URL) error {
+func (s *Store) BatchCreateURL(ctx context.Context, userID string, urls []models.URL) error {
 	tx, err := s.conn.Begin()
 	if err != nil {
 		return err
@@ -106,7 +105,7 @@ func (s *Store) BatchCreateURL(ctx context.Context, urls []models.URL) error {
 
 	urlStmt, err := tx.PrepareContext(
 		ctx,
-		"INSERT INTO urls (id, user_id, correlation_id, slug, original_url, created_at) VALUES ($1, $2, $3, $4, $5, $6)",
+		"INSERT INTO urls (id, correlation_id, slug, original_url, created_at) VALUES ($1, $2, $3, $4, $5)",
 	)
 	if err != nil {
 		return err
@@ -123,12 +122,13 @@ func (s *Store) BatchCreateURL(ctx context.Context, urls []models.URL) error {
 	defer userUrlStmt.Close()
 
 	for _, url := range urls {
-		_, err := urlStmt.ExecContext(ctx, url.ID, newNullString(url.UserID), url.CorrelationID, url.Slug, url.Original, url.CreatedAt)
+		// TODO Handle integrity violation.
+		_, err := urlStmt.ExecContext(ctx, url.ID, url.CorrelationID, url.Slug, url.Original, url.CreatedAt)
 		if err != nil {
 			return err
 		}
 
-		_, err = userUrlStmt.ExecContext(ctx, uuid.NewString(), url.UserID, url.ID, false, time.Now())
+		_, err = userUrlStmt.ExecContext(ctx, uuid.NewString(), userID, url.ID, false, time.Now())
 		if err != nil {
 			return err
 		}
@@ -139,19 +139,16 @@ func (s *Store) BatchCreateURL(ctx context.Context, urls []models.URL) error {
 
 func (s *Store) GetURL(ctx context.Context, slug string) (models.URL, error) {
 	var url models.URL
-	var userID sql.NullString
 
 	err := s.conn.QueryRowContext(
 		ctx,
-		"SELECT id, user_id, correlation_id, slug, original_url, created_at, is_deleted FROM urls WHERE slug = $1",
+		"SELECT id, correlation_id, slug, original_url, created_at, is_deleted FROM urls WHERE slug = $1",
 		slug,
-	).Scan(&url.ID, &userID, &url.CorrelationID, &url.Slug, &url.Original, &url.CreatedAt, &url.Deleted)
+	).Scan(&url.ID, &url.CorrelationID, &url.Slug, &url.Original, &url.CreatedAt, &url.Deleted)
 
 	if err != nil {
 		return url, err
 	}
-
-	url.UserID = userID.String
 
 	return url, nil
 }
@@ -161,7 +158,7 @@ func (s *Store) ListURLsByUserID(ctx context.Context, userID string) ([]models.U
 
 	rows, err := s.conn.QueryContext(
 		ctx,
-		"SELECT id, user_id, correlation_id, slug, original_url, created_at, is_deleted FROM urls WHERE id IN (SELECT url_id FROM user_urls WHERE user_id = $1 AND NOT is_deleted)",
+		"SELECT id, correlation_id, slug, original_url, created_at, is_deleted FROM urls WHERE id IN (SELECT url_id FROM user_urls WHERE user_id = $1 AND NOT is_deleted)",
 		userID,
 	)
 	if err != nil {
@@ -171,12 +168,10 @@ func (s *Store) ListURLsByUserID(ctx context.Context, userID string) ([]models.U
 
 	for rows.Next() {
 		var url models.URL
-		var userID sql.NullString
-		err = rows.Scan(&url.ID, &userID, &url.CorrelationID, &url.Slug, &url.Original, &url.CreatedAt, &url.Deleted)
+		err = rows.Scan(&url.ID, &url.CorrelationID, &url.Slug, &url.Original, &url.CreatedAt, &url.Deleted)
 		if err != nil {
 			return nil, err
 		}
-		url.UserID = userID.String
 		res = append(res, url)
 	}
 
@@ -202,9 +197,9 @@ func (s *Store) SoftDeleteURL(ctx context.Context, userID string, slug string) e
 	var url models.URL
 	err = tx.QueryRowContext(
 		ctx,
-		"SELECT id, user_id, correlation_id, slug, original_url, created_at, is_deleted FROM urls WHERE slug = $1",
+		"SELECT id, correlation_id, slug, original_url, created_at, is_deleted FROM urls WHERE slug = $1",
 		slug,
-	).Scan(&url.ID, &userID, &url.CorrelationID, &url.Slug, &url.Original, &url.CreatedAt, &url.Deleted)
+	).Scan(&url.ID, &url.CorrelationID, &url.Slug, &url.Original, &url.CreatedAt, &url.Deleted)
 	if err != nil {
 		return err
 	}
@@ -263,19 +258,16 @@ func (s *Store) bootstrap() error {
 
 func (s *Store) getURLByOriginal(ctx context.Context, originalURL string) (models.URL, error) {
 	var url models.URL
-	var userID sql.NullString
 
 	err := s.conn.QueryRowContext(
 		ctx,
-		"SELECT id, user_id, correlation_id, slug, original_url, created_at, is_deleted FROM urls WHERE original_url = $1",
+		"SELECT id, correlation_id, slug, original_url, created_at, is_deleted FROM urls WHERE original_url = $1",
 		originalURL,
-	).Scan(&url.ID, &userID, &url.CorrelationID, &url.Slug, &url.Original, &url.CreatedAt, &url.Deleted)
+	).Scan(&url.ID, &url.CorrelationID, &url.Slug, &url.Original, &url.CreatedAt, &url.Deleted)
 
 	if err != nil {
 		return url, err
 	}
-
-	url.UserID = userID.String
 
 	return url, nil
 }
@@ -300,14 +292,4 @@ func (s *Store) linkURLtoUser(ctx context.Context, url models.URL, userID string
 	)
 
 	return err
-}
-
-func newNullString(s string) sql.NullString {
-	if len(s) == 0 {
-		return sql.NullString{}
-	}
-	return sql.NullString{
-		String: s,
-		Valid:  true,
-	}
 }
