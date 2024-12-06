@@ -297,10 +297,12 @@ func (h *Handlers) DeleteUserURLsHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if err = h.s.SoftDeleteURL(r.Context(), userID, request.Slugs); err != nil {
-		h.handleError("DeleteUserURLsHandler", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+	for _, slug := range request.Slugs {
+		if err = h.s.SoftDeleteURL(r.Context(), userID, slug); err != nil {
+			h.handleError("DeleteUserURLsHandler", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 	}
 
 	w.WriteHeader(http.StatusAccepted)

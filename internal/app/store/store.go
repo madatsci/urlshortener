@@ -29,7 +29,7 @@ type Store interface {
 	ListAllUrls(ctx context.Context) map[string]models.URL
 
 	// SoftDeleteURL marks URLs as deleted.
-	SoftDeleteURL(ctx context.Context, userID string, slugs []string) error
+	SoftDeleteURL(ctx context.Context, userID string, slug string) error
 
 	// Ping is a storage healthcheck.
 	Ping(ctx context.Context) error

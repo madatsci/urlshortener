@@ -115,7 +115,7 @@ func (s *Store) ListAllUrls(_ context.Context) map[string]models.URL {
 	return s.urls
 }
 
-func (s *Store) SoftDeleteURL(_ context.Context, userID string, slugs []string) error {
+func (s *Store) SoftDeleteURL(_ context.Context, userID string, slug string) error {
 	// TODO implement
 	return nil
 }

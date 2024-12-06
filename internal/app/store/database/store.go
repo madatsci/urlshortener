@@ -5,8 +5,6 @@ import (
 	"database/sql"
 	"embed"
 	"errors"
-	"fmt"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -63,7 +61,7 @@ func (s *Store) GetUser(ctx context.Context, userID string) (models.User, error)
 }
 
 func (s *Store) CreateURL(ctx context.Context, url models.URL) error {
-	originalURL, err := s.getByOriginalURL(ctx, url.Original)
+	originalURL, err := s.getURLByOriginal(ctx, url.Original)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			_, err = s.conn.ExecContext(
@@ -194,26 +192,55 @@ func (s *Store) ListAllUrls(ctx context.Context) map[string]models.URL {
 	return nil
 }
 
-func (s *Store) SoftDeleteURL(ctx context.Context, userID string, slugs []string) error {
-	inArgs := make([]string, len(slugs))
-	for i := 0; i < len(slugs); i++ {
-		inArgs[i] = fmt.Sprintf("$%d", i+2)
+func (s *Store) SoftDeleteURL(ctx context.Context, userID string, slug string) error {
+	tx, err := s.conn.Begin()
+	if err != nil {
+		return err
 	}
-	inArg := strings.Join(inArgs, ",")
+	defer tx.Rollback() //nolint:errcheck
 
-	args := make([]interface{}, len(slugs)+1)
-	args[0] = userID
-	for i, slug := range slugs {
-		args[i+1] = slug
-	}
-
-	_, err := s.conn.ExecContext(
+	var url models.URL
+	err = tx.QueryRowContext(
 		ctx,
-		"UPDATE urls SET is_deleted = true WHERE user_id = $1 and slug IN("+inArg+")",
-		args...,
-	)
+		"SELECT id, user_id, correlation_id, slug, original_url, created_at, is_deleted FROM urls WHERE slug = $1",
+		slug,
+	).Scan(&url.ID, &userID, &url.CorrelationID, &url.Slug, &url.Original, &url.CreatedAt, &url.Deleted)
+	if err != nil {
+		return err
+	}
 
-	return err
+	_, err = tx.ExecContext(
+		ctx,
+		"UPDATE user_urls SET is_deleted = true WHERE user_id = $1 AND url_id = $2",
+		userID,
+		url.ID,
+	)
+	if err != nil {
+		return err
+	}
+
+	var linksCount int
+	err = tx.QueryRowContext(
+		ctx,
+		"SELECT COUNT(id) FROM user_urls WHERE url_id = $1 AND NOT is_deleted",
+		url.ID,
+	).Scan(&linksCount)
+	if err != nil {
+		return err
+	}
+
+	if linksCount == 0 {
+		_, err = tx.ExecContext(
+			ctx,
+			"UPDATE urls SET is_deleted = true WHERE id = $1",
+			url.ID,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
 }
 
 func (s *Store) Ping(ctx context.Context) error {
@@ -234,7 +261,7 @@ func (s *Store) bootstrap() error {
 	return nil
 }
 
-func (s *Store) getByOriginalURL(ctx context.Context, originalURL string) (models.URL, error) {
+func (s *Store) getURLByOriginal(ctx context.Context, originalURL string) (models.URL, error) {
 	var url models.URL
 	var userID sql.NullString
 
