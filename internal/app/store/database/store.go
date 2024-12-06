@@ -7,7 +7,9 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/madatsci/urlshortener/internal/app/models"
@@ -61,26 +63,32 @@ func (s *Store) GetUser(ctx context.Context, userID string) (models.User, error)
 }
 
 func (s *Store) CreateURL(ctx context.Context, url models.URL) error {
-	_, err := s.conn.ExecContext(
-		ctx,
-		"INSERT INTO urls (id, user_id, correlation_id, slug, original_url, created_at) VALUES ($1, $2, $3, $4, $5, $6)",
-		url.ID,
-		newNullString(url.UserID),
-		url.CorrelationID,
-		url.Slug,
-		url.Original,
-		url.CreatedAt,
-	)
-
+	originalURL, err := s.getByOriginalURL(ctx, url.Original)
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) && pgerrcode.IsIntegrityConstraintViolation(pgErr.Code) {
-			// TODO Handle the case when URL is deleted.
-			originalURL, err := s.getByOriginalURL(ctx, url.Original)
+		if errors.Is(err, sql.ErrNoRows) {
+			_, err = s.conn.ExecContext(
+				ctx,
+				"INSERT INTO urls (id, user_id, correlation_id, slug, original_url, created_at) VALUES ($1, $2, $3, $4, $5, $6)",
+				url.ID,
+				newNullString(url.UserID),
+				url.CorrelationID,
+				url.Slug,
+				url.Original,
+				url.CreatedAt,
+			)
 			if err != nil {
 				return err
 			}
 
+			return s.linkURLtoUser(ctx, url, url.UserID)
+		}
+
+		return err
+	}
+
+	if err = s.linkURLtoUser(ctx, originalURL, url.UserID); err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgerrcode.IsIntegrityConstraintViolation(pgErr.Code) {
 			return &store.AlreadyExistsError{
 				Err: pgErr,
 				URL: originalURL,
@@ -88,7 +96,7 @@ func (s *Store) CreateURL(ctx context.Context, url models.URL) error {
 		}
 	}
 
-	return nil
+	return err
 }
 
 func (s *Store) BatchCreateURL(ctx context.Context, urls []models.URL) error {
@@ -229,6 +237,28 @@ func (s *Store) getByOriginalURL(ctx context.Context, originalURL string) (model
 	url.UserID = userID.String
 
 	return url, nil
+}
+
+func (s *Store) linkURLtoUser(ctx context.Context, url models.URL, userID string) error {
+	userURL := models.UserURL{
+		ID:        uuid.NewString(),
+		UserID:    userID,
+		UrlID:     url.ID,
+		Deleted:   false,
+		CreatedAt: time.Now(),
+	}
+
+	_, err := s.conn.ExecContext(
+		ctx,
+		"INSERT INTO user_urls (id, user_id, url_id, is_deleted, created_at) VALUES ($1, $2, $3, $4, $5)",
+		userURL.ID,
+		userURL.UserID,
+		userURL.UrlID,
+		userURL.Deleted,
+		userURL.CreatedAt,
+	)
+
+	return err
 }
 
 func newNullString(s string) sql.NullString {
