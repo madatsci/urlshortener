@@ -106,17 +106,31 @@ func (s *Store) BatchCreateURL(ctx context.Context, urls []models.URL) error {
 	}
 	defer tx.Rollback() //nolint:errcheck
 
-	stmt, err := tx.PrepareContext(
+	urlStmt, err := tx.PrepareContext(
 		ctx,
 		"INSERT INTO urls (id, user_id, correlation_id, slug, original_url, created_at) VALUES ($1, $2, $3, $4, $5, $6)",
 	)
 	if err != nil {
 		return err
 	}
-	defer stmt.Close()
+	defer urlStmt.Close()
+
+	userUrlStmt, err := tx.PrepareContext(
+		ctx,
+		"INSERT INTO user_urls (id, user_id, url_id, is_deleted, created_at) VALUES ($1, $2, $3, $4, $5)",
+	)
+	if err != nil {
+		return err
+	}
+	defer userUrlStmt.Close()
 
 	for _, url := range urls {
-		_, err := stmt.ExecContext(ctx, url.ID, newNullString(url.UserID), url.CorrelationID, url.Slug, url.Original, url.CreatedAt)
+		_, err := urlStmt.ExecContext(ctx, url.ID, newNullString(url.UserID), url.CorrelationID, url.Slug, url.Original, url.CreatedAt)
+		if err != nil {
+			return err
+		}
+
+		_, err = userUrlStmt.ExecContext(ctx, uuid.NewString(), url.UserID, url.ID, false, time.Now())
 		if err != nil {
 			return err
 		}
