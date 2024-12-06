@@ -9,6 +9,7 @@ CREATE TABLE user_urls (
 )
 -- +goose StatementEnd
 -- +goose StatementBegin
+CREATE UNIQUE INDEX user_urls_user_id_url_id ON user_urls (user_id, url_id);
 ALTER TABLE user_urls ADD CONSTRAINT user_id_constraint FOREIGN KEY (user_id) REFERENCES users(id);
 ALTER TABLE user_urls ADD CONSTRAINT url_id_constraint FOREIGN KEY (url_id) REFERENCES urls(id);
 -- +goose StatementEnd
