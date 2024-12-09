@@ -74,6 +74,59 @@ func TestCreateURL(t *testing.T) {
 	require.Equal(t, 2, len(all))
 }
 
+func TestBatchCreateURL(t *testing.T) {
+	type urlData struct {
+		slug          string
+		url           string
+		correlationID string
+	}
+
+	urls := []urlData{
+		{
+			slug:          "rQujOeua",
+			url:           "https://practicum.yandex.ru/",
+			correlationID: "123",
+		},
+		{
+			slug:          "jViVdkfU",
+			url:           "http://example.org",
+			correlationID: "456",
+		},
+	}
+
+	s := New()
+	ctx := context.Background()
+
+	urlModels := make([]models.URL, 0)
+	for _, d := range urls {
+		url := models.URL{
+			ID:            uuid.NewString(),
+			CorrelationID: d.correlationID,
+			Slug:          d.slug,
+			Original:      d.url,
+			CreatedAt:     time.Now(),
+		}
+
+		urlModels = append(urlModels, url)
+	}
+
+	err := s.BatchCreateURL(ctx, uuid.NewString(), urlModels)
+	require.NoError(t, err)
+
+	for _, d := range urls {
+		res, err := s.GetURL(ctx, d.slug)
+		require.NoError(t, err)
+		assert.Equal(t, d.url, res.Original)
+		assert.Equal(t, d.slug, res.Slug)
+		assert.Equal(t, d.correlationID, res.CorrelationID)
+		assert.NotEmpty(t, res.ID)
+		assert.NotEmpty(t, res.CreatedAt)
+	}
+
+	all := s.ListAllUrls(ctx)
+	require.Equal(t, 2, len(all))
+}
+
 func TestListURLsByUserID(t *testing.T) {
 	type urlData struct {
 		userID string
