@@ -63,3 +63,18 @@ func TestJWT(t *testing.T) {
 		assert.ErrorIs(t, err, j.ErrTokenSignatureInvalid)
 	})
 }
+
+func BenchmarkGetString(b *testing.B) {
+	jwt := New(Options{
+		Secret:   []byte("secret_key"),
+		Duration: time.Hour,
+	})
+
+	for i := 0; i < b.N; i++ {
+		b.StopTimer()
+		userID := uuid.NewString()
+		b.StartTimer()
+
+		jwt.GetString(userID)
+	}
+}
