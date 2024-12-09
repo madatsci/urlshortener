@@ -15,7 +15,7 @@ import (
 	"github.com/madatsci/urlshortener/internal/app/models"
 	"github.com/madatsci/urlshortener/internal/app/server/middleware"
 	"github.com/madatsci/urlshortener/internal/app/store"
-	"github.com/madatsci/urlshortener/pkg/randomstr"
+	"github.com/madatsci/urlshortener/pkg/random"
 	"go.uber.org/zap"
 )
 
@@ -172,7 +172,7 @@ func (h *Handlers) AddHandlerJSONBatch(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// TODO Fix copy-paste (see h.storeShortURL()).
-		slug := randomstr.Generate(slugLength)
+		slug := random.ASCIIString(slugLength)
 		shortURL := h.generateShortURLFromSlug(slug)
 
 		url := models.URL{
@@ -327,7 +327,7 @@ func (h *Handlers) Store() store.Store {
 }
 
 func (h *Handlers) storeShortURL(ctx context.Context, longURL, userID string) (string, error) {
-	slug := randomstr.Generate(slugLength)
+	slug := random.ASCIIString(slugLength)
 	shortURL := h.generateShortURLFromSlug(slug)
 
 	url := models.URL{

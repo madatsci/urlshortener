@@ -1,13 +1,13 @@
-package randomstr
+package random
 
 import (
 	"math/rand"
 	"time"
 )
 
-const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+const charset = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-func Generate(length int) string {
+func ASCIIString(length int) string {
 	rand := rand.New(rand.NewSource(time.Now().UnixNano()))
 	b := make([]byte, length)
 	for i := range b {
