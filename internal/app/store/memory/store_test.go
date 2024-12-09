@@ -29,7 +29,7 @@ func TestCreateUser(t *testing.T) {
 	assert.Equal(t, user.CreatedAt, res.CreatedAt)
 }
 
-func TestAdd(t *testing.T) {
+func TestCreateURL(t *testing.T) {
 	type urlData struct {
 		slug string
 		url  string
@@ -74,7 +74,7 @@ func TestAdd(t *testing.T) {
 	require.Equal(t, 2, len(all))
 }
 
-func TestListByUserID(t *testing.T) {
+func TestListURLsByUserID(t *testing.T) {
 	type urlData struct {
 		userID string
 		slug   string

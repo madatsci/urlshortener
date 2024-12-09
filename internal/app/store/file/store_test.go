@@ -87,7 +87,7 @@ func TestStorageWithEmptyFile(t *testing.T) {
 	require.Equal(t, 2, len(all))
 }
 
-func TestListByUserID(t *testing.T) {
+func TestListURLsByUserID(t *testing.T) {
 	type urlData struct {
 		userID string
 		slug   string
