@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/madatsci/urlshortener/internal/app/models"
+	"github.com/madatsci/urlshortener/pkg/random"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -37,12 +38,12 @@ func TestCreateURL(t *testing.T) {
 
 	urls := []urlData{
 		{
-			slug: "rQujOeua",
-			url:  "https://practicum.yandex.ru/",
+			slug: random.ASCIIString(8),
+			url:  random.URL().String(),
 		},
 		{
-			slug: "jViVdkfU",
-			url:  "http://example.org",
+			slug: random.ASCIIString(8),
+			url:  random.URL().String(),
 		},
 	}
 
@@ -84,14 +85,14 @@ func TestBatchCreateURL(t *testing.T) {
 
 	urls := []urlData{
 		{
-			slug:          "rQujOeua",
-			url:           "https://practicum.yandex.ru/",
-			correlationID: "123",
+			slug:          random.ASCIIString(8),
+			url:           random.URL().String(),
+			correlationID: random.ASCIIString(5),
 		},
 		{
-			slug:          "jViVdkfU",
-			url:           "http://example.org",
-			correlationID: "456",
+			slug:          random.ASCIIString(8),
+			url:           random.URL().String(),
+			correlationID: random.ASCIIString(5),
 		},
 	}
 
@@ -141,23 +142,23 @@ func TestListURLsByUserID(t *testing.T) {
 	urls := []urlData{
 		{
 			userID: userID,
-			slug:   "rQujOeua",
-			url:    "https://practicum.yandex.ru/",
+			slug:   random.ASCIIString(8),
+			url:    random.URL().String(),
 		},
 		{
 			userID: uuid.NewString(),
-			slug:   "jViVdkfU",
-			url:    "http://example.org",
+			slug:   random.ASCIIString(8),
+			url:    random.URL().String(),
 		},
 		{
 			userID: userID,
-			slug:   "hdkUTydP",
-			url:    "https://www.iana.org/help/example-domains",
+			slug:   random.ASCIIString(8),
+			url:    random.URL().String(),
 		},
 		{
 			userID: uuid.NewString(),
-			slug:   "agRTjKlP",
-			url:    "https://www.iana.org/domains",
+			slug:   random.ASCIIString(8),
+			url:    random.URL().String(),
 		},
 	}
 

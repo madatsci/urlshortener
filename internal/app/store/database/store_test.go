@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/madatsci/urlshortener/internal/app/database"
 	"github.com/madatsci/urlshortener/internal/app/models"
+	"github.com/madatsci/urlshortener/pkg/random"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -99,8 +100,8 @@ func TestCreateURL(t *testing.T) {
 
 		url := models.URL{
 			ID:        uuid.NewString(),
-			Slug:      "new_url_slug",
-			Original:  "https://example.com/1",
+			Slug:      random.ASCIIString(8),
+			Original:  random.URL().String(),
 			CreatedAt: time.Now().UTC(),
 		}
 
@@ -139,8 +140,8 @@ func TestCreateURL(t *testing.T) {
 
 		url := models.URL{
 			ID:        uuid.NewString(),
-			Slug:      "new_url_slug",
-			Original:  "https://example.com/1",
+			Slug:      random.ASCIIString(8),
+			Original:  random.URL().String(),
 			CreatedAt: time.Now().UTC(),
 		}
 
@@ -215,23 +216,23 @@ func TestBatchCreateURL(t *testing.T) {
 	urls := []models.URL{
 		{
 			ID:            uuid.NewString(),
-			CorrelationID: "1000",
-			Slug:          "short_1",
-			Original:      "https://example.org/1",
+			CorrelationID: random.ASCIIString(5),
+			Slug:          random.ASCIIString(8),
+			Original:      random.URL().String(),
 			CreatedAt:     time.Now().UTC(),
 		},
 		{
 			ID:            uuid.NewString(),
-			CorrelationID: "2000",
-			Slug:          "short_2",
-			Original:      "https://example.org/2",
+			CorrelationID: random.ASCIIString(5),
+			Slug:          random.ASCIIString(8),
+			Original:      random.URL().String(),
 			CreatedAt:     time.Now().UTC(),
 		},
 		{
 			ID:            uuid.NewString(),
-			CorrelationID: "3000",
-			Slug:          "short_3",
-			Original:      "https://example.org/3",
+			CorrelationID: random.ASCIIString(5),
+			Slug:          random.ASCIIString(8),
+			Original:      random.URL().String(),
 			CreatedAt:     time.Now().UTC(),
 		},
 	}
@@ -281,17 +282,17 @@ func TestListURLsByUserID(t *testing.T) {
 
 	url1 := models.URL{
 		ID:            uuid.NewString(),
-		CorrelationID: "1000",
-		Slug:          "short_1",
-		Original:      "https://example.org/1",
+		CorrelationID: random.ASCIIString(5),
+		Slug:          random.ASCIIString(8),
+		Original:      random.URL().String(),
 		CreatedAt:     time.Now().UTC(),
 	}
 
 	url2 := models.URL{
 		ID:            uuid.NewString(),
-		CorrelationID: "2000",
-		Slug:          "short_2",
-		Original:      "https://example.org/2",
+		CorrelationID: random.ASCIIString(5),
+		Slug:          random.ASCIIString(8),
+		Original:      random.URL().String(),
 		CreatedAt:     time.Now().UTC(),
 	}
 
@@ -303,9 +304,9 @@ func TestListURLsByUserID(t *testing.T) {
 
 	url3 := models.URL{
 		ID:            uuid.NewString(),
-		CorrelationID: "3000",
-		Slug:          "short_3",
-		Original:      "https://example.org/3",
+		CorrelationID: random.ASCIIString(5),
+		Slug:          random.ASCIIString(8),
+		Original:      random.URL().String(),
 		CreatedAt:     time.Now().UTC(),
 	}
 
@@ -344,9 +345,9 @@ func TestSoftDeleteURL(t *testing.T) {
 
 		url := models.URL{
 			ID:            uuid.NewString(),
-			CorrelationID: "1000",
-			Slug:          "short_1",
-			Original:      "https://example.org/1",
+			CorrelationID: random.ASCIIString(5),
+			Slug:          random.ASCIIString(8),
+			Original:      random.URL().String(),
 			CreatedAt:     time.Now().UTC(),
 		}
 
@@ -394,9 +395,9 @@ func TestSoftDeleteURL(t *testing.T) {
 
 		url := models.URL{
 			ID:            uuid.NewString(),
-			CorrelationID: "1000",
-			Slug:          "short_1",
-			Original:      "https://example.org/1",
+			CorrelationID: random.ASCIIString(5),
+			Slug:          random.ASCIIString(8),
+			Original:      random.URL().String(),
 			CreatedAt:     time.Now().UTC(),
 		}
 
