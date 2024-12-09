@@ -26,7 +26,7 @@ type Store interface {
 	ListURLsByUserID(ctx context.Context, userID string) ([]models.URL, error)
 
 	// ListAllUrls returns the full map of stored URLs.
-	ListAllUrls(ctx context.Context) map[string]models.URL
+	ListAllUrls(ctx context.Context) (map[string]models.URL, error)
 
 	// SoftDeleteURL marks URLs as deleted.
 	SoftDeleteURL(ctx context.Context, userID string, slug string) error

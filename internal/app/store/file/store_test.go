@@ -59,7 +59,8 @@ func TestStorageWithEmptyFile(t *testing.T) {
 
 	ctx := context.Background()
 
-	all := s.ListAllUrls(ctx)
+	all, err := s.ListAllUrls(ctx)
+	require.NoError(t, err)
 	require.Equal(t, 0, len(all))
 
 	for _, d := range urls {
@@ -83,7 +84,8 @@ func TestStorageWithEmptyFile(t *testing.T) {
 		assert.NotEmpty(t, res.CreatedAt)
 	}
 
-	all = s.ListAllUrls(ctx)
+	all, err = s.ListAllUrls(ctx)
+	require.NoError(t, err)
 	require.Equal(t, 2, len(all))
 }
 
@@ -129,7 +131,8 @@ func TestListURLsByUserID(t *testing.T) {
 
 	ctx := context.Background()
 
-	all := s.ListAllUrls(ctx)
+	all, err := s.ListAllUrls(ctx)
+	require.NoError(t, err)
 	require.Equal(t, 0, len(all))
 
 	for _, d := range urls {

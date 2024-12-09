@@ -90,8 +90,8 @@ func (s *Store) ListURLsByUserID(_ context.Context, userID string) ([]models.URL
 	return res, nil
 }
 
-func (s *Store) ListAllUrls(_ context.Context) map[string]models.URL {
-	return s.urls
+func (s *Store) ListAllUrls(_ context.Context) (map[string]models.URL, error) {
+	return s.urls, nil
 }
 
 func (s *Store) SoftDeleteURL(_ context.Context, userID string, slug string) error {

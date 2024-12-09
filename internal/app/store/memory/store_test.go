@@ -70,7 +70,8 @@ func TestCreateURL(t *testing.T) {
 		assert.NotEmpty(t, res.CreatedAt)
 	}
 
-	all := s.ListAllUrls(ctx)
+	all, err := s.ListAllUrls(ctx)
+	require.NoError(t, err)
 	require.Equal(t, 2, len(all))
 }
 
@@ -123,7 +124,8 @@ func TestBatchCreateURL(t *testing.T) {
 		assert.NotEmpty(t, res.CreatedAt)
 	}
 
-	all := s.ListAllUrls(ctx)
+	all, err := s.ListAllUrls(ctx)
+	require.NoError(t, err)
 	require.Equal(t, 2, len(all))
 }
 

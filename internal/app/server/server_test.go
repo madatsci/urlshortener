@@ -304,7 +304,9 @@ func sendRequest(t *testing.T, req *http.Request) *http.Response {
 
 func expectedShortURL(t *testing.T, s *Server, url string) string {
 	var slug string
-	for k, u := range s.h.Store().ListAllUrls(context.Background()) {
+	urls, err := s.h.Store().ListAllUrls(context.Background())
+	require.NoError(t, err)
+	for k, u := range urls {
 		if u.Original == url {
 			slug = k
 			break

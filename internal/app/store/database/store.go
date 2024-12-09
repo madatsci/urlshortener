@@ -183,9 +183,32 @@ func (s *Store) ListURLsByUserID(ctx context.Context, userID string) ([]models.U
 	return res, nil
 }
 
-func (s *Store) ListAllUrls(ctx context.Context) map[string]models.URL {
-	// TODO implement later (currently this is used only for testing purposes)
-	return nil
+func (s *Store) ListAllUrls(ctx context.Context) (map[string]models.URL, error) {
+	res := make(map[string]models.URL, 0)
+
+	rows, err := s.conn.QueryContext(
+		ctx,
+		"SELECT id, correlation_id, slug, original_url, created_at, is_deleted FROM urls",
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var url models.URL
+		err = rows.Scan(&url.ID, &url.CorrelationID, &url.Slug, &url.Original, &url.CreatedAt, &url.Deleted)
+		if err != nil {
+			return nil, err
+		}
+		res[url.Slug] = url
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
 }
 
 func (s *Store) SoftDeleteURL(ctx context.Context, userID string, slug string) error {
@@ -293,4 +316,21 @@ func (s *Store) linkURLtoUser(ctx context.Context, url models.URL, userID string
 	)
 
 	return err
+}
+
+func (s *Store) geUserURLLink(ctx context.Context, userID, urlID string) (models.UserURL, error) {
+	var link models.UserURL
+
+	err := s.conn.QueryRowContext(
+		ctx,
+		"SELECT id, user_id, url_id, is_deleted, created_at FROM user_urls WHERE user_id = $1 AND url_id = $2",
+		userID,
+		urlID,
+	).Scan(&link.ID, &link.UserID, &link.UrlID, &link.Deleted, &link.CreatedAt)
+
+	if err != nil {
+		return link, err
+	}
+
+	return link, nil
 }
