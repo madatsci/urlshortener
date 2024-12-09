@@ -142,7 +142,6 @@ func (h *Handlers) AddHandlerJSON(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// TODO Add a test case for this.
 func (h *Handlers) AddHandlerJSONBatch(w http.ResponseWriter, r *http.Request) {
 	userID, err := ensureUserID(r)
 	if err != nil {
@@ -167,8 +166,13 @@ func (h *Handlers) AddHandlerJSONBatch(w http.ResponseWriter, r *http.Request) {
 	urls := make([]models.URL, 0, len(request.URLs))
 	responseURLs := make([]models.ShortenBatchResponseItem, 0, len(request.URLs))
 	for _, reqURL := range request.URLs {
+		if reqURL.OriginalURL == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
 		// TODO Fix copy-paste (see h.storeShortURL()).
-		slug := randomstr.GenerateSlug(slugLength)
+		slug := randomstr.Generate(slugLength)
 		shortURL := h.generateShortURLFromSlug(slug)
 
 		url := models.URL{
@@ -323,7 +327,7 @@ func (h *Handlers) Store() store.Store {
 }
 
 func (h *Handlers) storeShortURL(ctx context.Context, longURL, userID string) (string, error) {
-	slug := randomstr.GenerateSlug(slugLength)
+	slug := randomstr.Generate(slugLength)
 	shortURL := h.generateShortURLFromSlug(slug)
 
 	url := models.URL{

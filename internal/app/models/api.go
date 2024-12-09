@@ -56,6 +56,26 @@ func (r *ShortenBatchResponse) MarshalJSON() ([]byte, error) {
 	return json.Marshal(list)
 }
 
+func (r *ShortenBatchResponse) UnmarshalJSON(data []byte) error {
+	tmp := make([]json.RawMessage, 0)
+	if err := json.Unmarshal(data, &tmp); err != nil {
+		return err
+	}
+
+	items := make([]ShortenBatchResponseItem, 0)
+	for _, rawItem := range tmp {
+		var responseItem ShortenBatchResponseItem
+		if err := json.Unmarshal(rawItem, &responseItem); err != nil {
+			return err
+		}
+		items = append(items, responseItem)
+	}
+
+	r.URLs = items
+
+	return nil
+}
+
 type ShortenBatchResponseItem struct {
 	CorrelationID string `json:"correlation_id"`
 	ShortURL      string `json:"short_url"`
@@ -76,6 +96,26 @@ func (r *ListByUserIDResponse) MarshalJSON() ([]byte, error) {
 	}
 
 	return json.Marshal(list)
+}
+
+func (r *ListByUserIDResponse) UnmarshalJSON(data []byte) error {
+	tmp := make([]json.RawMessage, 0)
+	if err := json.Unmarshal(data, &tmp); err != nil {
+		return err
+	}
+
+	items := make([]UserURLItem, 0)
+	for _, rawItem := range tmp {
+		var responseItem UserURLItem
+		if err := json.Unmarshal(rawItem, &responseItem); err != nil {
+			return err
+		}
+		items = append(items, responseItem)
+	}
+
+	r.URLs = items
+
+	return nil
 }
 
 type UserURLItem struct {
