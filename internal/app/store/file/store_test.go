@@ -11,8 +11,13 @@ import (
 )
 
 func TestCreateUser(t *testing.T) {
-	s, err := New("./test_storage.json")
+	filepath := "./test_storage.json"
+	s, err := New(filepath)
 	require.NoError(t, err)
+	defer func() {
+		err := os.Remove(filepath)
+		require.NoError(t, err)
+	}()
 
 	ctx := context.Background()
 
@@ -24,6 +29,26 @@ func TestCreateUser(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, user.ID, res.ID)
 	assert.Equal(t, user.CreatedAt, res.CreatedAt)
+}
+
+func BenchmarkCreateUser(b *testing.B) {
+	filepath := "./test_storage.json"
+	s, err := New(filepath)
+	require.NoError(b, err)
+	defer func() {
+		err := os.Remove(filepath)
+		require.NoError(b, err)
+	}()
+
+	ctx := context.Background()
+
+	for i := 0; i < b.N; i++ {
+		b.StopTimer()
+		user := random.RandomUser()
+		b.StartTimer()
+
+		s.CreateUser(ctx, user)
+	}
 }
 
 func TestCreateURL(t *testing.T) {
@@ -63,6 +88,27 @@ func TestCreateURL(t *testing.T) {
 	require.Equal(t, 3, len(all))
 }
 
+func BenchmarkCreateURL(b *testing.B) {
+	filepath := "./test_storage.json"
+	s, err := New(filepath)
+	require.NoError(b, err)
+	defer func() {
+		err := os.Remove(filepath)
+		require.NoError(b, err)
+	}()
+
+	ctx := context.Background()
+
+	for i := 0; i < b.N; i++ {
+		b.StopTimer()
+		user := random.RandomUser()
+		url := random.RandomURL()
+		b.StartTimer()
+
+		s.CreateURL(ctx, user.ID, url)
+	}
+}
+
 func TestBatchCreateURL(t *testing.T) {
 	filepath := "./test_storage.json"
 	s, err := New(filepath)
@@ -92,6 +138,27 @@ func TestBatchCreateURL(t *testing.T) {
 	all, err := s.ListAllUrls(ctx)
 	require.NoError(t, err)
 	require.Equal(t, 3, len(all))
+}
+
+func BenchmarkBatchCreateURL(b *testing.B) {
+	filepath := "./test_storage.json"
+	s, err := New(filepath)
+	require.NoError(b, err)
+	defer func() {
+		err := os.Remove(filepath)
+		require.NoError(b, err)
+	}()
+
+	ctx := context.Background()
+
+	for i := 0; i < b.N; i++ {
+		b.StopTimer()
+		user := random.RandomUser()
+		urls := random.RandomURLs(10)
+		b.StartTimer()
+
+		s.BatchCreateURL(ctx, user.ID, urls)
+	}
 }
 
 func TestListURLsByUserID(t *testing.T) {
