@@ -71,11 +71,7 @@ func TestCreateUser(t *testing.T) {
 	}
 	defer cleanup(s)
 
-	user := models.User{
-		ID:        uuid.NewString(),
-		CreatedAt: time.Now().UTC(),
-	}
-
+	user := randomUser()
 	err = s.CreateUser(ctx, user)
 	require.NoError(t, err)
 
@@ -98,21 +94,11 @@ func TestCreateURL(t *testing.T) {
 	t.Run("new URL", func(t *testing.T) {
 		defer cleanup(s)
 
-		url := models.URL{
-			ID:        uuid.NewString(),
-			Slug:      random.ASCIIString(8),
-			Original:  random.URL().String(),
-			CreatedAt: time.Now().UTC(),
-		}
-
-		user := models.User{
-			ID:        uuid.NewString(),
-			CreatedAt: time.Now().UTC(),
-		}
-
+		user := randomUser()
 		err = s.CreateUser(ctx, user)
 		require.NoError(t, err)
 
+		url := randomURL()
 		err := s.CreateURL(ctx, user.ID, url)
 		require.NoError(t, err)
 
@@ -138,29 +124,15 @@ func TestCreateURL(t *testing.T) {
 	t.Run("existing URL", func(t *testing.T) {
 		defer cleanup(s)
 
-		url := models.URL{
-			ID:        uuid.NewString(),
-			Slug:      random.ASCIIString(8),
-			Original:  random.URL().String(),
-			CreatedAt: time.Now().UTC(),
-		}
-
-		user1 := models.User{
-			ID:        uuid.NewString(),
-			CreatedAt: time.Now().UTC(),
-		}
-
+		user1 := randomUser()
 		err = s.CreateUser(ctx, user1)
 		require.NoError(t, err)
 
+		url := randomURL()
 		err = s.CreateURL(ctx, user1.ID, url)
 		require.NoError(t, err)
 
-		user2 := models.User{
-			ID:        uuid.NewString(),
-			CreatedAt: time.Now().UTC(),
-		}
-
+		user2 := randomUser()
 		err = s.CreateUser(ctx, user2)
 		require.NoError(t, err)
 
@@ -205,36 +177,13 @@ func TestBatchCreateURL(t *testing.T) {
 	}
 	defer cleanup(s)
 
-	user := models.User{
-		ID:        uuid.NewString(),
-		CreatedAt: time.Now().UTC(),
-	}
-
+	user := randomUser()
 	err = s.CreateUser(ctx, user)
 	require.NoError(t, err)
 
-	urls := []models.URL{
-		{
-			ID:            uuid.NewString(),
-			CorrelationID: random.ASCIIString(5),
-			Slug:          random.ASCIIString(8),
-			Original:      random.URL().String(),
-			CreatedAt:     time.Now().UTC(),
-		},
-		{
-			ID:            uuid.NewString(),
-			CorrelationID: random.ASCIIString(5),
-			Slug:          random.ASCIIString(8),
-			Original:      random.URL().String(),
-			CreatedAt:     time.Now().UTC(),
-		},
-		{
-			ID:            uuid.NewString(),
-			CorrelationID: random.ASCIIString(5),
-			Slug:          random.ASCIIString(8),
-			Original:      random.URL().String(),
-			CreatedAt:     time.Now().UTC(),
-		},
+	urls := make([]models.URL, 3)
+	for i := 0; i < 3; i++ {
+		urls[i] = randomURL()
 	}
 
 	err = s.BatchCreateURL(ctx, user.ID, urls)
@@ -264,51 +213,23 @@ func TestListURLsByUserID(t *testing.T) {
 	}
 	defer cleanup(s)
 
-	user1 := models.User{
-		ID:        uuid.NewString(),
-		CreatedAt: time.Now().UTC(),
-	}
-
+	user1 := randomUser()
 	err = s.CreateUser(ctx, user1)
 	require.NoError(t, err)
 
-	user2 := models.User{
-		ID:        uuid.NewString(),
-		CreatedAt: time.Now().UTC(),
-	}
-
+	user2 := randomUser()
 	err = s.CreateUser(ctx, user2)
 	require.NoError(t, err)
 
-	url1 := models.URL{
-		ID:            uuid.NewString(),
-		CorrelationID: random.ASCIIString(5),
-		Slug:          random.ASCIIString(8),
-		Original:      random.URL().String(),
-		CreatedAt:     time.Now().UTC(),
-	}
-
-	url2 := models.URL{
-		ID:            uuid.NewString(),
-		CorrelationID: random.ASCIIString(5),
-		Slug:          random.ASCIIString(8),
-		Original:      random.URL().String(),
-		CreatedAt:     time.Now().UTC(),
-	}
-
+	url1 := randomURL()
 	err = s.CreateURL(ctx, user1.ID, url1)
 	require.NoError(t, err)
 
+	url2 := randomURL()
 	err = s.CreateURL(ctx, user1.ID, url2)
 	require.NoError(t, err)
 
-	url3 := models.URL{
-		ID:            uuid.NewString(),
-		CorrelationID: random.ASCIIString(5),
-		Slug:          random.ASCIIString(8),
-		Original:      random.URL().String(),
-		CreatedAt:     time.Now().UTC(),
-	}
+	url3 := randomURL()
 
 	err = s.CreateURL(ctx, user2.ID, url3)
 	require.NoError(t, err)
@@ -335,22 +256,11 @@ func TestSoftDeleteURL(t *testing.T) {
 	t.Run("all links to URL are deleted", func(t *testing.T) {
 		defer cleanup(s)
 
-		user := models.User{
-			ID:        uuid.NewString(),
-			CreatedAt: time.Now().UTC(),
-		}
-
+		user := randomUser()
 		err = s.CreateUser(ctx, user)
 		require.NoError(t, err)
 
-		url := models.URL{
-			ID:            uuid.NewString(),
-			CorrelationID: random.ASCIIString(5),
-			Slug:          random.ASCIIString(8),
-			Original:      random.URL().String(),
-			CreatedAt:     time.Now().UTC(),
-		}
-
+		url := randomURL()
 		err = s.CreateURL(ctx, user.ID, url)
 		require.NoError(t, err)
 
@@ -377,30 +287,15 @@ func TestSoftDeleteURL(t *testing.T) {
 	t.Run("not all links to URL are deleted", func(t *testing.T) {
 		defer cleanup(s)
 
-		user1 := models.User{
-			ID:        uuid.NewString(),
-			CreatedAt: time.Now().UTC(),
-		}
-
+		user1 := randomUser()
 		err = s.CreateUser(ctx, user1)
 		require.NoError(t, err)
 
-		user2 := models.User{
-			ID:        uuid.NewString(),
-			CreatedAt: time.Now().UTC(),
-		}
-
+		user2 := randomUser()
 		err = s.CreateUser(ctx, user2)
 		require.NoError(t, err)
 
-		url := models.URL{
-			ID:            uuid.NewString(),
-			CorrelationID: random.ASCIIString(5),
-			Slug:          random.ASCIIString(8),
-			Original:      random.URL().String(),
-			CreatedAt:     time.Now().UTC(),
-		}
-
+		url := randomURL()
 		err = s.CreateURL(ctx, user1.ID, url)
 		require.NoError(t, err)
 
@@ -430,4 +325,21 @@ func TestSoftDeleteURL(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, false, persistedURL.Deleted)
 	})
+}
+
+func randomUser() models.User {
+	return models.User{
+		ID:        uuid.NewString(),
+		CreatedAt: time.Now().UTC(),
+	}
+}
+
+func randomURL() models.URL {
+	return models.URL{
+		ID:            uuid.NewString(),
+		CorrelationID: random.ASCIIString(5),
+		Slug:          random.ASCIIString(8),
+		Original:      random.URL().String(),
+		CreatedAt:     time.Now().UTC(),
+	}
 }
