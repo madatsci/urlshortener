@@ -79,6 +79,29 @@ func TestCreateUser(t *testing.T) {
 	assert.Equal(t, user.CreatedAt, res.CreatedAt)
 }
 
+func BenchmarkCreateUser(b *testing.B) {
+	ctx := context.Background()
+	s, err := newTestStore(ctx)
+	if err != nil {
+		if err == errMissingDSN {
+			b.Skip()
+		}
+		b.Fatal(err)
+	}
+	defer cleanup(s)
+
+	b.Run("create user", func(b *testing.B) {
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			b.StopTimer()
+			user := random.RandomUser()
+			b.StartTimer()
+
+			s.CreateUser(ctx, user)
+		}
+	})
+}
+
 func TestCreateURL(t *testing.T) {
 	ctx := context.Background()
 	s, err := newTestStore(ctx)
@@ -164,6 +187,54 @@ func TestCreateURL(t *testing.T) {
 	})
 }
 
+func BenchmarkCreateURL(b *testing.B) {
+	ctx := context.Background()
+	s, err := newTestStore(ctx)
+	if err != nil {
+		if err == errMissingDSN {
+			b.Skip()
+		}
+		b.Fatal(err)
+	}
+	defer cleanup(s)
+
+	b.Run("new URL", func(b *testing.B) {
+		user := random.RandomUser()
+		err = s.CreateUser(ctx, user)
+		require.NoError(b, err)
+
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			b.StopTimer()
+			url := random.RandomURL()
+			b.StartTimer()
+
+			s.CreateURL(ctx, user.ID, url)
+		}
+	})
+
+	b.Run("existing URL", func(b *testing.B) {
+		user := random.RandomUser()
+		err := s.CreateUser(ctx, user)
+		require.NoError(b, err)
+
+		url := random.RandomURL()
+		err = s.CreateURL(ctx, user.ID, url)
+		require.NoError(b, err)
+
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			b.StopTimer()
+			user := random.RandomUser()
+			err := s.CreateUser(ctx, user)
+			require.NoError(b, err)
+			b.StartTimer()
+
+			s.CreateURL(ctx, user.ID, url)
+		}
+	})
+}
+
 func TestBatchCreateURL(t *testing.T) {
 	ctx := context.Background()
 	s, err := newTestStore(ctx)
@@ -198,6 +269,33 @@ func TestBatchCreateURL(t *testing.T) {
 		assert.Equal(t, url.ID, link.UrlID)
 		assert.Equal(t, false, link.Deleted)
 	}
+}
+
+func BenchmarkBatchCreateURL(b *testing.B) {
+	ctx := context.Background()
+	s, err := newTestStore(ctx)
+	if err != nil {
+		if err == errMissingDSN {
+			b.Skip()
+		}
+		b.Fatal(err)
+	}
+	defer cleanup(s)
+
+	b.Run("batch create URL", func(b *testing.B) {
+		user := random.RandomUser()
+		err := s.CreateUser(ctx, user)
+		require.NoError(b, err)
+
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			b.StopTimer()
+			urls := random.RandomURLs(10)
+			b.StartTimer()
+
+			s.BatchCreateURL(ctx, user.ID, urls)
+		}
+	})
 }
 
 func TestListURLsByUserID(t *testing.T) {
