@@ -31,6 +31,10 @@ test:
 	done
 	echo "Tests completed."
 
+.PHONY: test_with_db
+test_with_db:
+	DATABASE_DSN=postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable go test -cover ./...
+
 .PHONY: test_iter1
 test_iter1:
 	./shortenertestbeta -test.v -test.run=^TestIteration1$$ -binary-path=cmd/shortener/shortener -source-path=.
