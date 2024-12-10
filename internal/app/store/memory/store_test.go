@@ -3,11 +3,8 @@ package memory
 import (
 	"context"
 	"testing"
-	"time"
 
-	"github.com/google/uuid"
-	"github.com/madatsci/urlshortener/internal/app/models"
-	"github.com/madatsci/urlshortener/pkg/random"
+	"github.com/madatsci/urlshortener/internal/random"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -16,11 +13,7 @@ func TestCreateUser(t *testing.T) {
 	s := New()
 	ctx := context.Background()
 
-	user := models.User{
-		ID:        uuid.NewString(),
-		CreatedAt: time.Now(),
-	}
-
+	user := random.RandomUser()
 	err := s.CreateUser(ctx, user)
 	require.NoError(t, err)
 
@@ -31,153 +24,74 @@ func TestCreateUser(t *testing.T) {
 }
 
 func TestCreateURL(t *testing.T) {
-	type urlData struct {
-		slug string
-		url  string
-	}
-
-	urls := []urlData{
-		{
-			slug: random.ASCIIString(8),
-			url:  random.URL().String(),
-		},
-		{
-			slug: random.ASCIIString(8),
-			url:  random.URL().String(),
-		},
-	}
-
 	s := New()
 	ctx := context.Background()
 
-	for _, d := range urls {
-		url := models.URL{
-			ID:        uuid.NewString(),
-			Slug:      d.slug,
-			Original:  d.url,
-			CreatedAt: time.Now(),
-		}
-
-		err := s.CreateURL(ctx, uuid.NewString(), url)
+	urls := random.RandomURLs(3)
+	user := random.RandomUser()
+	for _, u := range urls {
+		err := s.CreateURL(ctx, user.ID, u)
 		require.NoError(t, err)
 	}
 
-	for _, d := range urls {
-		res, err := s.GetURL(ctx, d.slug)
+	for _, u := range urls {
+		res, err := s.GetURL(ctx, u.Slug)
 		require.NoError(t, err)
-		assert.Equal(t, d.url, res.Original)
-		assert.Equal(t, d.slug, res.Slug)
-		assert.NotEmpty(t, res.ID)
-		assert.NotEmpty(t, res.CreatedAt)
+		assert.Equal(t, u.Original, res.Original)
+		assert.Equal(t, u.Slug, res.Slug)
+		assert.Equal(t, u.ID, res.ID)
+		assert.Equal(t, u.CreatedAt, res.CreatedAt)
 	}
 
 	all, err := s.ListAllUrls(ctx)
 	require.NoError(t, err)
-	require.Equal(t, 2, len(all))
+	require.Equal(t, 3, len(all))
 }
 
 func TestBatchCreateURL(t *testing.T) {
-	type urlData struct {
-		slug          string
-		url           string
-		correlationID string
-	}
-
-	urls := []urlData{
-		{
-			slug:          random.ASCIIString(8),
-			url:           random.URL().String(),
-			correlationID: random.ASCIIString(5),
-		},
-		{
-			slug:          random.ASCIIString(8),
-			url:           random.URL().String(),
-			correlationID: random.ASCIIString(5),
-		},
-	}
-
 	s := New()
 	ctx := context.Background()
 
-	urlModels := make([]models.URL, 0)
-	for _, d := range urls {
-		url := models.URL{
-			ID:            uuid.NewString(),
-			CorrelationID: d.correlationID,
-			Slug:          d.slug,
-			Original:      d.url,
-			CreatedAt:     time.Now(),
-		}
-
-		urlModels = append(urlModels, url)
-	}
-
-	err := s.BatchCreateURL(ctx, uuid.NewString(), urlModels)
+	urls := random.RandomURLs(3)
+	user := random.RandomUser()
+	err := s.BatchCreateURL(ctx, user.ID, urls)
 	require.NoError(t, err)
 
-	for _, d := range urls {
-		res, err := s.GetURL(ctx, d.slug)
+	for _, u := range urls {
+		res, err := s.GetURL(ctx, u.Slug)
 		require.NoError(t, err)
-		assert.Equal(t, d.url, res.Original)
-		assert.Equal(t, d.slug, res.Slug)
-		assert.Equal(t, d.correlationID, res.CorrelationID)
-		assert.NotEmpty(t, res.ID)
-		assert.NotEmpty(t, res.CreatedAt)
+		assert.Equal(t, u.Original, res.Original)
+		assert.Equal(t, u.Slug, res.Slug)
+		assert.Equal(t, u.CorrelationID, res.CorrelationID)
+		assert.Equal(t, u.ID, res.ID)
+		assert.Equal(t, u.CreatedAt, res.CreatedAt)
 	}
 
 	all, err := s.ListAllUrls(ctx)
 	require.NoError(t, err)
-	require.Equal(t, 2, len(all))
+	require.Equal(t, 3, len(all))
 }
 
 func TestListURLsByUserID(t *testing.T) {
-	type urlData struct {
-		userID string
-		slug   string
-		url    string
-	}
-
-	userID := uuid.NewString()
-
-	urls := []urlData{
-		{
-			userID: userID,
-			slug:   random.ASCIIString(8),
-			url:    random.URL().String(),
-		},
-		{
-			userID: uuid.NewString(),
-			slug:   random.ASCIIString(8),
-			url:    random.URL().String(),
-		},
-		{
-			userID: userID,
-			slug:   random.ASCIIString(8),
-			url:    random.URL().String(),
-		},
-		{
-			userID: uuid.NewString(),
-			slug:   random.ASCIIString(8),
-			url:    random.URL().String(),
-		},
-	}
-
 	s := New()
 	ctx := context.Background()
 
-	for _, d := range urls {
-		url := models.URL{
-			ID:        uuid.NewString(),
-			Slug:      d.slug,
-			Original:  d.url,
-			CreatedAt: time.Now(),
-		}
+	user1 := random.RandomUser()
+	user1_urls := random.RandomURLs(3)
+	user2 := random.RandomUser()
+	user2_urls := random.RandomURLs(2)
 
-		err := s.CreateURL(ctx, d.userID, url)
-		require.NoError(t, err)
-	}
-
-	resURLs, err := s.ListURLsByUserID(ctx, userID)
+	err := s.BatchCreateURL(ctx, user1.ID, user1_urls)
 	require.NoError(t, err)
-	assert.Equal(t, 2, len(resURLs))
+
+	err = s.BatchCreateURL(ctx, user2.ID, user2_urls)
+	require.NoError(t, err)
+
+	resURLs1, err := s.ListURLsByUserID(ctx, user1.ID)
+	require.NoError(t, err)
+	assert.Equal(t, 3, len(resURLs1))
+
+	resURLs2, err := s.ListURLsByUserID(ctx, user2.ID)
+	require.NoError(t, err)
+	assert.Equal(t, 2, len(resURLs2))
 }
