@@ -128,3 +128,19 @@ func TestListURLsByUserID(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 2, len(resURLs2))
 }
+
+func TestLoadFromFile(t *testing.T) {
+	filepath := "./fixtures/test_storage.json"
+	s, err := New(filepath)
+	require.NoError(t, err)
+
+	ctx := context.Background()
+
+	resURLs1, err := s.ListURLsByUserID(ctx, "59100585-a808-4fe2-8dd3-9aaf2b47984f")
+	require.NoError(t, err)
+	assert.Equal(t, 3, len(resURLs1))
+
+	resURLs2, err := s.ListURLsByUserID(ctx, "706be65e-b545-4d5f-bb09-1dd2fd285e44")
+	require.NoError(t, err)
+	assert.Equal(t, 2, len(resURLs2))
+}
