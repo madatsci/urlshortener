@@ -26,7 +26,7 @@ func TestCreateUser(t *testing.T) {
 	assert.Equal(t, user.CreatedAt, res.CreatedAt)
 }
 
-func TestStorageWithEmptyFile(t *testing.T) {
+func TestCreateURL(t *testing.T) {
 	filepath := "./test_storage.json"
 	s, err := New(filepath)
 	require.NoError(t, err)
