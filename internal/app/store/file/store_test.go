@@ -4,11 +4,8 @@ import (
 	"context"
 	"os"
 	"testing"
-	"time"
 
-	"github.com/google/uuid"
-	"github.com/madatsci/urlshortener/internal/app/models"
-	"github.com/madatsci/urlshortener/pkg/random"
+	"github.com/madatsci/urlshortener/internal/random"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -19,11 +16,7 @@ func TestCreateUser(t *testing.T) {
 
 	ctx := context.Background()
 
-	user := models.User{
-		ID:        uuid.NewString(),
-		CreatedAt: time.Now(),
-	}
-
+	user := random.RandomUser()
 	err = s.CreateUser(ctx, user)
 	require.NoError(t, err)
 
@@ -34,22 +27,6 @@ func TestCreateUser(t *testing.T) {
 }
 
 func TestStorageWithEmptyFile(t *testing.T) {
-	type urlData struct {
-		slug string
-		url  string
-	}
-
-	urls := []urlData{
-		{
-			slug: random.ASCIIString(8),
-			url:  random.URL().String(),
-		},
-		{
-			slug: random.ASCIIString(8),
-			url:  random.URL().String(),
-		},
-	}
-
 	filepath := "./test_storage.json"
 	s, err := New(filepath)
 	require.NoError(t, err)
@@ -64,64 +41,60 @@ func TestStorageWithEmptyFile(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 0, len(all))
 
-	for _, d := range urls {
-		url := models.URL{
-			ID:        uuid.NewString(),
-			Slug:      d.slug,
-			Original:  d.url,
-			CreatedAt: time.Now(),
-		}
-
-		err := s.CreateURL(ctx, uuid.NewString(), url)
+	user := random.RandomUser()
+	urls := random.RandomURLs(3)
+	for _, u := range urls {
+		err := s.CreateURL(ctx, user.ID, u)
 		require.NoError(t, err)
 	}
 
-	for _, d := range urls {
-		res, err := s.GetURL(ctx, d.slug)
+	for _, u := range urls {
+		res, err := s.GetURL(ctx, u.Slug)
 		require.NoError(t, err)
-		assert.Equal(t, d.url, res.Original)
-		assert.Equal(t, d.slug, res.Slug)
-		assert.NotEmpty(t, res.ID)
-		assert.NotEmpty(t, res.CreatedAt)
+		assert.Equal(t, u.Original, res.Original)
+		assert.Equal(t, u.Slug, res.Slug)
+		assert.Equal(t, u.ID, res.ID)
+		assert.Equal(t, u.CorrelationID, res.CorrelationID)
+		assert.Equal(t, u.CreatedAt, res.CreatedAt)
 	}
 
 	all, err = s.ListAllUrls(ctx)
 	require.NoError(t, err)
-	require.Equal(t, 2, len(all))
+	require.Equal(t, 3, len(all))
+}
+
+func TestBatchCreateURL(t *testing.T) {
+	filepath := "./test_storage.json"
+	s, err := New(filepath)
+	require.NoError(t, err)
+	defer func() {
+		err := os.Remove(filepath)
+		require.NoError(t, err)
+	}()
+
+	ctx := context.Background()
+
+	urls := random.RandomURLs(3)
+	user := random.RandomUser()
+	err = s.BatchCreateURL(ctx, user.ID, urls)
+	require.NoError(t, err)
+
+	for _, u := range urls {
+		res, err := s.GetURL(ctx, u.Slug)
+		require.NoError(t, err)
+		assert.Equal(t, u.Original, res.Original)
+		assert.Equal(t, u.Slug, res.Slug)
+		assert.Equal(t, u.CorrelationID, res.CorrelationID)
+		assert.Equal(t, u.ID, res.ID)
+		assert.Equal(t, u.CreatedAt, res.CreatedAt)
+	}
+
+	all, err := s.ListAllUrls(ctx)
+	require.NoError(t, err)
+	require.Equal(t, 3, len(all))
 }
 
 func TestListURLsByUserID(t *testing.T) {
-	type urlData struct {
-		userID string
-		slug   string
-		url    string
-	}
-
-	userID := uuid.NewString()
-
-	urls := []urlData{
-		{
-			userID: userID,
-			slug:   random.ASCIIString(8),
-			url:    random.URL().String(),
-		},
-		{
-			userID: uuid.NewString(),
-			slug:   random.ASCIIString(8),
-			url:    random.URL().String(),
-		},
-		{
-			userID: userID,
-			slug:   random.ASCIIString(8),
-			url:    random.URL().String(),
-		},
-		{
-			userID: uuid.NewString(),
-			slug:   random.ASCIIString(8),
-			url:    random.URL().String(),
-		},
-	}
-
 	filepath := "./test_storage.json"
 	s, err := New(filepath)
 	require.NoError(t, err)
@@ -136,19 +109,22 @@ func TestListURLsByUserID(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 0, len(all))
 
-	for _, d := range urls {
-		url := models.URL{
-			ID:        uuid.NewString(),
-			Slug:      d.slug,
-			Original:  d.url,
-			CreatedAt: time.Now(),
-		}
+	user1 := random.RandomUser()
+	user1_urls := random.RandomURLs(3)
+	user2 := random.RandomUser()
+	user2_urls := random.RandomURLs(2)
 
-		err := s.CreateURL(ctx, d.userID, url)
-		require.NoError(t, err)
-	}
-
-	resURLs, err := s.ListURLsByUserID(ctx, userID)
+	err = s.BatchCreateURL(ctx, user1.ID, user1_urls)
 	require.NoError(t, err)
-	assert.Equal(t, 2, len(resURLs))
+
+	err = s.BatchCreateURL(ctx, user2.ID, user2_urls)
+	require.NoError(t, err)
+
+	resURLs1, err := s.ListURLsByUserID(ctx, user1.ID)
+	require.NoError(t, err)
+	assert.Equal(t, 3, len(resURLs1))
+
+	resURLs2, err := s.ListURLsByUserID(ctx, user2.ID)
+	require.NoError(t, err)
+	assert.Equal(t, 2, len(resURLs2))
 }

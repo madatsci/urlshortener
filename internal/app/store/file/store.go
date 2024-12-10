@@ -72,7 +72,6 @@ func (s *Store) CreateURL(_ context.Context, userID string, url models.URL) erro
 	return s.save()
 }
 
-// TODO Add a test case for this.
 func (s *Store) BatchCreateURL(_ context.Context, userID string, urls []models.URL) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()

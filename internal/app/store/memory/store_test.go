@@ -40,6 +40,7 @@ func TestCreateURL(t *testing.T) {
 		assert.Equal(t, u.Original, res.Original)
 		assert.Equal(t, u.Slug, res.Slug)
 		assert.Equal(t, u.ID, res.ID)
+		assert.Equal(t, u.CorrelationID, res.CorrelationID)
 		assert.Equal(t, u.CreatedAt, res.CreatedAt)
 	}
 
