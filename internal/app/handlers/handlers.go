@@ -24,6 +24,13 @@ type (
 		s   store.Store
 		c   *config.Config
 		log *zap.SugaredLogger
+
+		delReqChan chan deleteURLRequest
+	}
+
+	deleteURLRequest struct {
+		userID string
+		slug   string
 	}
 )
 
@@ -31,7 +38,16 @@ const slugLength = 8
 
 // New creates new Handlers.
 func New(config *config.Config, logger *zap.SugaredLogger, store store.Store) *Handlers {
-	return &Handlers{c: config, s: store, log: logger}
+	h := &Handlers{
+		c:          config,
+		s:          store,
+		log:        logger,
+		delReqChan: make(chan deleteURLRequest, 1024),
+	}
+
+	go h.flushDeleteURLRequests(context.TODO())
+
+	return h
 }
 
 // AddHandler handles adding a new URL via text/plain request.
@@ -301,10 +317,9 @@ func (h *Handlers) DeleteUserURLsHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	for _, slug := range request.Slugs {
-		if err = h.s.SoftDeleteURL(r.Context(), userID, slug); err != nil {
-			h.handleError("DeleteUserURLsHandler", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
+		h.delReqChan <- deleteURLRequest{
+			userID: userID,
+			slug:   slug,
 		}
 	}
 
@@ -346,6 +361,33 @@ func (h *Handlers) generateShortURLFromSlug(slug string) string {
 
 func (h *Handlers) handleError(method string, err error) {
 	h.log.Errorln("error handling request", "method", method, "err", err)
+}
+
+func (h *Handlers) flushDeleteURLRequests(ctx context.Context) {
+	ticker := time.NewTicker(10 * time.Second)
+	var reqs []deleteURLRequest
+
+	for {
+		select {
+		case req := <-h.delReqChan:
+			reqs = append(reqs, req)
+		case <-ticker.C:
+			if len(reqs) == 0 {
+				continue
+			}
+
+			for _, req := range reqs {
+				if err := h.s.SoftDeleteURL(ctx, req.userID, req.slug); err != nil {
+					h.log.Errorln("error deleting url", "err", err)
+					continue
+				}
+
+				h.log.With("userID", req.userID, "slug", req.slug).Info("deleted url")
+			}
+
+			reqs = nil
+		}
+	}
 }
 
 func ensureUserID(r *http.Request) (string, error) {
