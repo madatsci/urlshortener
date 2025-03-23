@@ -38,6 +38,9 @@ func New(config *config.Config, store store.Store, logger *zap.SugaredLogger) *S
 	r.Use(mw.Gzip)
 	r.Use(middleware.Recoverer)
 
+	// Mounting net/http/pprof.
+	r.Mount("/debug", middleware.Profiler())
+
 	authMiddleware := mw.NewAuth(mw.Options{
 		JWT: jwt.New(jwt.Options{
 			Secret:   config.TokenSecret,

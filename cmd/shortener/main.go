@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 
+	_ "net/http/pprof"
+
 	"github.com/madatsci/urlshortener/internal/app"
 )
 

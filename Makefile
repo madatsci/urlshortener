@@ -94,3 +94,23 @@ test_iter14:
 .PHONY: test_iter15
 test_iter15:
 	./shortenertestbeta -test.v -test.run=^TestIteration15$$ -binary-path=cmd/shortener/shortener -source-path=. -database-dsn='postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable'
+
+.PHONY: test_iter16
+test_iter15:
+	./shortenertestbeta -test.v -test.run=^TestIteration16$$ -binary-path=cmd/shortener/shortener -source-path=. -database-dsn='postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable'
+
+.PHONY: base_profile_file
+base_profile:
+	curl -v "http://localhost:8080/debug/pprof/heap?seconds=40" > profiles/base.pprof
+
+.PHONY: serve_base_profile_url
+serve_base_profile_url:
+	go tool pprof -http=":9090" -seconds=40 http://localhost:8080/debug/pprof/heap
+
+.PHONY: serve_base_profile_file
+serve_base_profile_file:
+	go tool pprof -http=":9090" -seconds=40 profiles/base.pprof
+
+.PHONY: compare_profiles
+compare_profiles:
+	go tool pprof -top -diff_base=profiles/base.pprof profiles/result.pprof
