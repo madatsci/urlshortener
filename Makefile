@@ -1,4 +1,4 @@
-ITER_COUNT = 15
+ITER_COUNT = 16
 
 .PHONY: build
 build:
@@ -96,7 +96,7 @@ test_iter15:
 	./shortenertestbeta -test.v -test.run=^TestIteration15$$ -binary-path=cmd/shortener/shortener -source-path=. -database-dsn='postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable'
 
 .PHONY: test_iter16
-test_iter15:
+test_iter16:
 	./shortenertestbeta -test.v -test.run=^TestIteration16$$ -binary-path=cmd/shortener/shortener -source-path=. -database-dsn='postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable'
 
 .PHONY: base_profile_file
