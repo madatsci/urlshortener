@@ -1,3 +1,8 @@
+// Package app initializes and runs the URL shortener service.
+//
+// It wires together the configuration, storage layer, HTTP server,
+// and logging components. The App type provides the entry point for
+// starting the service. It still does not handle graceful shutdown yet.
 package app
 
 import (
@@ -16,6 +21,9 @@ import (
 )
 
 type (
+	// App is the top-level application container for the URL shortener service.
+	//
+	// Use New to create a new instance and Start to start the application.
 	App struct {
 		config *config.Config
 		store  store.Store
@@ -33,7 +41,8 @@ type (
 	}
 )
 
-// New creates new App.
+// New creates a new App instance by initializing all core components,
+// including the configuration, logger, storage layer, and HTTP server.
 func New(ctx context.Context, opts Options) (*App, error) {
 	config := config.New(opts.ServerAddr, opts.BaseURL, opts.FileStoragePath, opts.DatabaseDSN, opts.TokenSecret, opts.TokenDuration)
 
@@ -59,7 +68,7 @@ func New(ctx context.Context, opts Options) (*App, error) {
 	return app, nil
 }
 
-// Start starts the application.
+// Start starts the URL shortener service and blocks until it is stopped.
 func (a *App) Start() error {
 	return a.server.Start()
 }

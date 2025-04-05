@@ -7,6 +7,7 @@ import (
 	"github.com/madatsci/urlshortener/internal/app/models"
 )
 
+// RandomUser returns a randomly generated models.User struct.
 func RandomUser() models.User {
 	return models.User{
 		ID:        uuid.NewString(),

@@ -7,6 +7,7 @@ import (
 
 const charset = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
+// ASCIIString returns a randomly generated ASCII string of specified length.
 func ASCIIString(length int) string {
 	rand := rand.New(rand.NewSource(time.Now().UnixNano()))
 	s := make([]byte, 0, length)
@@ -23,6 +24,8 @@ func ASCIIString(length int) string {
 	return string(s)
 }
 
+// ASCIIStringVarLength returns a randomly generated ASCII string with length
+// between minLen and maxLen.
 func ASCIIStringVarLength(minLen, maxLen int) string {
 	rand := rand.New(rand.NewSource(time.Now().UnixNano()))
 	slen := rand.Intn(maxLen-minLen) + minLen

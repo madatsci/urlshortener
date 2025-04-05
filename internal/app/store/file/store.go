@@ -1,4 +1,5 @@
-package storage
+// Package filestore implements data storage in a file.
+package filestore
 
 import (
 	"context"
@@ -14,6 +15,8 @@ import (
 
 type (
 	// Store is an implementation of store.Store interface which uses a file to save data on disk.
+	//
+	// Use New to create an instance of Store.
 	Store struct {
 		filepath  string
 		urls      map[string]models.URL

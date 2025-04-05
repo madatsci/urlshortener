@@ -7,14 +7,19 @@ import (
 	"go.uber.org/zap"
 )
 
+// Logger is a logger middleware.
+//
+// Use NewLogger to create a new instance of Logger.
 type Logger struct {
 	log *zap.SugaredLogger
 }
 
+// NewLogger creates a new instance of Logger.
 func NewLogger(log *zap.SugaredLogger) *Logger {
 	return &Logger{log: log}
 }
 
+// Logger defines a Logger middleware handler.
 func (l *Logger) Logger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()

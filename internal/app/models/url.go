@@ -2,6 +2,7 @@ package models
 
 import "time"
 
+// URL represents stored URL.
 type URL struct {
 	ID            string    `json:"id"`
 	CorrelationID string    `json:"correlation_id"`

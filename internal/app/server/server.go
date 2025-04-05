@@ -1,3 +1,4 @@
+// Package server implements an HTTP web server with router and middleware.
 package server
 
 import (
@@ -13,14 +14,17 @@ import (
 	"go.uber.org/zap"
 )
 
-type (
-	Server struct {
-		mux    http.Handler
-		config *config.Config
-		h      *handlers.Handlers
-		log    *zap.SugaredLogger
-	}
-)
+// Server is the HTTP server for the URL shortener service.
+//
+// It holds the application's HTTP router, configuration, handler logic, and logger.
+// Use New to create and configure a server instance, then call Start to begin
+// handling HTTP requests.
+type Server struct {
+	mux    http.Handler
+	config *config.Config
+	h      *handlers.Handlers
+	log    *zap.SugaredLogger
+}
 
 // New creates a new HTTP server.
 func New(config *config.Config, store store.Store, logger *zap.SugaredLogger) *Server {
@@ -77,7 +81,7 @@ func New(config *config.Config, store store.Store, logger *zap.SugaredLogger) *S
 	return server
 }
 
-// Start starts the server under the specified address.
+// Start starts the server after it was created and configured.
 func (s *Server) Start() error {
 	s.log.Infof("starting server with config: %+v", s.config)
 

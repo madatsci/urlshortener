@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+// Gzip is a gzip encoding middleware handler.
 func Gzip(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ow := w

@@ -1,3 +1,4 @@
+// Package handlers implements REST API request handlers.
 package handlers
 
 import (
@@ -20,6 +21,7 @@ import (
 )
 
 type (
+	// Handlers represents Handlers service.
 	Handlers struct {
 		s   store.Store
 		c   *config.Config
@@ -158,6 +160,7 @@ func (h *Handlers) AddHandlerJSON(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// AddHandlerJSONBatch handles adding a batch of URLs via application/json request.
 func (h *Handlers) AddHandlerJSONBatch(w http.ResponseWriter, r *http.Request) {
 	userID, err := ensureUserID(r)
 	if err != nil {

@@ -1,3 +1,5 @@
+// Package store represents an interface for data storage.
+// It also defines common errors.
 package store
 
 import (
@@ -6,6 +8,7 @@ import (
 	"github.com/madatsci/urlshortener/internal/app/models"
 )
 
+// Store is a storage interface.
 type Store interface {
 	// CreateUser registers new user.
 	CreateUser(ctx context.Context, user models.User) error
@@ -35,11 +38,13 @@ type Store interface {
 	Ping(ctx context.Context) error
 }
 
+// AlreadyExistsError represents RDB integrity constraint violation error on inserts.
 type AlreadyExistsError struct {
 	Err error
 	URL models.URL
 }
 
+// Error is an implementation of error built-in interface.
 func (e *AlreadyExistsError) Error() string {
 	return e.Err.Error()
 }

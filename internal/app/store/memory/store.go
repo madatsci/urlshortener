@@ -1,3 +1,4 @@
+// Package memory implements in-memory data storage.
 package memory
 
 import (
@@ -10,6 +11,8 @@ import (
 )
 
 // Store is an implementation of store.Store interface which stores data in memory.
+//
+// Use New to create an instance of Store.
 type Store struct {
 	urls      map[string]models.URL
 	users     map[string]models.User

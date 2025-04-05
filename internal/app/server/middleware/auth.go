@@ -19,6 +19,9 @@ const defaultCookieName = "auth_token"
 const AuthenticatedUserKey ctxKey = 0
 
 type (
+	// Auth is an authentication middleware.
+	//
+	// User NewAuth to create a new Auth instance.
 	Auth struct {
 		cookieName string
 		jwt        *jwt.JWT
@@ -27,6 +30,7 @@ type (
 		userID     string
 	}
 
+	// Options represents dependencies required for Auth.
 	Options struct {
 		CookieName string
 		JWT        *jwt.JWT
@@ -37,6 +41,7 @@ type (
 	ctxKey int
 )
 
+// NewAuth creates a new Auth middleware.
 func NewAuth(opts Options) *Auth {
 	cookieName := opts.CookieName
 	if cookieName == "" {
@@ -51,6 +56,7 @@ func NewAuth(opts Options) *Auth {
 	}
 }
 
+// PublicAPIAuth defines authentication handler for public API scope.
 func (a *Auth) PublicAPIAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var userID string
@@ -93,6 +99,7 @@ func (a *Auth) PublicAPIAuth(next http.Handler) http.Handler {
 	})
 }
 
+// PublicAPIAuth defines authentication handler for private API scope.
 func (a *Auth) PrivateAPIAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie(a.cookieName)

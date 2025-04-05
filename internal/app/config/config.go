@@ -1,7 +1,9 @@
+// Package config holds the service configuration.
 package config
 
 import "time"
 
+// Config represents the service configuration.
 type Config struct {
 	ServerAddr      string
 	BaseURL         string

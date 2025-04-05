@@ -1,3 +1,4 @@
+// Package database is an implementation of storage which uses a relational database.
 package database
 
 import (
@@ -19,6 +20,8 @@ import (
 var embedMigrations embed.FS
 
 // Store is an implementation of store.Store interface which interacts with database.
+//
+// Use New to create an instance of Store.
 type Store struct {
 	conn *sql.DB
 }

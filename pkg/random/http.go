@@ -9,6 +9,7 @@ import (
 
 var zones = []string{"com", "ru", "net", "biz", "org"}
 
+// URL returns a pointer to randomly generated URL.
 func URL() *url.URL {
 	var res url.URL
 

@@ -8,6 +8,7 @@ import (
 	"github.com/madatsci/urlshortener/pkg/random"
 )
 
+// RandomURL returns a randomly generated models.URL struct.
 func RandomURL() models.URL {
 	return models.URL{
 		ID:            uuid.NewString(),
@@ -18,13 +19,14 @@ func RandomURL() models.URL {
 	}
 }
 
+// RandomURLs returns a slice of randomly generated models.URL structs.
 func RandomURLs(n int) []models.URL {
 	if n <= 0 {
 		return nil
 	}
-	urls := make([]models.URL, n)
+	urls := make([]models.URL, 0, n)
 	for i := 0; i < n; i++ {
-		urls[i] = RandomURL()
+		urls = append(urls, RandomURL())
 	}
 
 	return urls
