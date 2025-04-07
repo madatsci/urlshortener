@@ -58,12 +58,15 @@ type (
 	}
 )
 
+// Write writes data to the connection and calculates cumulative data size.
 func (r *loggingResponseWriter) Write(b []byte) (int, error) {
 	size, err := r.ResponseWriter.Write(b)
 	r.responseData.size += size
 	return size, err
 }
 
+// WriteHeader sends an HTTP response header with the provided status code.
+// It also saves the status code in the receiver.
 func (r *loggingResponseWriter) WriteHeader(statusCode int) {
 	r.ResponseWriter.WriteHeader(statusCode)
 	r.responseData.status = statusCode

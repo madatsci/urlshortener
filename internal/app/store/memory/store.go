@@ -29,6 +29,7 @@ func New() *Store {
 	}
 }
 
+// CreateUser registers new user.
 func (s *Store) CreateUser(_ context.Context, user models.User) error {
 	if _, ok := s.users[user.ID]; !ok {
 		s.users[user.ID] = user
@@ -37,6 +38,9 @@ func (s *Store) CreateUser(_ context.Context, user models.User) error {
 	return nil
 }
 
+// GetUser fetches user by ID.
+//
+// It returns error if user is not found.
 func (s *Store) GetUser(_ context.Context, userID string) (models.User, error) {
 	if user, ok := s.users[userID]; ok {
 		return user, nil
@@ -45,6 +49,9 @@ func (s *Store) GetUser(_ context.Context, userID string) (models.User, error) {
 	return models.User{}, fmt.Errorf("user with id %s not found", userID)
 }
 
+// CreateURL adds a new URL to the storage.
+//
+// It also links the URL to the current user.
 func (s *Store) CreateURL(_ context.Context, userID string, url models.URL) error { //nolint:unparam
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -55,6 +62,9 @@ func (s *Store) CreateURL(_ context.Context, userID string, url models.URL) erro
 	return nil
 }
 
+// BatchCreateURL adds a batch of URLs to the storage.
+//
+// It also links the created URLs to the current user.
 func (s *Store) BatchCreateURL(_ context.Context, userID string, urls []models.URL) error { //nolint:unparam
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -67,6 +77,9 @@ func (s *Store) BatchCreateURL(_ context.Context, userID string, urls []models.U
 	return nil
 }
 
+// GetURL retrieves a URL by its slug from the storage.
+//
+// It returns error if URL is not found.
 func (s *Store) GetURL(_ context.Context, slug string) (models.URL, error) {
 	var url models.URL
 
@@ -78,6 +91,7 @@ func (s *Store) GetURL(_ context.Context, slug string) (models.URL, error) {
 	return url, nil
 }
 
+// ListURLsByUserID returns all URLs created by the specified user.
 func (s *Store) ListURLsByUserID(_ context.Context, userID string) ([]models.URL, error) {
 	slugs := s.user_urls[userID]
 	if len(slugs) == 0 {
@@ -93,15 +107,20 @@ func (s *Store) ListURLsByUserID(_ context.Context, userID string) ([]models.URL
 	return res, nil
 }
 
+// ListAllUrls returns the full map of stored URLs.
+//
+// This function should not be used in production.
 func (s *Store) ListAllUrls(_ context.Context) (map[string]models.URL, error) {
 	return s.urls, nil
 }
 
+// SoftDeleteURL marks URLs as deleted.
 func (s *Store) SoftDeleteURL(_ context.Context, userID string, slug string) error {
 	// TODO implement
 	return nil
 }
 
+// Ping is a storage healthcheck.
 func (s *Store) Ping(_ context.Context) error {
 	// Nothing to ping here.
 	return nil

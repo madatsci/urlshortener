@@ -11,28 +11,26 @@ import (
 
 var errInvalidToken = errors.New("invalid JWT token")
 
-type (
-	// JWT represents data required to create and sign JWT token.
-	//
-	// Use New to create a new instance of JWT.
-	JWT struct {
-		Secret []byte
-		claims Claims
-	}
+// JWT represents data required to create and sign JWT token.
+//
+// Use New to create a new instance of JWT.
+type JWT struct {
+	Secret []byte
+	claims Claims
+}
 
-	// Claims represents JWT token claims.
-	Claims struct {
-		jwt.RegisteredClaims
-		UserID string
-	}
+// Claims represents JWT token claims.
+type Claims struct {
+	jwt.RegisteredClaims
+	UserID string
+}
 
-	// Options is used to initialize a new JWT.
-	Options struct {
-		Secret   []byte
-		Duration time.Duration
-		Issuer   string
-	}
-)
+// Options is used to initialize a new JWT.
+type Options struct {
+	Secret   []byte
+	Duration time.Duration
+	Issuer   string
+}
 
 // New creates a new instance of JWT.
 func New(opts Options) *JWT {

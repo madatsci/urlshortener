@@ -13,33 +13,32 @@ import (
 	"go.uber.org/zap"
 )
 
+// DefaultCookieName is the default cookie name for authentication token.
 const DefaultCookieName = "auth_token"
 
 // AuthenticatedUserKey should be used to read userID from context.
 const AuthenticatedUserKey ctxKey = 0
 
-type (
-	// Auth is an authentication middleware.
-	//
-	// User NewAuth to create a new Auth instance.
-	Auth struct {
-		cookieName string
-		jwt        *jwt.JWT
-		store      store.Store
-		log        *zap.SugaredLogger
-		userID     string
-	}
+// Auth is an authentication middleware.
+//
+// User NewAuth to create a new Auth instance.
+type Auth struct {
+	cookieName string
+	jwt        *jwt.JWT
+	store      store.Store
+	log        *zap.SugaredLogger
+	userID     string
+}
 
-	// Options represents dependencies required for Auth.
-	Options struct {
-		CookieName string
-		JWT        *jwt.JWT
-		Store      store.Store
-		Log        *zap.SugaredLogger
-	}
+// Options represents dependencies required for Auth.
+type Options struct {
+	CookieName string
+	JWT        *jwt.JWT
+	Store      store.Store
+	Log        *zap.SugaredLogger
+}
 
-	ctxKey int
-)
+type ctxKey int
 
 // NewAuth creates a new Auth middleware.
 func NewAuth(opts Options) *Auth {

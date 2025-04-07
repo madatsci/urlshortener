@@ -20,26 +20,25 @@ import (
 	"go.uber.org/zap"
 )
 
-type (
-	// App is the top-level application container for the URL shortener service.
-	//
-	// Use New to create a new instance and Start to start the application.
-	App struct {
-		config *config.Config
-		store  store.Store
-		logger *zap.SugaredLogger
-		server *server.Server
-	}
+// App is the top-level application container for the URL shortener service.
+//
+// Use New to create a new instance and Start to start the application.
+type App struct {
+	config *config.Config
+	store  store.Store
+	logger *zap.SugaredLogger
+	server *server.Server
+}
 
-	Options struct {
-		ServerAddr      string
-		BaseURL         string
-		FileStoragePath string
-		DatabaseDSN     string
-		TokenSecret     []byte
-		TokenDuration   time.Duration
-	}
-)
+// Options contains all dependencies required to build App.
+type Options struct {
+	ServerAddr      string
+	BaseURL         string
+	FileStoragePath string
+	DatabaseDSN     string
+	TokenSecret     []byte
+	TokenDuration   time.Duration
+}
 
 // New creates a new App instance by initializing all core components,
 // including the configuration, logger, storage layer, and HTTP server.

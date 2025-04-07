@@ -20,21 +20,22 @@ import (
 	"go.uber.org/zap"
 )
 
-type (
-	// Handlers represents Handlers service.
-	Handlers struct {
-		s   store.Store
-		c   *config.Config
-		log *zap.SugaredLogger
+// Handlers is a service that provides HTTP handlers for REST API endpoints.
+//
+// It wires storage, configuration, and logger service. It also uses a channel
+// for asynchronous processing requests for deleting URLs.
+type Handlers struct {
+	s   store.Store
+	c   *config.Config
+	log *zap.SugaredLogger
 
-		delReqChan chan deleteURLRequest
-	}
+	delReqChan chan deleteURLRequest
+}
 
-	deleteURLRequest struct {
-		userID string
-		slug   string
-	}
-)
+type deleteURLRequest struct {
+	userID string
+	slug   string
+}
 
 const slugLength = 8
 
