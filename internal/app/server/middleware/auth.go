@@ -13,7 +13,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const defaultCookieName = "auth_token"
+const DefaultCookieName = "auth_token"
 
 // AuthenticatedUserKey should be used to read userID from context.
 const AuthenticatedUserKey ctxKey = 0
@@ -45,7 +45,7 @@ type (
 func NewAuth(opts Options) *Auth {
 	cookieName := opts.CookieName
 	if cookieName == "" {
-		cookieName = defaultCookieName
+		cookieName = DefaultCookieName
 	}
 
 	return &Auth{
