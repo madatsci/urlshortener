@@ -14,18 +14,18 @@ import (
 //
 // Use New to create an instance of Store.
 type Store struct {
-	urls      map[string]models.URL
-	users     map[string]models.User
-	user_urls map[string][]string
-	mu        sync.Mutex
+	urls     map[string]models.URL
+	users    map[string]models.User
+	userURLs map[string][]string
+	mu       sync.Mutex
 }
 
 // New creates a new in-memory storage.
 func New() *Store {
 	return &Store{
-		urls:      make(map[string]models.URL),
-		users:     make(map[string]models.User),
-		user_urls: make(map[string][]string),
+		urls:     make(map[string]models.URL),
+		users:    make(map[string]models.User),
+		userURLs: make(map[string][]string),
 	}
 }
 
@@ -57,7 +57,7 @@ func (s *Store) CreateURL(_ context.Context, userID string, url models.URL) erro
 	defer s.mu.Unlock()
 
 	s.urls[url.Slug] = url
-	s.user_urls[userID] = append(s.user_urls[userID], url.Slug)
+	s.userURLs[userID] = append(s.userURLs[userID], url.Slug)
 
 	return nil
 }
@@ -71,7 +71,7 @@ func (s *Store) BatchCreateURL(_ context.Context, userID string, urls []models.U
 
 	for _, url := range urls {
 		s.urls[url.Slug] = url
-		s.user_urls[userID] = append(s.user_urls[userID], url.Slug)
+		s.userURLs[userID] = append(s.userURLs[userID], url.Slug)
 	}
 
 	return nil
@@ -93,7 +93,7 @@ func (s *Store) GetURL(_ context.Context, slug string) (models.URL, error) {
 
 // ListURLsByUserID returns all URLs created by the specified user.
 func (s *Store) ListURLsByUserID(_ context.Context, userID string) ([]models.URL, error) {
-	slugs := s.user_urls[userID]
+	slugs := s.userURLs[userID]
 	if len(slugs) == 0 {
 		return []models.URL{}, nil
 	}

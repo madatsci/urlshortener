@@ -78,14 +78,14 @@ func TestListURLsByUserID(t *testing.T) {
 	ctx := context.Background()
 
 	user1 := random.RandomUser()
-	user1_urls := random.RandomURLs(3)
+	user1URLs := random.RandomURLs(3)
 	user2 := random.RandomUser()
-	user2_urls := random.RandomURLs(2)
+	user2URLs := random.RandomURLs(2)
 
-	err := s.BatchCreateURL(ctx, user1.ID, user1_urls)
+	err := s.BatchCreateURL(ctx, user1.ID, user1URLs)
 	require.NoError(t, err)
 
-	err = s.BatchCreateURL(ctx, user2.ID, user2_urls)
+	err = s.BatchCreateURL(ctx, user2.ID, user2URLs)
 	require.NoError(t, err)
 
 	resURLs1, err := s.ListURLsByUserID(ctx, user1.ID)

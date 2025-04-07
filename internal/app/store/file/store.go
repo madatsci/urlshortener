@@ -17,11 +17,11 @@ import (
 //
 // Use New to create an instance of Store.
 type Store struct {
-	filepath  string
-	urls      map[string]models.URL
-	users     map[string]models.User
-	user_urls map[string][]string
-	mu        sync.Mutex
+	filepath string
+	urls     map[string]models.URL
+	users    map[string]models.User
+	userURLs map[string][]string
+	mu       sync.Mutex
 }
 
 // ServiceState is used to store service state in file.
@@ -36,10 +36,10 @@ type ServiceState struct {
 // New creates a new file storage.
 func New(filepath string) (*Store, error) {
 	s := &Store{
-		filepath:  filepath,
-		urls:      make(map[string]models.URL),
-		users:     make(map[string]models.User),
-		user_urls: make(map[string][]string),
+		filepath: filepath,
+		urls:     make(map[string]models.URL),
+		users:    make(map[string]models.User),
+		userURLs: make(map[string][]string),
 	}
 
 	if err := s.load(); err != nil {
@@ -77,7 +77,7 @@ func (s *Store) CreateURL(_ context.Context, userID string, url models.URL) erro
 	defer s.mu.Unlock()
 
 	s.urls[url.Slug] = url
-	s.user_urls[userID] = append(s.user_urls[userID], url.Slug)
+	s.userURLs[userID] = append(s.userURLs[userID], url.Slug)
 
 	return s.save()
 }
@@ -91,7 +91,7 @@ func (s *Store) BatchCreateURL(_ context.Context, userID string, urls []models.U
 
 	for _, url := range urls {
 		s.urls[url.Slug] = url
-		s.user_urls[userID] = append(s.user_urls[userID], url.Slug)
+		s.userURLs[userID] = append(s.userURLs[userID], url.Slug)
 	}
 
 	return s.save()
@@ -113,7 +113,7 @@ func (s *Store) GetURL(_ context.Context, slug string) (models.URL, error) {
 
 // ListURLsByUserID returns all URLs created by the specified user.
 func (s *Store) ListURLsByUserID(_ context.Context, userID string) ([]models.URL, error) {
-	slugs := s.user_urls[userID]
+	slugs := s.userURLs[userID]
 	if len(slugs) == 0 {
 		return []models.URL{}, nil
 	}
@@ -150,7 +150,7 @@ func (s *Store) save() error {
 	state := &ServiceState{
 		URLs:     s.urls,
 		Users:    s.users,
-		UserURLs: s.user_urls,
+		UserURLs: s.userURLs,
 	}
 
 	file, err := os.OpenFile(s.filepath, os.O_WRONLY|os.O_CREATE, 0666)
@@ -181,7 +181,7 @@ func (s *Store) load() error {
 
 	s.urls = state.URLs
 	s.users = state.Users
-	s.user_urls = state.UserURLs
+	s.userURLs = state.UserURLs
 
 	return nil
 }

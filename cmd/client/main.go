@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/madatsci/urlshortener/internal/app/server/middleware"
 	"github.com/madatsci/urlshortener/pkg/random"
 )
 
@@ -36,7 +37,6 @@ type (
 )
 
 const endpoint = "http://localhost:8080"
-const auth_cookie_name = "auth_token"
 
 func main() {
 	client := &http.Client{
@@ -242,7 +242,7 @@ func doJSONRequest(client *http.Client, request *http.Request, result interface{
 
 func parseAuthToken(res *http.Response) string {
 	for _, c := range res.Cookies() {
-		if c.Name == auth_cookie_name {
+		if c.Name == middleware.DefaultCookieName {
 			fmt.Printf("Auth token:\n%s\n", c.Value)
 
 			return c.Value

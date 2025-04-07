@@ -125,14 +125,14 @@ func (s *Store) BatchCreateURL(ctx context.Context, userID string, urls []models
 	}
 	defer urlStmt.Close()
 
-	userUrlStmt, err := tx.PrepareContext(
+	userURLStmt, err := tx.PrepareContext(
 		ctx,
 		"INSERT INTO user_urls (id, user_id, url_id, is_deleted, created_at) VALUES ($1, $2, $3, $4, $5)",
 	)
 	if err != nil {
 		return err
 	}
-	defer userUrlStmt.Close()
+	defer userURLStmt.Close()
 
 	for _, url := range urls {
 		// TODO Handle integrity violation.
@@ -142,7 +142,7 @@ func (s *Store) BatchCreateURL(ctx context.Context, userID string, urls []models
 		}
 
 		// TODO Handle integrity violation.
-		_, err = userUrlStmt.ExecContext(ctx, uuid.NewString(), userID, url.ID, false, time.Now())
+		_, err = userURLStmt.ExecContext(ctx, uuid.NewString(), userID, url.ID, false, time.Now())
 		if err != nil {
 			return err
 		}
@@ -322,7 +322,7 @@ func (s *Store) linkURLtoUser(ctx context.Context, url models.URL, userID string
 	userURL := models.UserURL{
 		ID:        uuid.NewString(),
 		UserID:    userID,
-		UrlID:     url.ID,
+		URLID:     url.ID,
 		Deleted:   false,
 		CreatedAt: time.Now(),
 	}
@@ -332,7 +332,7 @@ func (s *Store) linkURLtoUser(ctx context.Context, url models.URL, userID string
 		"INSERT INTO user_urls (id, user_id, url_id, is_deleted, created_at) VALUES ($1, $2, $3, $4, $5)",
 		userURL.ID,
 		userURL.UserID,
-		userURL.UrlID,
+		userURL.URLID,
 		userURL.Deleted,
 		userURL.CreatedAt,
 	)
@@ -348,7 +348,7 @@ func (s *Store) geUserURLLink(ctx context.Context, userID, urlID string) (models
 		"SELECT id, user_id, url_id, is_deleted, created_at FROM user_urls WHERE user_id = $1 AND url_id = $2",
 		userID,
 		urlID,
-	).Scan(&link.ID, &link.UserID, &link.UrlID, &link.Deleted, &link.CreatedAt)
+	).Scan(&link.ID, &link.UserID, &link.URLID, &link.Deleted, &link.CreatedAt)
 
 	if err != nil {
 		return link, err

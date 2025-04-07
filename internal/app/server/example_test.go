@@ -30,18 +30,21 @@ func ExampleServer() {
 	shortURL := w.Body.String()
 	// Authorization token for future requests
 	authToken := parseAuthToken(w.Result())
+	w.Result().Body.Close()
 
 	// Get full URL
 	r = httptest.NewRequest(http.MethodGet, shortURL, nil)
 	w = httptest.NewRecorder()
 	s.mux.ServeHTTP(w, r)
 	fmt.Println(w.Code)
+	w.Result().Body.Close()
 
 	// Add URL via JSON
 	r = httptest.NewRequest(http.MethodPost, "/api/shorten", strings.NewReader(`{"url":"http://example.org"}`))
 	w = httptest.NewRecorder()
 	s.mux.ServeHTTP(w, r)
 	fmt.Println(w.Code)
+	w.Result().Body.Close()
 
 	// Add multiple URLs via JSON batch
 	data := `
@@ -54,6 +57,7 @@ func ExampleServer() {
 	w = httptest.NewRecorder()
 	s.mux.ServeHTTP(w, r)
 	fmt.Println(w.Code)
+	w.Result().Body.Close()
 
 	// Get user URLs
 	r = httptest.NewRequest(http.MethodGet, "/api/user/urls", nil)
@@ -64,6 +68,7 @@ func ExampleServer() {
 	w = httptest.NewRecorder()
 	s.mux.ServeHTTP(w, r)
 	fmt.Println(w.Code)
+	w.Result().Body.Close()
 
 	// Delete user URLs
 	r = httptest.NewRequest(http.MethodDelete, "/api/user/urls", strings.NewReader(`["LduvFKkQ", "hVKwFYrF"]`))
@@ -74,6 +79,7 @@ func ExampleServer() {
 	w = httptest.NewRecorder()
 	s.mux.ServeHTTP(w, r)
 	fmt.Println(w.Code)
+	w.Result().Body.Close()
 
 	// Output:
 	// 201

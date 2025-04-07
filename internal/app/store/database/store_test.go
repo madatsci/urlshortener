@@ -134,7 +134,7 @@ func TestCreateURL(t *testing.T) {
 		link, err := s.geUserURLLink(ctx, user.ID, url.ID)
 		require.NoError(t, err)
 		assert.Equal(t, user.ID, link.UserID)
-		assert.Equal(t, url.ID, link.UrlID)
+		assert.Equal(t, url.ID, link.URLID)
 		assert.Equal(t, false, link.Deleted)
 
 		listURLs, err := s.ListAllUrls(ctx)
@@ -172,13 +172,13 @@ func TestCreateURL(t *testing.T) {
 		link1, err := s.geUserURLLink(ctx, user1.ID, url.ID)
 		require.NoError(t, err)
 		assert.Equal(t, user1.ID, link1.UserID)
-		assert.Equal(t, url.ID, link1.UrlID)
+		assert.Equal(t, url.ID, link1.URLID)
 		assert.Equal(t, false, link1.Deleted)
 
 		link2, err := s.geUserURLLink(ctx, user2.ID, url.ID)
 		require.NoError(t, err)
 		assert.Equal(t, user2.ID, link2.UserID)
-		assert.Equal(t, url.ID, link2.UrlID)
+		assert.Equal(t, url.ID, link2.URLID)
 		assert.Equal(t, false, link2.Deleted)
 
 		listURLs, err := s.ListAllUrls(ctx)
@@ -266,7 +266,7 @@ func TestBatchCreateURL(t *testing.T) {
 		link, err := s.geUserURLLink(ctx, user.ID, url.ID)
 		require.NoError(t, err)
 		assert.Equal(t, user.ID, link.UserID)
-		assert.Equal(t, url.ID, link.UrlID)
+		assert.Equal(t, url.ID, link.URLID)
 		assert.Equal(t, false, link.Deleted)
 	}
 }
@@ -330,13 +330,13 @@ func TestListURLsByUserID(t *testing.T) {
 	err = s.CreateURL(ctx, user2.ID, url3)
 	require.NoError(t, err)
 
-	user1_urls, err := s.ListURLsByUserID(ctx, user1.ID)
+	user1URLs, err := s.ListURLsByUserID(ctx, user1.ID)
 	require.NoError(t, err)
-	assert.Equal(t, 2, len(user1_urls))
+	assert.Equal(t, 2, len(user1URLs))
 
-	user2_urls, err := s.ListURLsByUserID(ctx, user1.ID)
+	user2URLs, err := s.ListURLsByUserID(ctx, user1.ID)
 	require.NoError(t, err)
-	assert.Equal(t, 2, len(user2_urls))
+	assert.Equal(t, 2, len(user2URLs))
 }
 
 func TestSoftDeleteURL(t *testing.T) {
