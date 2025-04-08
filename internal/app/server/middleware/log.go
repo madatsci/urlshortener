@@ -22,12 +22,6 @@ func NewLogger(log *zap.SugaredLogger) *Logger {
 // Logger defines a Logger middleware handler.
 func (l *Logger) Logger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		cookies := make(map[string]string)
-		for _, c := range r.Cookies() {
-			cookies[c.Name] = c.Value
-		}
-		l.log.With("method", r.Method, "uri", r.RequestURI, "cookies", cookies, "headers", r.Header).Debug("received incoming request")
-
 		start := time.Now()
 
 		responseData := &responseData{
@@ -42,14 +36,13 @@ func (l *Logger) Logger(next http.Handler) http.Handler {
 
 		duration := time.Since(start)
 
-		l.log.Infoln(
+		l.log.With(
 			"uri", r.RequestURI,
 			"method", r.Method,
 			"status", responseData.status,
 			"duration", duration,
 			"size", responseData.size,
-			"response_header", lw.ResponseWriter.Header(),
-		)
+		).Info("processed request")
 	})
 }
 
