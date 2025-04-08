@@ -48,6 +48,7 @@ func (l *Logger) Logger(next http.Handler) http.Handler {
 			"status", responseData.status,
 			"duration", duration,
 			"size", responseData.size,
+			"response_header", lw.ResponseWriter.Header(),
 		)
 	})
 }
