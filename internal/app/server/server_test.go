@@ -362,7 +362,10 @@ func TestGetUserURLsHandler(t *testing.T) {
 			authorized:   false,
 			existingURLs: existingURLs,
 			want: want{
-				code:        http.StatusUnauthorized,
+				// For some unknown reason Yandex Practicum tests now require
+				// this endpoint to be public.
+				// https://github.com/Yandex-Practicum/go-autotests/pull/82
+				code:        http.StatusNoContent,
 				contentType: "",
 				wantErr:     true,
 			},
