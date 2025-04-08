@@ -22,6 +22,8 @@ func NewLogger(log *zap.SugaredLogger) *Logger {
 // Logger defines a Logger middleware handler.
 func (l *Logger) Logger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		l.log.With("method", r.Method, "uri", r.RequestURI).Debug("received incoming request")
+
 		start := time.Now()
 
 		responseData := &responseData{
