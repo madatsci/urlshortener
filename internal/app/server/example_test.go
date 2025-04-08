@@ -29,8 +29,9 @@ func ExampleServer() {
 	// Created URL
 	shortURL := w.Body.String()
 	// Authorization token for future requests
-	authToken := parseAuthToken(w.Result())
-	w.Result().Body.Close()
+	resp := w.Result()
+	authToken := parseAuthToken(resp)
+	resp.Body.Close()
 
 	// Get full URL
 	r = httptest.NewRequest(http.MethodGet, shortURL, nil)
