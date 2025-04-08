@@ -55,25 +55,24 @@ func New(config *config.Config, store store.Store, logger *zap.SugaredLogger) *S
 		Log:   logger,
 	})
 
-	r.Route("/", func(r chi.Router) {
-		// Public API
-		r.Route("/", func(r chi.Router) {
-			r.Use(authMiddleware.PublicAPIAuth)
-			r.Post("/", h.AddHandler)
-			r.Post("/api/shorten", h.AddHandlerJSON)
-			r.Post("/api/shorten/batch", h.AddHandlerJSONBatch)
-		})
-
-		// Private API
-		r.Route("/api/user", func(r chi.Router) {
-			r.Use(authMiddleware.PrivateAPIAuth)
-			r.Get("/urls", h.GetUserURLsHandler)
-			r.Delete("/urls", h.DeleteUserURLsHandler)
-		})
-
-		r.Get("/ping", h.PingHandler)
-		r.Get("/{slug}", h.GetHandler)
+	r.Group(func(r chi.Router) {
+		r.Use(authMiddleware.PublicAPIAuth)
+		r.Post("/", h.AddHandler)
+		r.Post("/api/shorten", h.AddHandlerJSON)
+		r.Post("/api/shorten/batch", h.AddHandlerJSONBatch)
+		// For some unknown reason Yandex Practicum tests now require
+		// this endpoint to be public.
+		// https://github.com/Yandex-Practicum/go-autotests/pull/82
+		r.Get("/api/user/urls", h.GetUserURLsHandler)
 	})
+
+	r.Group(func(r chi.Router) {
+		r.Use(authMiddleware.PrivateAPIAuth)
+		r.Delete("/api/user/urls", h.DeleteUserURLsHandler)
+	})
+
+	r.Get("/ping", h.PingHandler)
+	r.Get("/{slug}", h.GetHandler)
 
 	server.h = h
 	server.mux = r
