@@ -9,6 +9,8 @@ import (
 	"context"
 	"time"
 
+	"go.uber.org/zap"
+
 	"github.com/madatsci/urlshortener/internal/app/config"
 	"github.com/madatsci/urlshortener/internal/app/database"
 	"github.com/madatsci/urlshortener/internal/app/logger"
@@ -17,7 +19,6 @@ import (
 	dbstore "github.com/madatsci/urlshortener/internal/app/store/database"
 	fstore "github.com/madatsci/urlshortener/internal/app/store/file"
 	memstore "github.com/madatsci/urlshortener/internal/app/store/memory"
-	"go.uber.org/zap"
 )
 
 // App is the top-level application container for the URL shortener service.

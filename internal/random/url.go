@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	"github.com/madatsci/urlshortener/internal/app/models"
 	"github.com/madatsci/urlshortener/pkg/random"
 )

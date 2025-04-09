@@ -12,12 +12,13 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"go.uber.org/zap"
+
 	"github.com/madatsci/urlshortener/internal/app/config"
 	"github.com/madatsci/urlshortener/internal/app/models"
 	"github.com/madatsci/urlshortener/internal/app/server/middleware"
 	"github.com/madatsci/urlshortener/internal/app/store"
 	"github.com/madatsci/urlshortener/pkg/random"
-	"go.uber.org/zap"
 )
 
 // Handlers is a service that provides HTTP handlers for REST API endpoints.

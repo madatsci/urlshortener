@@ -4,9 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/madatsci/urlshortener/internal/random"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/madatsci/urlshortener/internal/random"
 )
 
 func TestCreateUser(t *testing.T) {

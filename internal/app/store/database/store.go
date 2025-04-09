@@ -11,9 +11,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/pressly/goose/v3"
+
 	"github.com/madatsci/urlshortener/internal/app/models"
 	"github.com/madatsci/urlshortener/internal/app/store"
-	"github.com/pressly/goose/v3"
 )
 
 //go:embed migrations/*.sql

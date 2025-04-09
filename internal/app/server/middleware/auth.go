@@ -7,10 +7,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"go.uber.org/zap"
+
 	"github.com/madatsci/urlshortener/internal/app/models"
 	"github.com/madatsci/urlshortener/internal/app/store"
 	"github.com/madatsci/urlshortener/pkg/jwt"
-	"go.uber.org/zap"
 )
 
 // DefaultCookieName is the default cookie name for authentication token.

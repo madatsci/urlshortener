@@ -6,12 +6,13 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"go.uber.org/zap"
+
 	"github.com/madatsci/urlshortener/internal/app/config"
 	"github.com/madatsci/urlshortener/internal/app/handlers"
 	mw "github.com/madatsci/urlshortener/internal/app/server/middleware"
 	"github.com/madatsci/urlshortener/internal/app/store"
 	"github.com/madatsci/urlshortener/pkg/jwt"
-	"go.uber.org/zap"
 )
 
 // Server is the HTTP server for the URL shortener service.
