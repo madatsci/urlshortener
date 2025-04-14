@@ -1,8 +1,15 @@
+// Package app initializes and runs the URL shortener service.
+//
+// It wires together the configuration, storage layer, HTTP server,
+// and logging components. The App type provides the entry point for
+// starting the service. It still does not handle graceful shutdown yet.
 package app
 
 import (
 	"context"
 	"time"
+
+	"go.uber.org/zap"
 
 	"github.com/madatsci/urlshortener/internal/app/config"
 	"github.com/madatsci/urlshortener/internal/app/database"
@@ -12,28 +19,30 @@ import (
 	dbstore "github.com/madatsci/urlshortener/internal/app/store/database"
 	fstore "github.com/madatsci/urlshortener/internal/app/store/file"
 	memstore "github.com/madatsci/urlshortener/internal/app/store/memory"
-	"go.uber.org/zap"
 )
 
-type (
-	App struct {
-		config *config.Config
-		store  store.Store
-		logger *zap.SugaredLogger
-		server *server.Server
-	}
+// App is the top-level application container for the URL shortener service.
+//
+// Use New to create a new instance and Start to start the application.
+type App struct {
+	config *config.Config
+	store  store.Store
+	logger *zap.SugaredLogger
+	server *server.Server
+}
 
-	Options struct {
-		ServerAddr      string
-		BaseURL         string
-		FileStoragePath string
-		DatabaseDSN     string
-		TokenSecret     []byte
-		TokenDuration   time.Duration
-	}
-)
+// Options contains all dependencies required to build App.
+type Options struct {
+	ServerAddr      string
+	BaseURL         string
+	FileStoragePath string
+	DatabaseDSN     string
+	TokenSecret     []byte
+	TokenDuration   time.Duration
+}
 
-// New creates new App.
+// New creates a new App instance by initializing all core components,
+// including the configuration, logger, storage layer, and HTTP server.
 func New(ctx context.Context, opts Options) (*App, error) {
 	config := config.New(opts.ServerAddr, opts.BaseURL, opts.FileStoragePath, opts.DatabaseDSN, opts.TokenSecret, opts.TokenDuration)
 
@@ -59,7 +68,7 @@ func New(ctx context.Context, opts Options) (*App, error) {
 	return app, nil
 }
 
-// Start starts the application.
+// Start starts the URL shortener service and blocks until it is stopped.
 func (a *App) Start() error {
 	return a.server.Start()
 }

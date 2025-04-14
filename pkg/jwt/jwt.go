@@ -1,3 +1,4 @@
+// Package jwt implements operations with JWT tokens.
 package jwt
 
 import (
@@ -10,29 +11,31 @@ import (
 
 var errInvalidToken = errors.New("invalid JWT token")
 
-type (
-	JWT struct {
-		Secret   []byte
-		Duration time.Duration
-		claims   Claims
-	}
+// JWT represents data required to create and sign JWT token.
+//
+// Use New to create a new instance of JWT.
+type JWT struct {
+	Secret []byte
+	claims Claims
+}
 
-	Claims struct {
-		jwt.RegisteredClaims
-		UserID string
-	}
+// Claims represents JWT token claims.
+type Claims struct {
+	jwt.RegisteredClaims
+	UserID string
+}
 
-	Options struct {
-		Secret   []byte
-		Duration time.Duration
-		Issuer   string
-	}
-)
+// Options is used to initialize a new JWT.
+type Options struct {
+	Secret   []byte
+	Duration time.Duration
+	Issuer   string
+}
 
+// New creates a new instance of JWT.
 func New(opts Options) *JWT {
 	return &JWT{
-		Secret:   opts.Secret,
-		Duration: opts.Duration,
+		Secret: opts.Secret,
 		claims: Claims{
 			RegisteredClaims: jwt.RegisteredClaims{
 				ExpiresAt: jwt.NewNumericDate(time.Now().Add(opts.Duration)),

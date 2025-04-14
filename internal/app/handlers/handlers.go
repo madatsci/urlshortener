@@ -1,3 +1,4 @@
+// Package handlers implements REST API request handlers.
 package handlers
 
 import (
@@ -11,29 +12,56 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"go.uber.org/zap"
+
 	"github.com/madatsci/urlshortener/internal/app/config"
 	"github.com/madatsci/urlshortener/internal/app/models"
 	"github.com/madatsci/urlshortener/internal/app/server/middleware"
 	"github.com/madatsci/urlshortener/internal/app/store"
-	"go.uber.org/zap"
+	"github.com/madatsci/urlshortener/pkg/random"
 )
 
-type (
-	Handlers struct {
-		s   store.Store
-		c   *config.Config
-		log *zap.SugaredLogger
-	}
-)
+// Handlers is a service that provides HTTP handlers for REST API endpoints.
+//
+// It wires storage, configuration, and logger service. It also uses a channel
+// for asynchronous processing requests for deleting URLs.
+type Handlers struct {
+	s   store.Store
+	c   *config.Config
+	log *zap.SugaredLogger
+
+	delReqChan chan deleteURLRequest
+}
+
+type deleteURLRequest struct {
+	userID string
+	slug   string
+}
+
+const slugLength = 8
 
 // New creates new Handlers.
 func New(config *config.Config, logger *zap.SugaredLogger, store store.Store) *Handlers {
-	return &Handlers{c: config, s: store, log: logger}
+	h := &Handlers{
+		c:          config,
+		s:          store,
+		log:        logger,
+		delReqChan: make(chan deleteURLRequest, 1024),
+	}
+
+	go h.flushDeleteURLRequests(context.TODO())
+
+	return h
 }
 
 // AddHandler handles adding a new URL via text/plain request.
 func (h *Handlers) AddHandler(w http.ResponseWriter, r *http.Request) {
-	userID := parseUserID(r)
+	userID, err := ensureUserID(r)
+	if err != nil {
+		h.log.With("handler", "AddHandler").Error(err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -51,7 +79,7 @@ func (h *Handlers) AddHandler(w http.ResponseWriter, r *http.Request) {
 
 		var alreadyExists *store.AlreadyExistsError
 		if errors.As(err, &alreadyExists) {
-			shortURL = h.generateShortURLFromSlug(alreadyExists.URL.Short)
+			shortURL = h.generateShortURLFromSlug(alreadyExists.URL.Slug)
 
 			w.Header().Set("content-type", "text/plain")
 			w.WriteHeader(http.StatusConflict)
@@ -76,7 +104,12 @@ func (h *Handlers) AddHandler(w http.ResponseWriter, r *http.Request) {
 
 // AddHandlerJSON handles adding a new URL via application/json request.
 func (h *Handlers) AddHandlerJSON(w http.ResponseWriter, r *http.Request) {
-	userID := parseUserID(r)
+	userID, err := ensureUserID(r)
+	if err != nil {
+		h.log.With("handler", "AddHandlerJSON").Error(err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
 	var request models.ShortenRequest
 	dec := json.NewDecoder(r.Body)
@@ -101,7 +134,7 @@ func (h *Handlers) AddHandlerJSON(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusConflict)
 
 			response := models.ShortenResponse{
-				Result: h.generateShortURLFromSlug(alreadyExists.URL.Short),
+				Result: h.generateShortURLFromSlug(alreadyExists.URL.Slug),
 			}
 
 			enc := json.NewEncoder(w)
@@ -129,9 +162,14 @@ func (h *Handlers) AddHandlerJSON(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// TODO Add a test case for this.
+// AddHandlerJSONBatch handles adding a batch of URLs via application/json request.
 func (h *Handlers) AddHandlerJSONBatch(w http.ResponseWriter, r *http.Request) {
-	userID := parseUserID(r)
+	userID, err := ensureUserID(r)
+	if err != nil {
+		h.log.With("handler", "AddHandlerJSONBatch").Error(err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
 	var request models.ShortenBatchRequest
 	dec := json.NewDecoder(r.Body)
@@ -146,18 +184,22 @@ func (h *Handlers) AddHandlerJSONBatch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	urls := make([]store.URL, 0, len(request.URLs))
+	urls := make([]models.URL, 0, len(request.URLs))
 	responseURLs := make([]models.ShortenBatchResponseItem, 0, len(request.URLs))
 	for _, reqURL := range request.URLs {
+		if reqURL.OriginalURL == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
 		// TODO Fix copy-paste (see h.storeShortURL()).
-		slug := generateSlug(slugLength)
+		slug := random.ASCIIString(slugLength)
 		shortURL := h.generateShortURLFromSlug(slug)
 
-		url := store.URL{
+		url := models.URL{
 			ID:            uuid.NewString(),
-			UserID:        userID,
 			CorrelationID: reqURL.CorrelationID,
-			Short:         slug,
+			Slug:          slug,
 			Original:      reqURL.OriginalURL,
 			CreatedAt:     time.Now(),
 		}
@@ -170,7 +212,7 @@ func (h *Handlers) AddHandlerJSONBatch(w http.ResponseWriter, r *http.Request) {
 		responseURLs = append(responseURLs, responseURL)
 	}
 
-	err := h.s.AddBatch(r.Context(), urls)
+	err = h.s.BatchCreateURL(r.Context(), userID, urls)
 	if err != nil {
 		h.handleError("AddHandlerJSONBatch", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -196,7 +238,7 @@ func (h *Handlers) AddHandlerJSONBatch(w http.ResponseWriter, r *http.Request) {
 func (h *Handlers) GetHandler(w http.ResponseWriter, r *http.Request) {
 	slug := chi.URLParam(r, "slug")
 
-	url, err := h.s.Get(r.Context(), slug)
+	url, err := h.s.GetURL(r.Context(), slug)
 	if err != nil {
 		h.handleError("GetHandler", err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -222,7 +264,7 @@ func (h *Handlers) GetUserURLsHandler(w http.ResponseWriter, r *http.Request) {
 
 	h.log.With("userID", userID).Debug("fetching user urls")
 
-	urls, err := h.s.ListByUserID(r.Context(), userID)
+	urls, err := h.s.ListURLsByUserID(r.Context(), userID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -236,7 +278,7 @@ func (h *Handlers) GetUserURLsHandler(w http.ResponseWriter, r *http.Request) {
 	responseURLs := make([]models.UserURLItem, 0, len(urls))
 	for _, url := range urls {
 		responseURL := models.UserURLItem{
-			ShortURL:    h.generateShortURLFromSlug(url.Short),
+			ShortURL:    h.generateShortURLFromSlug(url.Slug),
 			OriginalURL: url.Original,
 		}
 		responseURLs = append(responseURLs, responseURL)
@@ -279,10 +321,11 @@ func (h *Handlers) DeleteUserURLsHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if err = h.s.SoftDelete(r.Context(), userID, request.Slugs); err != nil {
-		h.handleError("DeleteUserURLsHandler", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+	for _, slug := range request.Slugs {
+		h.delReqChan <- deleteURLRequest{
+			userID: userID,
+			slug:   slug,
+		}
 	}
 
 	w.WriteHeader(http.StatusAccepted)
@@ -304,21 +347,17 @@ func (h *Handlers) Store() store.Store {
 }
 
 func (h *Handlers) storeShortURL(ctx context.Context, longURL, userID string) (string, error) {
-	slug := generateSlug(slugLength)
+	slug := random.ASCIIString(slugLength)
 	shortURL := h.generateShortURLFromSlug(slug)
 
-	url := store.URL{
-		ID:     uuid.NewString(),
-		UserID: userID,
-
-		// TODO fix naming ambiguity:
-		// slug is just a random string, while shortURL is the complete URL which contains the slug.
-		Short:     slug,
+	url := models.URL{
+		ID:        uuid.NewString(),
+		Slug:      slug,
 		Original:  longURL,
 		CreatedAt: time.Now(),
 	}
 
-	return shortURL, h.s.Add(ctx, url)
+	return shortURL, h.s.CreateURL(ctx, userID, url)
 }
 
 func (h *Handlers) generateShortURLFromSlug(slug string) string {
@@ -329,13 +368,31 @@ func (h *Handlers) handleError(method string, err error) {
 	h.log.Errorln("error handling request", "method", method, "err", err)
 }
 
-func parseUserID(r *http.Request) string {
-	userIDCtx := r.Context().Value(middleware.AuthenticatedUserKey)
-	if userID, ok := userIDCtx.(string); ok {
-		return userID
-	}
+func (h *Handlers) flushDeleteURLRequests(ctx context.Context) {
+	ticker := time.NewTicker(10 * time.Second)
+	var reqs []deleteURLRequest
 
-	return ""
+	for {
+		select {
+		case req := <-h.delReqChan:
+			reqs = append(reqs, req)
+		case <-ticker.C:
+			if len(reqs) == 0 {
+				continue
+			}
+
+			for _, req := range reqs {
+				if err := h.s.SoftDeleteURL(ctx, req.userID, req.slug); err != nil {
+					h.log.Errorln("error deleting url", "err", err)
+					continue
+				}
+
+				h.log.With("userID", req.userID, "slug", req.slug).Info("deleted url")
+			}
+
+			reqs = nil
+		}
+	}
 }
 
 func ensureUserID(r *http.Request) (string, error) {

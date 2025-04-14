@@ -1,4 +1,4 @@
-ITER_COUNT = 15
+ITER_COUNT = 18
 
 .PHONY: build
 build:
@@ -14,7 +14,7 @@ run:
 
 .PHONY: run_with_file
 run_with_file:
-	./cmd/shortener/shortener -f './tmp/storage.txt'
+	./cmd/shortener/shortener -f './tmp/storage.json'
 
 .PHONY: run_with_db
 run_with_db:
@@ -30,6 +30,10 @@ test:
 		fi; \
 	done
 	echo "Tests completed."
+
+.PHONY: test_with_db
+test_with_db:
+	DATABASE_DSN=postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable go test -cover ./...
 
 .PHONY: test_iter1
 test_iter1:
@@ -65,7 +69,7 @@ test_iter8:
 
 .PHONY: test_iter9
 test_iter9:
-	./shortenertestbeta -test.v -test.run=^TestIteration9$$ -binary-path=cmd/shortener/shortener -source-path=. -file-storage-path=./tmp/storage.txt
+	./shortenertestbeta -test.v -test.run=^TestIteration9$$ -binary-path=cmd/shortener/shortener -source-path=. -file-storage-path=./tmp/storage.json
 
 .PHONY: test_iter10
 test_iter10:
@@ -90,3 +94,31 @@ test_iter14:
 .PHONY: test_iter15
 test_iter15:
 	./shortenertestbeta -test.v -test.run=^TestIteration15$$ -binary-path=cmd/shortener/shortener -source-path=. -database-dsn='postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable'
+
+.PHONY: test_iter16
+test_iter16:
+	./shortenertestbeta -test.v -test.run=^TestIteration16$$ -binary-path=cmd/shortener/shortener -source-path=. -database-dsn='postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable'
+
+.PHONY: test_iter17
+test_iter17:
+	./shortenertestbeta -test.v -test.run=^TestIteration17$$ -binary-path=cmd/shortener/shortener -source-path=. -database-dsn='postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable'
+
+.PHONY: test_iter18
+test_iter18:
+	./shortenertestbeta -test.v -test.run=^TestIteration18$$ -binary-path=cmd/shortener/shortener -source-path=. -database-dsn='postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable'
+
+.PHONY: base_profile_file
+base_profile:
+	curl -v "http://localhost:8080/debug/pprof/heap?seconds=40" > profiles/base.pprof
+
+.PHONY: serve_base_profile_url
+serve_base_profile_url:
+	go tool pprof -http=":9090" -seconds=40 http://localhost:8080/debug/pprof/heap
+
+.PHONY: serve_base_profile_file
+serve_base_profile_file:
+	go tool pprof -http=":9090" -seconds=40 profiles/base.pprof
+
+.PHONY: compare_profiles
+compare_profiles:
+	go tool pprof -top -diff_base=profiles/base.pprof profiles/result.pprof

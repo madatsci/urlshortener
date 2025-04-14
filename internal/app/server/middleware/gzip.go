@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+// Gzip is a gzip encoding middleware handler.
 func Gzip(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ow := w
@@ -47,14 +48,17 @@ func newCompressWriter(w http.ResponseWriter) *compressWriter {
 	}
 }
 
+// Header is an implementation of http.ResponseWriter interface.
 func (c *compressWriter) Header() http.Header {
 	return c.w.Header()
 }
 
+// Write is an implementation of http.ResponseWriter interface.
 func (c *compressWriter) Write(p []byte) (int, error) {
 	return c.zw.Write(p)
 }
 
+// WriteHeader is an implementation of http.ResponseWriter interface.
 func (c *compressWriter) WriteHeader(statusCode int) {
 	if statusCode < 300 {
 		c.w.Header().Set("Content-Encoding", "gzip")
@@ -62,6 +66,7 @@ func (c *compressWriter) WriteHeader(statusCode int) {
 	c.w.WriteHeader(statusCode)
 }
 
+// Close closes the gzip Writer.
 func (c *compressWriter) Close() error {
 	return c.zw.Close()
 }
@@ -83,10 +88,12 @@ func newCompressReader(r io.ReadCloser) (*compressReader, error) {
 	}, nil
 }
 
+// Read implements io.Reader.
 func (c compressReader) Read(p []byte) (n int, err error) {
 	return c.zr.Read(p)
 }
 
+// Close closes the Reader.
 func (c *compressReader) Close() error {
 	if err := c.r.Close(); err != nil {
 		return err

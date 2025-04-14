@@ -1,48 +1,50 @@
+// Package store represents an interface for data storage.
+// It also defines common errors.
 package store
 
 import (
 	"context"
-	"time"
+
+	"github.com/madatsci/urlshortener/internal/app/models"
 )
 
+// Store is a storage interface.
 type Store interface {
-	// Add adds a new URL to the storage.
-	Add(ctx context.Context, url URL) error
+	// CreateUser registers new user.
+	CreateUser(ctx context.Context, user models.User) error
 
-	// AddBatch adds a batch of URLs to the storage.
-	AddBatch(ctx context.Context, urls []URL) error
+	// GetUser fetches user by ID.
+	GetUser(ctx context.Context, userID string) (models.User, error)
 
-	// Get retrieves a URL by its slug from the storage.
-	Get(ctx context.Context, slug string) (URL, error)
+	// CreateURL adds a new URL to the storage.
+	CreateURL(ctx context.Context, userID string, url models.URL) error
 
-	// ListByUserID returns all URLs created by the specified user.
-	ListByUserID(ctx context.Context, userID string) ([]URL, error)
+	// BatchCreateURL adds a batch of URLs to the storage.
+	BatchCreateURL(ctx context.Context, userID string, urls []models.URL) error
 
-	// ListAll returns the full map of stored URLs.
-	ListAll(ctx context.Context) map[string]URL
+	// GetURL retrieves a URL by its slug from the storage.
+	GetURL(ctx context.Context, slug string) (models.URL, error)
 
-	// ListAll marks URLs as deleted.
-	SoftDelete(ctx context.Context, userID string, slugs []string) error
+	// ListURLsByUserID returns all URLs created by the specified user.
+	ListURLsByUserID(ctx context.Context, userID string) ([]models.URL, error)
+
+	// ListAllUrls returns the full map of stored URLs.
+	ListAllUrls(ctx context.Context) (map[string]models.URL, error)
+
+	// SoftDeleteURL marks URLs as deleted.
+	SoftDeleteURL(ctx context.Context, userID string, slug string) error
 
 	// Ping is a storage healthcheck.
 	Ping(ctx context.Context) error
 }
 
-type URL struct {
-	ID            string    `json:"id"`
-	UserID        string    `json:"user_id"`
-	CorrelationID string    `json:"correlation_id"`
-	Short         string    `json:"short_url"`
-	Original      string    `json:"original_url"`
-	CreatedAt     time.Time `json:"created_at"`
-	Deleted       bool      `json:"is_deleted"`
-}
-
+// AlreadyExistsError represents RDB integrity constraint violation error on inserts.
 type AlreadyExistsError struct {
 	Err error
-	URL URL
+	URL models.URL
 }
 
+// Error is an implementation of error built-in interface.
 func (e *AlreadyExistsError) Error() string {
 	return e.Err.Error()
 }

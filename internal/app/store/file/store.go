@@ -1,29 +1,45 @@
-package storage
+// Package filestore implements data storage in a file.
+package filestore
 
 import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"sync"
 
-	"github.com/madatsci/urlshortener/internal/app/store"
+	"github.com/madatsci/urlshortener/internal/app/models"
 )
 
 // Store is an implementation of store.Store interface which uses a file to save data on disk.
+//
+// Use New to create an instance of Store.
 type Store struct {
 	filepath string
-	// TODO Maybe it would be better to use pointer *store.URL
-	urls map[string]store.URL
-	mu   sync.Mutex
+	urls     map[string]models.URL
+	users    map[string]models.User
+	userURLs map[string][]string
+	mu       sync.Mutex
+}
+
+// ServiceState is used to store service state in file.
+//
+// It is JSON-encoded and then persisted to file.
+type ServiceState struct {
+	URLs     map[string]models.URL  `json:"urls"`
+	Users    map[string]models.User `json:"users"`
+	UserURLs map[string][]string    `json:"user_urls"`
 }
 
 // New creates a new file storage.
 func New(filepath string) (*Store, error) {
 	s := &Store{
 		filepath: filepath,
-		urls:     make(map[string]store.URL),
+		urls:     make(map[string]models.URL),
+		users:    make(map[string]models.User),
+		userURLs: make(map[string][]string),
 	}
 
 	if err := s.load(); err != nil {
@@ -33,47 +49,59 @@ func New(filepath string) (*Store, error) {
 	return s, nil
 }
 
-func (s *Store) Add(_ context.Context, url store.URL) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	s.urls[url.Short] = url
-
-	file, err := os.OpenFile(s.filepath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		return err
+// CreateUser registers new user.
+func (s *Store) CreateUser(_ context.Context, user models.User) error {
+	if _, ok := s.users[user.ID]; !ok {
+		s.users[user.ID] = user
 	}
-	defer file.Close()
 
-	return json.NewEncoder(file).Encode(&url)
+	return s.save()
 }
 
-// TODO Add a test case for this.
-func (s *Store) AddBatch(_ context.Context, urls []store.URL) error {
+// GetUser fetches user by ID.
+//
+// It returns error if user is not found.
+func (s *Store) GetUser(_ context.Context, userID string) (models.User, error) {
+	if user, ok := s.users[userID]; ok {
+		return user, nil
+	}
+
+	return models.User{}, fmt.Errorf("user with id %s not found", userID)
+}
+
+// CreateURL adds a new URL to the storage.
+//
+// It also links the URL to the current user.
+func (s *Store) CreateURL(_ context.Context, userID string, url models.URL) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	file, err := os.OpenFile(s.filepath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
+	s.urls[url.Slug] = url
+	s.userURLs[userID] = append(s.userURLs[userID], url.Slug)
 
-	enc := json.NewEncoder(file)
+	return s.save()
+}
+
+// BatchCreateURL adds a batch of URLs to the storage.
+//
+// It also links the created URLs to the current user.
+func (s *Store) BatchCreateURL(_ context.Context, userID string, urls []models.URL) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
 	for _, url := range urls {
-		s.urls[url.Short] = url
-
-		if err := enc.Encode(&url); err != nil {
-			return err
-		}
+		s.urls[url.Slug] = url
+		s.userURLs[userID] = append(s.userURLs[userID], url.Slug)
 	}
 
-	return nil
+	return s.save()
 }
 
-func (s *Store) Get(_ context.Context, slug string) (store.URL, error) {
-	var url store.URL
+// GetURL retrieves a URL by its slug from the storage.
+//
+// It returns error if URL is not found.
+func (s *Store) GetURL(_ context.Context, slug string) (models.URL, error) {
+	var url models.URL
 
 	url, ok := s.urls[slug]
 	if !ok {
@@ -83,10 +111,15 @@ func (s *Store) Get(_ context.Context, slug string) (store.URL, error) {
 	return url, nil
 }
 
-func (s *Store) ListByUserID(_ context.Context, userID string) ([]store.URL, error) {
-	res := make([]store.URL, 0)
-	for _, url := range s.urls {
-		if url.UserID == userID {
+// ListURLsByUserID returns all URLs created by the specified user.
+func (s *Store) ListURLsByUserID(_ context.Context, userID string) ([]models.URL, error) {
+	slugs := s.userURLs[userID]
+	if len(slugs) == 0 {
+		return []models.URL{}, nil
+	}
+	res := make([]models.URL, 0)
+	for _, slug := range slugs {
+		if url, ok := s.urls[slug]; ok {
 			res = append(res, url)
 		}
 	}
@@ -94,18 +127,39 @@ func (s *Store) ListByUserID(_ context.Context, userID string) ([]store.URL, err
 	return res, nil
 }
 
-func (s *Store) ListAll(_ context.Context) map[string]store.URL {
-	return s.urls
+// ListAllUrls returns the full map of stored URLs.
+//
+// This function should not be used in production.
+func (s *Store) ListAllUrls(_ context.Context) (map[string]models.URL, error) {
+	return s.urls, nil
 }
 
-func (s *Store) SoftDelete(_ context.Context, userID string, slugs []string) error {
+// SoftDeleteURL marks URLs as deleted.
+func (s *Store) SoftDeleteURL(_ context.Context, userID string, slug string) error {
 	// TODO implement
 	return nil
 }
 
+// Ping is a storage healthcheck.
 func (s *Store) Ping(_ context.Context) error {
 	// Nothing to ping here.
 	return nil
+}
+
+func (s *Store) save() error {
+	state := &ServiceState{
+		URLs:     s.urls,
+		Users:    s.users,
+		UserURLs: s.userURLs,
+	}
+
+	file, err := os.OpenFile(s.filepath, os.O_WRONLY|os.O_CREATE, 0666)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	return json.NewEncoder(file).Encode(&state)
 }
 
 func (s *Store) load() error {
@@ -116,19 +170,18 @@ func (s *Store) load() error {
 	defer file.Close()
 
 	decoder := json.NewDecoder(file)
-	urls := make(map[string]store.URL)
+	var state *ServiceState
 
-	for {
-		url := &store.URL{}
-		if err := decoder.Decode(&url); err != nil {
-			if err == io.EOF {
-				break
-			}
-			return err
+	if err := decoder.Decode(&state); err != nil {
+		if err == io.EOF {
+			return nil
 		}
-		urls[url.Short] = *url
+		return err
 	}
 
-	s.urls = urls
+	s.urls = state.URLs
+	s.users = state.Users
+	s.userURLs = state.UserURLs
+
 	return nil
 }
