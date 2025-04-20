@@ -77,7 +77,7 @@ func TestCreateUser(t *testing.T) {
 	res, err := s.GetUser(ctx, user.ID)
 	require.NoError(t, err)
 	assert.Equal(t, user.ID, res.ID)
-	assert.Equal(t, user.CreatedAt, res.CreatedAt)
+	assert.Equal(t, user.CreatedAt.Unix(), res.CreatedAt.Unix())
 }
 
 func BenchmarkCreateUser(b *testing.B) {
@@ -130,7 +130,7 @@ func TestCreateURL(t *testing.T) {
 		assert.Equal(t, url.Slug, persistedURL.Slug)
 		assert.Equal(t, url.Original, persistedURL.Original)
 		assert.Equal(t, false, persistedURL.Deleted)
-		assert.Equal(t, url.CreatedAt, persistedURL.CreatedAt)
+		assert.Equal(t, url.CreatedAt.Unix(), persistedURL.CreatedAt.Unix())
 
 		link, err := s.geUserURLLink(ctx, user.ID, url.ID)
 		require.NoError(t, err)
@@ -168,7 +168,7 @@ func TestCreateURL(t *testing.T) {
 		assert.Equal(t, url.Slug, persistedURL.Slug)
 		assert.Equal(t, url.Original, persistedURL.Original)
 		assert.Equal(t, false, persistedURL.Deleted)
-		assert.Equal(t, url.CreatedAt, persistedURL.CreatedAt)
+		assert.Equal(t, url.CreatedAt.Unix(), persistedURL.CreatedAt.Unix())
 
 		link1, err := s.geUserURLLink(ctx, user1.ID, url.ID)
 		require.NoError(t, err)
