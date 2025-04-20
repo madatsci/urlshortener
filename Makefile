@@ -35,9 +35,9 @@ test:
 test_with_db:
 	DATABASE_DSN=postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable go test -cover ./...
 
-.PHONY: test_with_coverprofile
-test_with_coverprofile:
-	DATABASE_DSN=postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable go test -coverprofile=coverage.txt ./...
+.PHONY: ci_test_with_coverprofile
+ci_test_with_coverprofile:
+	DATABASE_DSN=postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable go test -coverprofile=coverage.txt ./...
 
 .PHONY: test_iter1
 test_iter1:
