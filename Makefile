@@ -8,6 +8,10 @@ build:
 lint:
 	golangci-lint run
 
+.PHONY: check
+check:
+	./cmd/staticlint/multichecker ./...
+
 .PHONY: run
 run:
 	./cmd/shortener/shortener
