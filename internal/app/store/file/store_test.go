@@ -16,7 +16,7 @@ func TestCreateUser(t *testing.T) {
 	s, err := New(filepath)
 	require.NoError(t, err)
 	defer func() {
-		err := os.Remove(filepath)
+		err = os.Remove(filepath)
 		require.NoError(t, err)
 	}()
 
@@ -57,7 +57,7 @@ func TestCreateURL(t *testing.T) {
 	s, err := New(filepath)
 	require.NoError(t, err)
 	defer func() {
-		err := os.Remove(filepath)
+		err = os.Remove(filepath)
 		require.NoError(t, err)
 	}()
 
@@ -70,7 +70,7 @@ func TestCreateURL(t *testing.T) {
 	user := random.RandomUser()
 	urls := random.RandomURLs(3)
 	for _, u := range urls {
-		err := s.CreateURL(ctx, user.ID, u)
+		err = s.CreateURL(ctx, user.ID, u)
 		require.NoError(t, err)
 	}
 
@@ -115,7 +115,7 @@ func TestBatchCreateURL(t *testing.T) {
 	s, err := New(filepath)
 	require.NoError(t, err)
 	defer func() {
-		err := os.Remove(filepath)
+		err = os.Remove(filepath)
 		require.NoError(t, err)
 	}()
 
@@ -167,7 +167,7 @@ func TestListURLsByUserID(t *testing.T) {
 	s, err := New(filepath)
 	require.NoError(t, err)
 	defer func() {
-		err := os.Remove(filepath)
+		err = os.Remove(filepath)
 		require.NoError(t, err)
 	}()
 

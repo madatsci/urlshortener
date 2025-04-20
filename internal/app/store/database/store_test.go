@@ -121,7 +121,7 @@ func TestCreateURL(t *testing.T) {
 		require.NoError(t, err)
 
 		url := random.RandomURL()
-		err := s.CreateURL(ctx, user.ID, url)
+		err = s.CreateURL(ctx, user.ID, url)
 		require.NoError(t, err)
 
 		persistedURL, err := s.GetURL(ctx, url.Slug)
