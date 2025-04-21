@@ -34,19 +34,14 @@ func run(pass *analysis.Pass) (interface{}, error) {
 		}
 	}
 	for _, file := range pass.Files {
-		ast.Inspect(file, func(node ast.Node) bool {
-			if file.Name.Name == "main" {
-				for _, decl := range file.Decls {
-					if x, ok := decl.(*ast.FuncDecl); ok {
-						if x.Name.Name == "main" {
-							bodyFunc(x.Body)
-						}
-					}
-				}
+		if file.Name.Name != "main" {
+			continue
+		}
+		for _, decl := range file.Decls {
+			if x, ok := decl.(*ast.FuncDecl); ok && x.Name.Name == "main" {
+				bodyFunc(x.Body)
 			}
-
-			return true
-		})
+		}
 	}
 	return nil, nil
 }
