@@ -1,6 +1,9 @@
 package main
 
 import (
+	"github.com/madatsci/urlshortener/cmd/staticlint/osexitanalyzer"
+
+	gocritic "github.com/go-critic/go-critic/checkers/analyzer"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/multichecker"
 	"golang.org/x/tools/go/analysis/passes/printf"
@@ -17,6 +20,8 @@ func main() {
 		printf.Analyzer,
 		shadow.Analyzer,
 		structtag.Analyzer,
+		gocritic.Analyzer,
+		osexitanalyzer.OsExitAnalyzer,
 	}
 
 	for _, v := range staticcheck.Analyzers {
