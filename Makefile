@@ -4,6 +4,10 @@ ITER_COUNT = 18
 build:
 	cd cmd/shortener && go build -o shortener *.go
 
+.PHONY: build_checker
+build_checker:
+	go build -o ./cmd/staticlint/multichecker ./cmd/staticlint/multichecker.go
+
 .PHONY: lint
 lint:
 	golangci-lint run
