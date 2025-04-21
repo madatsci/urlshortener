@@ -75,8 +75,8 @@ func TestCreateURL(t *testing.T) {
 	}
 
 	for _, u := range urls {
-		res, err := s.GetURL(ctx, u.Slug)
-		require.NoError(t, err)
+		res, getErr := s.GetURL(ctx, u.Slug)
+		require.NoError(t, getErr)
 		assert.Equal(t, u.Original, res.Original)
 		assert.Equal(t, u.Slug, res.Slug)
 		assert.Equal(t, u.ID, res.ID)
@@ -127,8 +127,8 @@ func TestBatchCreateURL(t *testing.T) {
 	require.NoError(t, err)
 
 	for _, u := range urls {
-		res, err := s.GetURL(ctx, u.Slug)
-		require.NoError(t, err)
+		res, getErr := s.GetURL(ctx, u.Slug)
+		require.NoError(t, getErr)
 		assert.Equal(t, u.Original, res.Original)
 		assert.Equal(t, u.Slug, res.Slug)
 		assert.Equal(t, u.CorrelationID, res.CorrelationID)
