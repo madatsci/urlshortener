@@ -4,6 +4,12 @@ ITER_COUNT = 18
 build:
 	cd cmd/shortener && go build -o shortener *.go
 
+.PHONY: build_with_flags
+build_with_flags:
+	cd cmd/shortener && go build -o shortener \
+		-ldflags "-X main.buildVersion=v1.0.0 -X 'main.buildDate=$$(date +'%Y/%m/%d')' -X main.buildCommit=$$(git rev-parse HEAD)" \
+		*.go
+
 .PHONY: build_checker
 build_checker:
 	go build -o ./cmd/staticlint/multichecker ./cmd/staticlint/multichecker.go
