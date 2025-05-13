@@ -99,7 +99,7 @@ func (a *Auth) PublicAPIAuth(next http.Handler) http.Handler {
 	})
 }
 
-// PublicAPIAuth defines authentication handler for private API scope.
+// PrivateAPIAuth defines authentication handler for private API scope.
 func (a *Auth) PrivateAPIAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie(a.cookieName)

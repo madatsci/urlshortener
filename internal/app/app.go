@@ -29,10 +29,17 @@ type App struct {
 	store  store.Store
 	logger *zap.SugaredLogger
 	server *server.Server
+
+	buildVersion string
+	buildDate    string
+	buildCommit  string
 }
 
 // Options contains all dependencies required to build App.
 type Options struct {
+	BuildVersion    string
+	BuildDate       string
+	BuildCommit     string
 	ServerAddr      string
 	BaseURL         string
 	FileStoragePath string
@@ -59,10 +66,13 @@ func New(ctx context.Context, opts Options) (*App, error) {
 	srv := server.New(config, store, logger)
 
 	app := &App{
-		config: config,
-		store:  store,
-		logger: logger,
-		server: srv,
+		config:       config,
+		store:        store,
+		logger:       logger,
+		server:       srv,
+		buildVersion: opts.BuildVersion,
+		buildDate:    opts.BuildDate,
+		buildCommit:  opts.BuildCommit,
 	}
 
 	return app, nil
@@ -70,6 +80,10 @@ func New(ctx context.Context, opts Options) (*App, error) {
 
 // Start starts the URL shortener service and blocks until it is stopped.
 func (a *App) Start() error {
+	a.logger.Infof("Build version: %s", a.buildVersion)
+	a.logger.Infof("Build date: %s", a.buildDate)
+	a.logger.Infof("Build commit: %s", a.buildCommit)
+
 	return a.server.Start()
 }
 

@@ -77,7 +77,7 @@ func TestCreateUser(t *testing.T) {
 	res, err := s.GetUser(ctx, user.ID)
 	require.NoError(t, err)
 	assert.Equal(t, user.ID, res.ID)
-	assert.Equal(t, user.CreatedAt, res.CreatedAt)
+	assert.Equal(t, user.CreatedAt.Unix(), res.CreatedAt.Unix())
 }
 
 func BenchmarkCreateUser(b *testing.B) {
@@ -121,25 +121,25 @@ func TestCreateURL(t *testing.T) {
 		require.NoError(t, err)
 
 		url := random.RandomURL()
-		err := s.CreateURL(ctx, user.ID, url)
+		err = s.CreateURL(ctx, user.ID, url)
 		require.NoError(t, err)
 
-		persistedURL, err := s.GetURL(ctx, url.Slug)
-		require.NoError(t, err)
+		persistedURL, urlErr := s.GetURL(ctx, url.Slug)
+		require.NoError(t, urlErr)
 		assert.Equal(t, url.ID, persistedURL.ID)
 		assert.Equal(t, url.Slug, persistedURL.Slug)
 		assert.Equal(t, url.Original, persistedURL.Original)
 		assert.Equal(t, false, persistedURL.Deleted)
-		assert.Equal(t, url.CreatedAt, persistedURL.CreatedAt)
+		assert.Equal(t, url.CreatedAt.Unix(), persistedURL.CreatedAt.Unix())
 
-		link, err := s.geUserURLLink(ctx, user.ID, url.ID)
-		require.NoError(t, err)
+		link, linkErr := s.geUserURLLink(ctx, user.ID, url.ID)
+		require.NoError(t, linkErr)
 		assert.Equal(t, user.ID, link.UserID)
 		assert.Equal(t, url.ID, link.URLID)
 		assert.Equal(t, false, link.Deleted)
 
-		listURLs, err := s.ListAllUrls(ctx)
-		require.NoError(t, err)
+		listURLs, listErr := s.ListAllUrls(ctx)
+		require.NoError(t, listErr)
 		assert.Equal(t, 1, len(listURLs))
 	})
 
@@ -168,7 +168,7 @@ func TestCreateURL(t *testing.T) {
 		assert.Equal(t, url.Slug, persistedURL.Slug)
 		assert.Equal(t, url.Original, persistedURL.Original)
 		assert.Equal(t, false, persistedURL.Deleted)
-		assert.Equal(t, url.CreatedAt, persistedURL.CreatedAt)
+		assert.Equal(t, url.CreatedAt.Unix(), persistedURL.CreatedAt.Unix())
 
 		link1, err := s.geUserURLLink(ctx, user1.ID, url.ID)
 		require.NoError(t, err)
@@ -361,23 +361,23 @@ func TestSoftDeleteURL(t *testing.T) {
 		err = s.CreateURL(ctx, user.ID, url)
 		require.NoError(t, err)
 
-		persistedURL, err := s.GetURL(ctx, url.Slug)
-		require.NoError(t, err)
+		persistedURL, urlErr := s.GetURL(ctx, url.Slug)
+		require.NoError(t, urlErr)
 		assert.Equal(t, false, persistedURL.Deleted)
 
-		link, err := s.geUserURLLink(ctx, user.ID, url.ID)
-		require.NoError(t, err)
+		link, linkErr := s.geUserURLLink(ctx, user.ID, url.ID)
+		require.NoError(t, linkErr)
 		assert.Equal(t, false, link.Deleted)
 
-		err = s.SoftDeleteURL(ctx, user.ID, url.Slug)
-		require.NoError(t, err)
+		deleteErr := s.SoftDeleteURL(ctx, user.ID, url.Slug)
+		require.NoError(t, deleteErr)
 
-		persistedURL, err = s.GetURL(ctx, url.Slug)
-		require.NoError(t, err)
+		persistedURL, urlErr = s.GetURL(ctx, url.Slug)
+		require.NoError(t, urlErr)
 		assert.Equal(t, true, persistedURL.Deleted)
 
-		link, err = s.geUserURLLink(ctx, user.ID, url.ID)
-		require.NoError(t, err)
+		link, linkErr = s.geUserURLLink(ctx, user.ID, url.ID)
+		require.NoError(t, linkErr)
 		assert.Equal(t, true, link.Deleted)
 	})
 

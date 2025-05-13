@@ -113,7 +113,7 @@ func (h *Handlers) AddHandlerJSON(w http.ResponseWriter, r *http.Request) {
 
 	var request models.ShortenRequest
 	dec := json.NewDecoder(r.Body)
-	if err := dec.Decode(&request); err != nil {
+	if err = dec.Decode(&request); err != nil {
 		h.handleError("AddHandlerJSON", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -173,7 +173,7 @@ func (h *Handlers) AddHandlerJSONBatch(w http.ResponseWriter, r *http.Request) {
 
 	var request models.ShortenBatchRequest
 	dec := json.NewDecoder(r.Body)
-	if err := dec.Decode(&request); err != nil {
+	if err = dec.Decode(&request); err != nil {
 		h.handleError("AddHandlerJSONBatch", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return

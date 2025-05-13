@@ -1,3 +1,7 @@
+# URL shortener
+
+[![codecov](https://codecov.io/gh/madatsci/urlshortener/graph/badge.svg?token=CA3XVRAKID)](https://codecov.io/gh/madatsci/urlshortener)
+
 # Development
 
 ## Обновление шаблона
