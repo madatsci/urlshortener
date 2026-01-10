@@ -46,12 +46,13 @@ type Options struct {
 	DatabaseDSN     string
 	TokenSecret     []byte
 	TokenDuration   time.Duration
+	EnableHTTPS     bool
 }
 
 // New creates a new App instance by initializing all core components,
 // including the configuration, logger, storage layer, and HTTP server.
 func New(ctx context.Context, opts Options) (*App, error) {
-	config := config.New(opts.ServerAddr, opts.BaseURL, opts.FileStoragePath, opts.DatabaseDSN, opts.TokenSecret, opts.TokenDuration)
+	config := config.New(opts.ServerAddr, opts.BaseURL, opts.FileStoragePath, opts.DatabaseDSN, opts.TokenSecret, opts.TokenDuration, opts.EnableHTTPS)
 
 	logger, err := logger.New()
 	if err != nil {

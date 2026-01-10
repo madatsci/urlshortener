@@ -29,6 +29,7 @@ func main() {
 		DatabaseDSN:     databaseDSN,
 		TokenSecret:     tokenSecret,
 		TokenDuration:   tokenDuration,
+		EnableHTTPS:     enableHTTPS,
 	})
 	if err != nil {
 		panic(err)

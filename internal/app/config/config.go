@@ -6,6 +6,7 @@ import "time"
 // Config represents the service configuration.
 type Config struct {
 	ServerAddr      string
+	EnableHTTPS     bool
 	BaseURL         string
 	FileStoragePath string
 	DatabaseDSN     string
@@ -16,9 +17,10 @@ type Config struct {
 }
 
 // New creates a new Config struct.
-func New(serverAddr, baseURL, fileStoragePath, databaseDSN string, tokenSecret []byte, tokenDuration time.Duration) *Config {
+func New(serverAddr, baseURL, fileStoragePath, databaseDSN string, tokenSecret []byte, tokenDuration time.Duration, enableHTTPS bool) *Config {
 	return &Config{
 		ServerAddr:      serverAddr,
+		EnableHTTPS:     enableHTTPS,
 		BaseURL:         baseURL,
 		FileStoragePath: fileStoragePath,
 		DatabaseDSN:     databaseDSN,

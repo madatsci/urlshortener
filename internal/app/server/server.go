@@ -2,7 +2,16 @@
 package server
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/tls"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/pem"
+	"math/big"
+	"net"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -85,10 +94,62 @@ func New(config *config.Config, store store.Store, logger *zap.SugaredLogger) *S
 func (s *Server) Start() error {
 	s.log.Infof("starting server with config: %+v", s.config)
 
+	if s.config.EnableHTTPS {
+		s.log.Info("HTTPS is enabled")
+		cert, err := s.generateSelfSignedCert()
+		if err != nil {
+			return err
+		}
+		server := &http.Server{
+			Addr:    s.config.ServerAddr,
+			Handler: s.mux,
+			TLSConfig: &tls.Config{
+				Certificates: []tls.Certificate{*cert},
+			},
+		}
+		return server.ListenAndServeTLS("", "")
+	}
+
 	return http.ListenAndServe(s.config.ServerAddr, s.mux)
 }
 
 // Router returns server router for usage in tests.
 func (s *Server) Router() http.Handler {
 	return s.mux
+}
+
+// generateSelfSignedCert generates a self-signed TLS certificate for development purposes.
+func (s *Server) generateSelfSignedCert() (*tls.Certificate, error) {
+	priv, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return nil, err
+	}
+
+	template := x509.Certificate{
+		SerialNumber: big.NewInt(1),
+		Subject: pkix.Name{
+			Organization: []string{"Self-signed"},
+		},
+		NotBefore:   time.Now(),
+		NotAfter:    time.Now().Add(time.Hour * 24 * 365),
+		KeyUsage:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		IPAddresses: []net.IP{net.ParseIP("127.0.0.1")},
+		DNSNames:    []string{"localhost"},
+	}
+
+	derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, &priv.PublicKey, priv)
+	if err != nil {
+		return nil, err
+	}
+
+	certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
+	keyPEM := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(priv)})
+
+	tlsCert, err := tls.X509KeyPair(certPEM, keyPEM)
+	if err != nil {
+		return nil, err
+	}
+
+	return &tlsCert, nil
 }
