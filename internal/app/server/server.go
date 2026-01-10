@@ -119,6 +119,15 @@ func (s *Server) Router() http.Handler {
 }
 
 // generateSelfSignedCert generates a self-signed TLS certificate for development purposes.
+// Self-signed certificates aren't trusted by default because they're not issued
+// by a recognized Certificate Authority (CA).
+// To resolve this for testing with curl, you have a few options:
+//  1. Use the --insecure (-k) flag with curl to bypass certificate validation.
+//     For development purposes, it is the simplest and most common approach.
+//  2. Modify the code to save the generated certificate to a file (e.g., server.crt) temporarily.
+//     Then use `curl --cacert server.crt https://...`
+//  3. Add the self-signed certificate to your system's trusted certificate store
+//     (not recommended for general use).
 func (s *Server) generateSelfSignedCert() (*tls.Certificate, error) {
 	priv, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
