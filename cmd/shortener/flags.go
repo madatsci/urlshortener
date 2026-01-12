@@ -19,6 +19,8 @@ var (
 	tokenDuration = time.Hour
 
 	fileStoragePath, databaseDSN string
+
+	enableHTTPS bool
 )
 
 func parseFlags() error {
@@ -82,6 +84,9 @@ func parseFlags() error {
 		return nil
 	})
 
+	enableHTTPSPtr := flag.Bool("s", false, "enable HTTPS")
+	enableHTTPS = *enableHTTPSPtr
+
 	flag.Parse()
 
 	if envServerAddress := os.Getenv("SERVER_ADDRESS"); envServerAddress != "" {
@@ -111,6 +116,15 @@ func parseFlags() error {
 		}
 
 		tokenDuration = duration
+	}
+
+	if envEnableHTTPS := os.Getenv("ENABLE_HTTPS"); envEnableHTTPS != "" {
+		val, err := strconv.ParseBool(envEnableHTTPS)
+		if err != nil {
+			return fmt.Errorf("invalid ENABLE_HTTPS: %s", envEnableHTTPS)
+		}
+
+		enableHTTPS = val
 	}
 
 	return nil

@@ -2,7 +2,16 @@
 package server
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/tls"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/pem"
+	"math/big"
+	"net"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -85,10 +94,71 @@ func New(config *config.Config, store store.Store, logger *zap.SugaredLogger) *S
 func (s *Server) Start() error {
 	s.log.Infof("starting server with config: %+v", s.config)
 
+	if s.config.EnableHTTPS {
+		s.log.Info("HTTPS is enabled")
+		cert, err := s.generateSelfSignedCert()
+		if err != nil {
+			return err
+		}
+		server := &http.Server{
+			Addr:    s.config.ServerAddr,
+			Handler: s.mux,
+			TLSConfig: &tls.Config{
+				Certificates: []tls.Certificate{*cert},
+			},
+		}
+		return server.ListenAndServeTLS("", "")
+	}
+
 	return http.ListenAndServe(s.config.ServerAddr, s.mux)
 }
 
 // Router returns server router for usage in tests.
 func (s *Server) Router() http.Handler {
 	return s.mux
+}
+
+// generateSelfSignedCert generates a self-signed TLS certificate for development purposes.
+// Self-signed certificates aren't trusted by default because they're not issued
+// by a recognized Certificate Authority (CA).
+// To resolve this for testing with curl, you have a few options:
+//  1. Use the --insecure (-k) flag with curl to bypass certificate validation.
+//     For development purposes, it is the simplest and most common approach.
+//  2. Modify the code to save the generated certificate to a file (e.g., server.crt) temporarily.
+//     Then use `curl --cacert server.crt https://...`
+//  3. Add the self-signed certificate to your system's trusted certificate store
+//     (not recommended for general use).
+func (s *Server) generateSelfSignedCert() (*tls.Certificate, error) {
+	priv, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return nil, err
+	}
+
+	template := x509.Certificate{
+		SerialNumber: big.NewInt(1),
+		Subject: pkix.Name{
+			Organization: []string{"Self-signed"},
+		},
+		NotBefore:   time.Now(),
+		NotAfter:    time.Now().Add(time.Hour * 24 * 365),
+		KeyUsage:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		IPAddresses: []net.IP{net.ParseIP("127.0.0.1")},
+		DNSNames:    []string{"localhost"},
+	}
+
+	derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, &priv.PublicKey, priv)
+	if err != nil {
+		return nil, err
+	}
+
+	certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
+	keyPEM := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(priv)})
+
+	tlsCert, err := tls.X509KeyPair(certPEM, keyPEM)
+	if err != nil {
+		return nil, err
+	}
+
+	return &tlsCert, nil
 }
