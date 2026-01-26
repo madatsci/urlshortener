@@ -11,12 +11,21 @@ import (
 	"time"
 )
 
-var (
-	serverAddr = "localhost:8080"
-	baseURL    = "http://localhost:8080"
+const (
+	defaultServerAddr    = "localhost:8080"
+	defaultBaseURL       = "http://localhost:8080"
+	defaultTokenDuration = time.Hour
+)
 
-	tokenSecret   = []byte("secret_key")
-	tokenDuration = time.Hour
+var defaultTokenSecret = []byte("secret_key")
+
+var (
+	configFilePath string
+
+	serverAddr, baseURL string
+
+	tokenSecret   []byte
+	tokenDuration time.Duration
 
 	fileStoragePath, databaseDSN string
 
@@ -58,6 +67,15 @@ func parseFlags() error {
 		}
 
 		databaseDSN = flagValue
+		return nil
+	})
+
+	flag.Func("c", "config file path", func(flagValue string) error {
+		if flagValue == "" {
+			return errors.New("invalid filepath")
+		}
+
+		configFilePath = flagValue
 		return nil
 	})
 
@@ -103,6 +121,10 @@ func parseFlags() error {
 
 	if envDatabaseDSN := os.Getenv("DATABASE_DSN"); envDatabaseDSN != "" {
 		databaseDSN = envDatabaseDSN
+	}
+
+	if envConfigFilepath := os.Getenv("CONFIG"); envConfigFilepath != "" {
+		configFilePath = envConfigFilepath
 	}
 
 	if envTokenSecretKey := os.Getenv("TOKEN_SECRET_KEY"); envTokenSecretKey != "" {

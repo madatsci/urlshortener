@@ -20,9 +20,11 @@ func main() {
 	}
 
 	app, err := app.New(context.Background(), app.Options{
-		BuildVersion:    buildVersion,
-		BuildDate:       buildDate,
-		BuildCommit:     buildCommit,
+		Build: app.BuildOptions{
+			Version: buildVersion,
+			Date:    buildDate,
+			Commit:  buildCommit,
+		},
 		ServerAddr:      serverAddr,
 		BaseURL:         baseURL,
 		FileStoragePath: fileStoragePath,

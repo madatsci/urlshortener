@@ -37,9 +37,7 @@ type App struct {
 
 // Options contains all dependencies required to build App.
 type Options struct {
-	BuildVersion    string
-	BuildDate       string
-	BuildCommit     string
+	Build           BuildOptions
 	ServerAddr      string
 	BaseURL         string
 	FileStoragePath string
@@ -47,6 +45,12 @@ type Options struct {
 	TokenSecret     []byte
 	TokenDuration   time.Duration
 	EnableHTTPS     bool
+}
+
+type BuildOptions struct {
+	Version string
+	Date    string
+	Commit  string
 }
 
 // New creates a new App instance by initializing all core components,
@@ -71,9 +75,9 @@ func New(ctx context.Context, opts Options) (*App, error) {
 		store:        store,
 		logger:       logger,
 		server:       srv,
-		buildVersion: opts.BuildVersion,
-		buildDate:    opts.BuildDate,
-		buildCommit:  opts.BuildCommit,
+		buildVersion: opts.Build.Version,
+		buildDate:    opts.Build.Date,
+		buildCommit:  opts.Build.Commit,
 	}
 
 	return app, nil
