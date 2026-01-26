@@ -149,6 +149,19 @@ func parseFlags() error {
 		enableHTTPS = val
 	}
 
+	if serverAddr == "" {
+		serverAddr = defaultServerAddr
+	}
+	if baseURL == "" {
+		baseURL = defaultBaseURL
+	}
+	if tokenDuration == 0 {
+		tokenDuration = defaultTokenDuration
+	}
+	if tokenSecret == nil {
+		tokenSecret = defaultTokenSecret
+	}
+
 	return nil
 }
 
