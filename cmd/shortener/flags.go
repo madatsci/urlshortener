@@ -72,7 +72,7 @@ func parseFlags() error {
 
 	flag.Func("c", "config file path", func(flagValue string) error {
 		if flagValue == "" {
-			return errors.New("invalid filepath")
+			return errors.New("invalid file path")
 		}
 
 		configFilePath = flagValue
