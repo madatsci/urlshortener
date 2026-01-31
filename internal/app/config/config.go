@@ -11,7 +11,7 @@ type Config struct {
 	FileStoragePath string
 	DatabaseDSN     string
 
-	TokenSecret   []byte
+	TokenSecret   string
 	TokenDuration time.Duration
 	TokenIssuer   string
 }
@@ -24,7 +24,7 @@ func New(serverAddr, baseURL, fileStoragePath, databaseDSN string, tokenSecret [
 		BaseURL:         baseURL,
 		FileStoragePath: fileStoragePath,
 		DatabaseDSN:     databaseDSN,
-		TokenSecret:     tokenSecret,
+		TokenSecret:     string(tokenSecret),
 		TokenDuration:   tokenDuration,
 		TokenIssuer:     "urlshortener",
 	}

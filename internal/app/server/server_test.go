@@ -489,7 +489,7 @@ func testServer() (*Server, *httptest.Server) {
 		ServerAddr:      "localhost:8080",
 		BaseURL:         "http://localhost:8080",
 		FileStoragePath: filepath,
-		TokenSecret:     []byte(tokenSecret),
+		TokenSecret:     tokenSecret,
 		TokenDuration:   tokenDuration,
 		TokenIssuer:     tokenIssuer,
 	}

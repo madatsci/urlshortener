@@ -57,7 +57,7 @@ func New(config *config.Config, store store.Store, logger *zap.SugaredLogger) *S
 
 	authMiddleware := mw.NewAuth(mw.Options{
 		JWT: jwt.New(jwt.Options{
-			Secret:   config.TokenSecret,
+			Secret:   []byte(config.TokenSecret),
 			Duration: config.TokenDuration,
 			Issuer:   config.TokenIssuer,
 		}),
