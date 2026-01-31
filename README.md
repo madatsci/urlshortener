@@ -68,6 +68,10 @@ App can be configured via flags, environment variables, and/or config file. Conf
 
 Address and port to run server in the form of host:port.
 
+### `-s`, `ENABLE_HTTPS`
+
+Enables HTTPS.
+
 ### `-b`, `BASE_URL`
 
 Base URL of the generated short URL.
