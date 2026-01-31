@@ -56,6 +56,12 @@ Some examples of how you can run the app (see Configuration below):
 ./cmd/shortener/shortener --token-secret="my_secret_key" --token-duration="1h"
 ```
 
+### Use configuration file
+
+```bash
+./cmd/shortener/shortener -c './config.example.json'
+```
+
 ## Configuration
 
 App can be configured via flags, environment variables, and/or config file. Configuration parameters are applied in this priority order:
