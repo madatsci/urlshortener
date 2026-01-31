@@ -40,6 +40,7 @@ type Options struct {
 	Config *config.Config
 }
 
+// BuildOptions represents app build metadata.
 type BuildOptions struct {
 	Version string
 	Date    string

@@ -42,6 +42,10 @@ type Config struct {
 	enableHTTPSFlagSet bool
 }
 
+// New creates new Config. Configuration parameters are applied in this priority order:
+// 1. Environment variables
+// 2. Flags
+// 3. Config file
 func New() (*Config, error) {
 	c, err := parseEnv()
 	if err != nil {
