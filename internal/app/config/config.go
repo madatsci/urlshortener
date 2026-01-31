@@ -216,6 +216,8 @@ func setDefaults(c *Config) {
 	if c.TokenSecret == "" {
 		c.TokenSecret = defaultTokenSecret
 	}
+
+	c.TokenIssuer = tokenIssuer
 }
 
 func validateAddress(value string) error {
