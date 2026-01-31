@@ -158,12 +158,25 @@ func parseFlags(c *Config) {
 		return nil
 	})
 
-	enableHTTPSPtr := flag.Bool("s", false, "enable HTTPS")
-
-	if enableHTTPSPtr != nil && !c.enableHTTPSEnvSet {
-		c.EnableHTTPS = *enableHTTPSPtr
-		c.enableHTTPSFlagSet = true
-	}
+	flag.Func("s", "enable HTTPS", func(flagValue string) error {
+		if !c.enableHTTPSEnvSet {
+			var val bool
+			if flagValue == "" {
+				// -s with no value → true
+				val = true
+			} else {
+				// -s=true, -s=1, etc. → parse it
+				parsed, err := strconv.ParseBool(flagValue)
+				if err != nil {
+					return fmt.Errorf("invalid boolean value: %s", flagValue)
+				}
+				val = parsed
+			}
+			c.EnableHTTPS = val
+			c.enableHTTPSFlagSet = true
+		}
+		return nil
+	})
 
 	flag.Parse()
 }
