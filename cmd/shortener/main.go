@@ -6,6 +6,7 @@ import (
 	_ "net/http/pprof"
 
 	"github.com/madatsci/urlshortener/internal/app"
+	"github.com/madatsci/urlshortener/internal/app/config"
 )
 
 var (
@@ -15,21 +16,18 @@ var (
 )
 
 func main() {
-	if err := parseFlags(); err != nil {
+	config, err := config.New()
+	if err != nil {
 		panic(err)
 	}
 
 	app, err := app.New(context.Background(), app.Options{
-		BuildVersion:    buildVersion,
-		BuildDate:       buildDate,
-		BuildCommit:     buildCommit,
-		ServerAddr:      serverAddr,
-		BaseURL:         baseURL,
-		FileStoragePath: fileStoragePath,
-		DatabaseDSN:     databaseDSN,
-		TokenSecret:     tokenSecret,
-		TokenDuration:   tokenDuration,
-		EnableHTTPS:     enableHTTPS,
+		Build: app.BuildOptions{
+			Version: buildVersion,
+			Date:    buildDate,
+			Commit:  buildCommit,
+		},
+		Config: config,
 	})
 	if err != nil {
 		panic(err)

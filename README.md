@@ -56,26 +56,50 @@ Some examples of how you can run the app (see Configuration below):
 ./cmd/shortener/shortener --token-secret="my_secret_key" --token-duration="1h"
 ```
 
+### Use configuration file
+
+```bash
+./cmd/shortener/shortener -c './config.example.json'
+```
+
 ## Configuration
 
-App can be configured via flags and/or environment variables. If both flag and environment variable are set for the same parameter, environment variable prevails.
+App can be configured via flags, environment variables, and/or config file. Configuration parameters are applied in this priority order:
+
+1. Environment variables (highest)
+2. Flags
+3. Config file (lowest)
 
 ### `-a`, `SERVER_ADDRESS`
+
 Address and port to run server in the form of host:port.
 
+### `-s`, `ENABLE_HTTPS`
+
+Enables HTTPS.
+
 ### `-b`, `BASE_URL`
+
 Base URL of the generated short URL.
 
 ### `-d`, `DATABASE_DSN`
+
 Database DSN (in case you want to store data in database).
 
 ### `-f`, `FILE_STORAGE_PATH`
+
 File storage path (in case you want to store data on disk).
 
+### `-c`, `CONFIG`
+
+Config file path.
+
 ### `--token-secret`, `TOKEN_SECRET_KEY`
+
 Authentication token secret key.
 
 ### `--token-duration`, `TOKEN_DURATION`
+
 Authentication token duration (in the format of Golang duration string).
 
 ## Migrations

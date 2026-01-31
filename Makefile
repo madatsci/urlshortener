@@ -34,6 +34,10 @@ run_with_file:
 run_with_db:
 	./cmd/shortener/shortener -d 'postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable'
 
+.PHONY: run_with_config
+run_with_config:
+	./cmd/shortener/shortener -c './config.example.json'
+
 .PHONY: test
 test:
 	for (( n = 1; n <= $(ITER_COUNT); n++ )) ; do \
