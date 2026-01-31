@@ -7,7 +7,6 @@ package app
 
 import (
 	"context"
-	"time"
 
 	"go.uber.org/zap"
 
@@ -37,14 +36,8 @@ type App struct {
 
 // Options contains all dependencies required to build App.
 type Options struct {
-	Build           BuildOptions
-	ServerAddr      string
-	BaseURL         string
-	FileStoragePath string
-	DatabaseDSN     string
-	TokenSecret     []byte
-	TokenDuration   time.Duration
-	EnableHTTPS     bool
+	Build  BuildOptions
+	Config *config.Config
 }
 
 type BuildOptions struct {
@@ -56,22 +49,20 @@ type BuildOptions struct {
 // New creates a new App instance by initializing all core components,
 // including the configuration, logger, storage layer, and HTTP server.
 func New(ctx context.Context, opts Options) (*App, error) {
-	config := config.New(opts.ServerAddr, opts.BaseURL, opts.FileStoragePath, opts.DatabaseDSN, opts.TokenSecret, opts.TokenDuration, opts.EnableHTTPS)
-
 	logger, err := logger.New()
 	if err != nil {
 		return nil, err
 	}
 
-	store, err := newStore(ctx, config)
+	store, err := newStore(ctx, opts.Config)
 	if err != nil {
 		return nil, err
 	}
 
-	srv := server.New(config, store, logger)
+	srv := server.New(opts.Config, store, logger)
 
 	app := &App{
-		config:       config,
+		config:       opts.Config,
 		store:        store,
 		logger:       logger,
 		server:       srv,
