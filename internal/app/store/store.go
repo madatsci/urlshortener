@@ -36,6 +36,9 @@ type Store interface {
 
 	// Ping is a storage healthcheck.
 	Ping(ctx context.Context) error
+
+	// Close releases resources held by the store and flushes any pending data.
+	Close() error
 }
 
 // AlreadyExistsError represents RDB integrity constraint violation error on inserts.

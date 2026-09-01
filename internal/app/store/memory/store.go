@@ -125,3 +125,10 @@ func (s *Store) Ping(_ context.Context) error {
 	// Nothing to ping here.
 	return nil
 }
+
+// Close releases resources held by the store.
+//
+// In-memory storage holds no external resources, so it is a no-op.
+func (s *Store) Close() error {
+	return nil
+}

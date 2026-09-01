@@ -2,11 +2,15 @@
 //
 // It wires together the configuration, storage layer, HTTP server,
 // and logging components. The App type provides the entry point for
-// starting the service. It still does not handle graceful shutdown yet.
+// starting the service and handles graceful shutdown on OS signals.
 package app
 
 import (
 	"context"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"go.uber.org/zap"
 
@@ -75,13 +79,42 @@ func New(ctx context.Context, opts Options) (*App, error) {
 	return app, nil
 }
 
-// Start starts the URL shortener service and blocks until it is stopped.
+// Start starts the URL shortener service and blocks until it is stopped by an
+// OS signal.
+//
+// It binds the HTTP server and then waits for one of the handled signals
+// (SIGINT, SIGTERM, SIGQUIT). On receiving a signal it gracefully shuts down
+// the server, allowing in-flight requests to finish, and closes the storage,
+// flushing any unsaved data.
 func (a *App) Start() error {
 	a.logger.Infof("Build version: %s", a.buildVersion)
 	a.logger.Infof("Build date: %s", a.buildDate)
 	a.logger.Infof("Build commit: %s", a.buildCommit)
 
-	return a.server.Start()
+	if err := a.server.Start(); err != nil {
+		return err
+	}
+	a.logger.Info("server started")
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	sig := <-quit
+
+	a.logger.Infof("received signal %s, shutting down gracefully...", sig)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if err := a.server.Shutdown(ctx); err != nil {
+		a.logger.Errorf("server shutdown error: %v", err)
+	}
+
+	if err := a.store.Close(); err != nil {
+		a.logger.Errorf("store close error: %v", err)
+	}
+
+	a.logger.Info("server stopped gracefully")
+	return nil
 }
 
 func newStore(ctx context.Context, config *config.Config) (store.Store, error) {
