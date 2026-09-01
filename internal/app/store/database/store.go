@@ -289,6 +289,11 @@ func (s *Store) Ping(ctx context.Context) error {
 	return s.conn.PingContext(ctx)
 }
 
+// Close closes the underlying database connection pool.
+func (s *Store) Close() error {
+	return s.conn.Close()
+}
+
 func (s *Store) bootstrap() error {
 	goose.SetBaseFS(embedMigrations)
 

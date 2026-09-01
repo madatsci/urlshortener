@@ -146,6 +146,17 @@ func (s *Store) Ping(_ context.Context) error {
 	return nil
 }
 
+// Close flushes all pending data to disk.
+//
+// It performs a final save so that any state modified since the last write
+// is not lost when the service shuts down.
+func (s *Store) Close() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	return s.save()
+}
+
 func (s *Store) save() error {
 	state := &ServiceState{
 		URLs:     s.urls,
