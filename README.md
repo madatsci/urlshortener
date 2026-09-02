@@ -30,8 +30,16 @@ git fetch template && git checkout template/main .github
 
 ## Run Database
 
+Start the database with Docker Compose (mapped to host port `54320` to avoid clashing with a local Postgres):
+
 ```bash
-docker run --name yandex-practicum-go -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=praktikum -p 5432:5432 -d postgres
+docker compose -f dev/docker-compose.yml up -d
+```
+
+To stop it:
+
+```bash
+docker compose -f dev/docker-compose.yml down
 ```
 
 ## Run app
@@ -41,7 +49,7 @@ Some examples of how you can run the app (see Configuration below):
 ### With database
 
 ```bash
-./cmd/shortener/shortener -d 'postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable'
+./cmd/shortener/shortener -d 'postgres://postgres:postgres@localhost:54320/praktikum?sslmode=disable'
 ```
 
 ### With file storage
@@ -108,7 +116,7 @@ Migrations are implemented with [goose](https://github.com/pressly/goose):
 
 ```bash
 export GOOSE_DRIVER=postgres
-export GOOSE_DBSTRING=postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable
+export GOOSE_DBSTRING=postgres://postgres:postgres@localhost:54320/praktikum?sslmode=disable
 
 goose -dir internal/app/store/database/migrations create add_some_column sql
 goose -dir internal/app/store/database/migrations up

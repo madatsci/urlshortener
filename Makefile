@@ -32,7 +32,7 @@ run_with_file:
 
 .PHONY: run_with_db
 run_with_db:
-	./cmd/shortener/shortener -d 'postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable'
+	./cmd/shortener/shortener -d 'postgres://postgres:postgres@localhost:54320/praktikum?sslmode=disable'
 
 .PHONY: run_with_config
 run_with_config:
@@ -51,7 +51,7 @@ test:
 
 .PHONY: test_with_db
 test_with_db:
-	DATABASE_DSN=postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable go test -cover ./...
+	DATABASE_DSN=postgres://postgres:postgres@localhost:54320/praktikum?sslmode=disable go test -cover ./...
 
 .PHONY: ci_test_with_coverprofile
 ci_test_with_coverprofile:
@@ -95,39 +95,39 @@ test_iter9:
 
 .PHONY: test_iter10
 test_iter10:
-	./shortenertestbeta -test.v -test.run=^TestIteration10$$ -binary-path=cmd/shortener/shortener -source-path=. -database-dsn='postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable'
+	./shortenertestbeta -test.v -test.run=^TestIteration10$$ -binary-path=cmd/shortener/shortener -source-path=. -database-dsn='postgres://postgres:postgres@localhost:54320/praktikum?sslmode=disable'
 
 .PHONY: test_iter11
 test_iter11:
-	./shortenertestbeta -test.v -test.run=^TestIteration11$$ -binary-path=cmd/shortener/shortener -source-path=. -database-dsn='postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable'
+	./shortenertestbeta -test.v -test.run=^TestIteration11$$ -binary-path=cmd/shortener/shortener -source-path=. -database-dsn='postgres://postgres:postgres@localhost:54320/praktikum?sslmode=disable'
 
 .PHONY: test_iter12
 test_iter12:
-	./shortenertestbeta -test.v -test.run=^TestIteration12$$ -binary-path=cmd/shortener/shortener -source-path=. -database-dsn='postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable'
+	./shortenertestbeta -test.v -test.run=^TestIteration12$$ -binary-path=cmd/shortener/shortener -source-path=. -database-dsn='postgres://postgres:postgres@localhost:54320/praktikum?sslmode=disable'
 
 .PHONY: test_iter13
 test_iter13:
-	./shortenertestbeta -test.v -test.run=^TestIteration13$$ -binary-path=cmd/shortener/shortener -source-path=. -database-dsn='postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable'
+	./shortenertestbeta -test.v -test.run=^TestIteration13$$ -binary-path=cmd/shortener/shortener -source-path=. -database-dsn='postgres://postgres:postgres@localhost:54320/praktikum?sslmode=disable'
 
 .PHONY: test_iter14
 test_iter14:
-	./shortenertestbeta -test.v -test.run=^TestIteration14$$ -binary-path=cmd/shortener/shortener -source-path=. -database-dsn='postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable'
+	./shortenertestbeta -test.v -test.run=^TestIteration14$$ -binary-path=cmd/shortener/shortener -source-path=. -database-dsn='postgres://postgres:postgres@localhost:54320/praktikum?sslmode=disable'
 
 .PHONY: test_iter15
 test_iter15:
-	./shortenertestbeta -test.v -test.run=^TestIteration15$$ -binary-path=cmd/shortener/shortener -source-path=. -database-dsn='postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable'
+	./shortenertestbeta -test.v -test.run=^TestIteration15$$ -binary-path=cmd/shortener/shortener -source-path=. -database-dsn='postgres://postgres:postgres@localhost:54320/praktikum?sslmode=disable'
 
 .PHONY: test_iter16
 test_iter16:
-	./shortenertestbeta -test.v -test.run=^TestIteration16$$ -binary-path=cmd/shortener/shortener -source-path=. -database-dsn='postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable'
+	./shortenertestbeta -test.v -test.run=^TestIteration16$$ -binary-path=cmd/shortener/shortener -source-path=. -database-dsn='postgres://postgres:postgres@localhost:54320/praktikum?sslmode=disable'
 
 .PHONY: test_iter17
 test_iter17:
-	./shortenertestbeta -test.v -test.run=^TestIteration17$$ -binary-path=cmd/shortener/shortener -source-path=. -database-dsn='postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable'
+	./shortenertestbeta -test.v -test.run=^TestIteration17$$ -binary-path=cmd/shortener/shortener -source-path=. -database-dsn='postgres://postgres:postgres@localhost:54320/praktikum?sslmode=disable'
 
 .PHONY: test_iter18
 test_iter18:
-	./shortenertestbeta -test.v -test.run=^TestIteration18$$ -binary-path=cmd/shortener/shortener -source-path=. -database-dsn='postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable'
+	./shortenertestbeta -test.v -test.run=^TestIteration18$$ -binary-path=cmd/shortener/shortener -source-path=. -database-dsn='postgres://postgres:postgres@localhost:54320/praktikum?sslmode=disable'
 
 .PHONY: base_profile_file
 base_profile:

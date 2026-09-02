@@ -1,0 +1,14 @@
+services:
+  database:
+    image: postgres
+    container_name: yandex-practicum-go
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: praktikum
+    ports:
+      - "54320:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d praktikum"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
