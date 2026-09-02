@@ -17,7 +17,7 @@ Start PostgreSQL as documented in `README.md` before database tests. `make test`
 
 ## Coding Style & Naming Conventions
 
-Target Go 1.23 or later. Format changed files with `gofmt` or `goimports`. Use tabs, short lowercase package names, PascalCase for exported identifiers, and camelCase for unexported identifiers. Document public declarations and follow existing error-wrapping patterns. `.golangci.yaml` enables `errcheck`, `govet`, `staticcheck`, `unused`, and related checks.
+Target Go 1.26 or later. Format changed files with `gofmt` or `goimports`. Use tabs, short lowercase package names, PascalCase for exported identifiers, and camelCase for unexported identifiers. Document public declarations and follow existing error-wrapping patterns. `.golangci.yaml` enables `errcheck`, `govet`, `staticcheck`, `unused`, and related checks.
 
 ## Testing Guidelines
 
