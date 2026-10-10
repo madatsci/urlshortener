@@ -4,9 +4,13 @@ package store
 
 import (
 	"context"
+	"errors"
 
 	"github.com/madatsci/urlshortener/internal/app/models"
 )
+
+// ErrNotFound is returned when a requested entity does not exist.
+var ErrNotFound = errors.New("not found")
 
 // Store is a storage interface.
 type Store interface {
