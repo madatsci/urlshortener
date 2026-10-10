@@ -287,15 +287,15 @@ func TestGetHandler(t *testing.T) {
 	err := s.h.Store().CreateURL(ctx, uuid.NewString(), url)
 	require.NoError(t, err)
 
+	userID := uuid.NewString()
 	deletedURL := models.URL{
 		ID:        uuid.NewString(),
 		Slug:      "deletedURL",
 		Original:  longURL + "some_page/",
-		Deleted:   true,
 		CreatedAt: time.Now(),
 	}
-	err = s.h.Store().CreateURL(ctx, uuid.NewString(), deletedURL)
-	require.NoError(t, err)
+	require.NoError(t, s.h.Store().CreateURL(ctx, userID, deletedURL))
+	require.NoError(t, s.h.Store().SoftDeleteURL(ctx, userID, "deletedURL"))
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
