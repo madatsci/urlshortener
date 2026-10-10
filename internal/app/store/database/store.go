@@ -256,6 +256,10 @@ func (s *Store) SoftDeleteURL(ctx context.Context, userID string, slug string) e
 		slug,
 	).Scan(&url.ID, &url.CorrelationID, &url.Slug, &url.Original, &url.CreatedAt, &url.Deleted)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return fmt.Errorf("url %q: %w", slug, store.ErrNotFound)
+		}
+
 		return err
 	}
 

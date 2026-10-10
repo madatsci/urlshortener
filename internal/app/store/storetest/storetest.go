@@ -4,6 +4,7 @@ package storetest
 import (
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -38,7 +39,9 @@ func Run(t *testing.T, newStore NewStoreFunc) {
 		s := newStore(t)
 		ctx := t.Context()
 
-		_, err := s.GetUser(ctx, "missing-user-id")
+		// A valid UUID that is not registered, since the database stores
+		// user IDs as uuid and rejects malformed inputs.
+		_, err := s.GetUser(ctx, uuid.NewString())
 		require.Error(t, err)
 		assert.ErrorIs(t, err, store.ErrNotFound)
 	})
