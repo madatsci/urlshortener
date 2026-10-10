@@ -53,6 +53,14 @@ test:
 test_with_db:
 	DATABASE_DSN=postgres://postgres:postgres@localhost:54320/praktikum?sslmode=disable go test -cover ./...
 
+.PHONY: test_stores
+test_stores:
+	go test -race ./internal/app/store/memory/... ./internal/app/store/file/...
+
+.PHONY: test_stores_with_db
+test_stores_with_db:
+	DATABASE_DSN=postgres://postgres:postgres@localhost:54320/praktikum?sslmode=disable go test -race ./internal/app/store/...
+
 .PHONY: ci_test_with_coverprofile
 ci_test_with_coverprofile:
 	DATABASE_DSN=postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable go test -coverprofile=coverage.txt ./...
