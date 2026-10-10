@@ -31,6 +31,9 @@ func New() *Store {
 
 // CreateUser registers new user.
 func (s *Store) CreateUser(_ context.Context, user models.User) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	if _, ok := s.users[user.ID]; !ok {
 		s.users[user.ID] = user
 	}
@@ -42,6 +45,9 @@ func (s *Store) CreateUser(_ context.Context, user models.User) error {
 //
 // It returns error if user is not found.
 func (s *Store) GetUser(_ context.Context, userID string) (models.User, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	if user, ok := s.users[userID]; ok {
 		return user, nil
 	}
@@ -81,6 +87,9 @@ func (s *Store) BatchCreateURL(_ context.Context, userID string, urls []models.U
 //
 // It returns error if URL is not found.
 func (s *Store) GetURL(_ context.Context, slug string) (models.URL, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	var url models.URL
 
 	url, ok := s.urls[slug]
@@ -93,6 +102,9 @@ func (s *Store) GetURL(_ context.Context, slug string) (models.URL, error) {
 
 // ListURLsByUserID returns all URLs created by the specified user.
 func (s *Store) ListURLsByUserID(_ context.Context, userID string) ([]models.URL, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	slugs := s.userURLs[userID]
 	if len(slugs) == 0 {
 		return []models.URL{}, nil
@@ -111,6 +123,9 @@ func (s *Store) ListURLsByUserID(_ context.Context, userID string) ([]models.URL
 //
 // This function should not be used in production.
 func (s *Store) ListAllUrls(_ context.Context) (map[string]models.URL, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	return s.urls, nil
 }
 

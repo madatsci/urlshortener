@@ -22,13 +22,16 @@ const AuthenticatedUserKey ctxKey = 0
 
 // Auth is an authentication middleware.
 //
+// An Auth instance is shared by all requests, so it holds no request-scoped
+// data: the authenticated user ID is carried from the authentication step to
+// the handler as a local variable and then via the request context.
+//
 // User NewAuth to create a new Auth instance.
 type Auth struct {
 	cookieName string
 	jwt        *jwt.JWT
 	store      store.Store
 	log        *zap.SugaredLogger
-	userID     string
 }
 
 // Options represents dependencies required for Auth.
@@ -94,8 +97,7 @@ func (a *Auth) PublicAPIAuth(next http.Handler) http.Handler {
 			}
 		}
 
-		a.userID = userID
-		a.continueWithUser(w, r, next)
+		a.continueWithUser(w, r, next, userID)
 	})
 }
 
@@ -118,17 +120,12 @@ func (a *Auth) PrivateAPIAuth(next http.Handler) http.Handler {
 			a.handleUnauthorized(w, err)
 			return
 		}
-		if userID == "" {
-			a.handleUnauthorized(w, errors.New("token does not contain user ID"))
-			return
-		}
 		if _, err := a.store.GetUser(r.Context(), userID); err != nil {
 			a.handleUnauthorized(w, errors.New("got unregistered user from auth token"))
 			return
 		}
 
-		a.userID = userID
-		a.continueWithUser(w, r, next)
+		a.continueWithUser(w, r, next, userID)
 	})
 }
 
@@ -158,8 +155,8 @@ func (a *Auth) handleUnauthorized(w http.ResponseWriter, err error) {
 	w.WriteHeader(http.StatusUnauthorized)
 }
 
-func (a *Auth) continueWithUser(w http.ResponseWriter, r *http.Request, next http.Handler) {
-	a.log.With("userID", a.userID).Debug("add userID to request context")
-	ctx := context.WithValue(r.Context(), AuthenticatedUserKey, a.userID)
+func (a *Auth) continueWithUser(w http.ResponseWriter, r *http.Request, next http.Handler, userID string) {
+	a.log.With("userID", userID).Debug("add userID to request context")
+	ctx := context.WithValue(r.Context(), AuthenticatedUserKey, userID)
 	next.ServeHTTP(w, r.WithContext(ctx))
 }

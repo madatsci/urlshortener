@@ -91,6 +91,12 @@ func (a *App) Start() error {
 	a.logger.Infof("Build date: %s", a.buildDate)
 	a.logger.Infof("Build commit: %s", a.buildCommit)
 
+	if a.config.TokenSecret == config.DefaultTokenSecret {
+		a.logger.Warn("using the built-in default token secret: " +
+			"anyone can forge tokens for any user. " +
+			"set TOKEN_SECRET_KEY or -token-secret to a secret random value")
+	}
+
 	if err := a.server.Start(); err != nil {
 		return err
 	}

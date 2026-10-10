@@ -106,6 +106,12 @@ Config file path.
 
 Authentication token secret key.
 
+If it is not set, the service falls back to the built-in `secret_key`, and
+anyone can forge tokens for any user. Always set an explicit secret value
+outside local development; the service logs a warning while the default is in
+use. Changing the secret invalidates all issued tokens, so every user is
+registered anew.
+
 ### `--token-duration`, `TOKEN_DURATION`
 
 Authentication token duration (in the format of Golang duration string).

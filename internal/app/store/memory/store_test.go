@@ -2,6 +2,7 @@ package memory
 
 import (
 	"context"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -72,6 +73,59 @@ func TestBatchCreateURL(t *testing.T) {
 	all, err := s.ListAllUrls(ctx)
 	require.NoError(t, err)
 	require.Equal(t, 3, len(all))
+}
+
+// TestConcurrentAccess checks that the store is safe for concurrent use.
+// It is meaningful under `go test -race`, and would previously crash with
+// "concurrent map read and map write".
+func TestConcurrentAccess(t *testing.T) {
+	s := New()
+	ctx := context.Background()
+
+	const goroutines = 16
+	const iterations = 25
+
+	var wg sync.WaitGroup
+
+	for g := 0; g < goroutines; g++ {
+		wg.Add(1)
+
+		go func(g int) {
+			defer wg.Done()
+
+			user := random.RandomUser()
+
+			for range iterations {
+				if err := s.CreateUser(ctx, user); err != nil {
+					t.Error(err)
+					return
+				}
+
+				if _, err := s.GetUser(ctx, user.ID); err != nil {
+					t.Error(err)
+					return
+				}
+
+				url := random.RandomURL()
+				if err := s.CreateURL(ctx, user.ID, url); err != nil {
+					t.Error(err)
+					return
+				}
+
+				if _, err := s.GetURL(ctx, url.Slug); err != nil {
+					t.Error(err)
+					return
+				}
+
+				if _, err := s.ListURLsByUserID(ctx, user.ID); err != nil {
+					t.Error(err)
+					return
+				}
+			}
+		}(g)
+	}
+
+	wg.Wait()
 }
 
 func TestListURLsByUserID(t *testing.T) {

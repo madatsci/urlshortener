@@ -21,8 +21,14 @@ const (
 	defaultServerAddr    = "localhost:8080"
 	defaultBaseURL       = "http://localhost:8080"
 	defaultTokenDuration = time.Hour
-	defaultTokenSecret   = "secret_key"
 )
+
+// DefaultTokenSecret is the signing key used when no TOKEN_SECRET_KEY is set.
+//
+// It is a well-known value, so anyone can forge tokens for any user while it is
+// in use. Set TOKEN_SECRET_KEY (or the -token-secret flag) to a secret random
+// value for anything but local development.
+const DefaultTokenSecret = "secret_key"
 
 // Config represents the service configuration.
 type Config struct {
@@ -231,7 +237,7 @@ func setDefaults(c *Config) {
 		c.TokenDuration = defaultTokenDuration
 	}
 	if c.TokenSecret == "" {
-		c.TokenSecret = defaultTokenSecret
+		c.TokenSecret = DefaultTokenSecret
 	}
 
 	c.TokenIssuer = tokenIssuer
