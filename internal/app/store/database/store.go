@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"embed"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -62,6 +63,10 @@ func (s *Store) GetUser(ctx context.Context, userID string) (models.User, error)
 	).Scan(&user.ID, &user.CreatedAt)
 
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return user, fmt.Errorf("user %q: %w", userID, store.ErrNotFound)
+		}
+
 		return user, err
 	}
 
@@ -74,7 +79,7 @@ func (s *Store) GetUser(ctx context.Context, userID string) (models.User, error)
 func (s *Store) CreateURL(ctx context.Context, userID string, url models.URL) error {
 	originalURL, err := s.getURLByOriginal(ctx, url.Original)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, store.ErrNotFound) {
 			_, err = s.conn.ExecContext(
 				ctx,
 				"INSERT INTO urls (id, correlation_id, slug, original_url, created_at) VALUES ($1, $2, $3, $4, $5)",
@@ -165,6 +170,10 @@ func (s *Store) GetURL(ctx context.Context, slug string) (models.URL, error) {
 	).Scan(&url.ID, &url.CorrelationID, &url.Slug, &url.Original, &url.CreatedAt, &url.Deleted)
 
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return url, fmt.Errorf("url %q: %w", slug, store.ErrNotFound)
+		}
+
 		return url, err
 	}
 
@@ -318,6 +327,10 @@ func (s *Store) getURLByOriginal(ctx context.Context, originalURL string) (model
 	).Scan(&url.ID, &url.CorrelationID, &url.Slug, &url.Original, &url.CreatedAt, &url.Deleted)
 
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return url, fmt.Errorf("url by original %q: %w", originalURL, store.ErrNotFound)
+		}
+
 		return url, err
 	}
 
