@@ -11,10 +11,27 @@ import (
 
 	"github.com/madatsci/urlshortener/internal/app/database"
 	"github.com/madatsci/urlshortener/internal/app/models"
+	"github.com/madatsci/urlshortener/internal/app/store"
+	"github.com/madatsci/urlshortener/internal/app/store/storetest"
 	"github.com/madatsci/urlshortener/internal/random"
 )
 
 var errMissingDSN = errors.New("database DSN not configured")
+
+func TestStoreConformance(t *testing.T) {
+	storetest.Run(t, func(t *testing.T) store.Store {
+		ctx := context.Background()
+		s, err := newTestStore(ctx)
+		if err != nil {
+			if err == errMissingDSN {
+				t.Skip()
+			}
+			t.Fatal(err)
+		}
+		t.Cleanup(func() { _ = cleanup(s) })
+		return s
+	})
+}
 
 func newTestStore(ctx context.Context) (*Store, error) {
 	var databaseDSN string
@@ -57,27 +74,6 @@ func cleanup(s *Store) error {
 	}
 
 	return nil
-}
-
-func TestCreateUser(t *testing.T) {
-	ctx := context.Background()
-	s, err := newTestStore(ctx)
-	if err != nil {
-		if err == errMissingDSN {
-			t.Skip()
-		}
-		t.Fatal(err)
-	}
-	defer cleanup(s)
-
-	user := random.RandomUser()
-	err = s.CreateUser(ctx, user)
-	require.NoError(t, err)
-
-	res, err := s.GetUser(ctx, user.ID)
-	require.NoError(t, err)
-	assert.Equal(t, user.ID, res.ID)
-	assert.Equal(t, user.CreatedAt.Unix(), res.CreatedAt.Unix())
 }
 
 func BenchmarkCreateUser(b *testing.B) {
@@ -297,47 +293,6 @@ func BenchmarkBatchCreateURL(b *testing.B) {
 			s.BatchCreateURL(ctx, user.ID, urls)
 		}
 	})
-}
-
-func TestListURLsByUserID(t *testing.T) {
-	ctx := context.Background()
-	s, err := newTestStore(ctx)
-	if err != nil {
-		if err == errMissingDSN {
-			t.Skip()
-		}
-		t.Fatal(err)
-	}
-	defer cleanup(s)
-
-	user1 := random.RandomUser()
-	err = s.CreateUser(ctx, user1)
-	require.NoError(t, err)
-
-	user2 := random.RandomUser()
-	err = s.CreateUser(ctx, user2)
-	require.NoError(t, err)
-
-	url1 := random.RandomURL()
-	err = s.CreateURL(ctx, user1.ID, url1)
-	require.NoError(t, err)
-
-	url2 := random.RandomURL()
-	err = s.CreateURL(ctx, user1.ID, url2)
-	require.NoError(t, err)
-
-	url3 := random.RandomURL()
-
-	err = s.CreateURL(ctx, user2.ID, url3)
-	require.NoError(t, err)
-
-	user1URLs, err := s.ListURLsByUserID(ctx, user1.ID)
-	require.NoError(t, err)
-	assert.Equal(t, 2, len(user1URLs))
-
-	user2URLs, err := s.ListURLsByUserID(ctx, user1.ID)
-	require.NoError(t, err)
-	assert.Equal(t, 2, len(user2URLs))
 }
 
 func TestSoftDeleteURL(t *testing.T) {

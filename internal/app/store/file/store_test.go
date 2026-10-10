@@ -8,28 +8,18 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/madatsci/urlshortener/internal/app/store"
+	"github.com/madatsci/urlshortener/internal/app/store/storetest"
 	"github.com/madatsci/urlshortener/internal/random"
 )
 
-func TestCreateUser(t *testing.T) {
-	filepath := "./test_storage.json"
-	s, err := New(filepath)
-	require.NoError(t, err)
-	defer func() {
-		err = os.Remove(filepath)
+func TestStoreConformance(t *testing.T) {
+	storetest.Run(t, func(t *testing.T) store.Store {
+		path := t.TempDir() + "/storage.json"
+		s, err := New(path)
 		require.NoError(t, err)
-	}()
-
-	ctx := context.Background()
-
-	user := random.RandomUser()
-	err = s.CreateUser(ctx, user)
-	require.NoError(t, err)
-
-	res, err := s.GetUser(ctx, user.ID)
-	require.NoError(t, err)
-	assert.Equal(t, user.ID, res.ID)
-	assert.Equal(t, user.CreatedAt, res.CreatedAt)
+		return s
+	})
 }
 
 func BenchmarkCreateUser(b *testing.B) {
@@ -50,43 +40,6 @@ func BenchmarkCreateUser(b *testing.B) {
 
 		s.CreateUser(ctx, user)
 	}
-}
-
-func TestCreateURL(t *testing.T) {
-	filepath := "./test_storage.json"
-	s, err := New(filepath)
-	require.NoError(t, err)
-	defer func() {
-		err = os.Remove(filepath)
-		require.NoError(t, err)
-	}()
-
-	ctx := context.Background()
-
-	all, err := s.ListAllUrls(ctx)
-	require.NoError(t, err)
-	require.Equal(t, 0, len(all))
-
-	user := random.RandomUser()
-	urls := random.RandomURLs(3)
-	for _, u := range urls {
-		err = s.CreateURL(ctx, user.ID, u)
-		require.NoError(t, err)
-	}
-
-	for _, u := range urls {
-		res, getErr := s.GetURL(ctx, u.Slug)
-		require.NoError(t, getErr)
-		assert.Equal(t, u.Original, res.Original)
-		assert.Equal(t, u.Slug, res.Slug)
-		assert.Equal(t, u.ID, res.ID)
-		assert.Equal(t, u.CorrelationID, res.CorrelationID)
-		assert.Equal(t, u.CreatedAt, res.CreatedAt)
-	}
-
-	all, err = s.ListAllUrls(ctx)
-	require.NoError(t, err)
-	require.Equal(t, 3, len(all))
 }
 
 func BenchmarkCreateURL(b *testing.B) {
@@ -160,41 +113,6 @@ func BenchmarkBatchCreateURL(b *testing.B) {
 
 		s.BatchCreateURL(ctx, user.ID, urls)
 	}
-}
-
-func TestListURLsByUserID(t *testing.T) {
-	filepath := "./test_storage.json"
-	s, err := New(filepath)
-	require.NoError(t, err)
-	defer func() {
-		err = os.Remove(filepath)
-		require.NoError(t, err)
-	}()
-
-	ctx := context.Background()
-
-	all, err := s.ListAllUrls(ctx)
-	require.NoError(t, err)
-	require.Equal(t, 0, len(all))
-
-	user1 := random.RandomUser()
-	user1URLs := random.RandomURLs(3)
-	user2 := random.RandomUser()
-	user2URLs := random.RandomURLs(2)
-
-	err = s.BatchCreateURL(ctx, user1.ID, user1URLs)
-	require.NoError(t, err)
-
-	err = s.BatchCreateURL(ctx, user2.ID, user2URLs)
-	require.NoError(t, err)
-
-	resURLs1, err := s.ListURLsByUserID(ctx, user1.ID)
-	require.NoError(t, err)
-	assert.Equal(t, 3, len(resURLs1))
-
-	resURLs2, err := s.ListURLsByUserID(ctx, user2.ID)
-	require.NoError(t, err)
-	assert.Equal(t, 2, len(resURLs2))
 }
 
 func TestLoadFromFile(t *testing.T) {
