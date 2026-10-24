@@ -99,7 +99,12 @@ func New(config *config.Config, store store.Store, logger *zap.SugaredLogger) *S
 // nil once the listener is successfully bound; use Shutdown to gracefully stop
 // the server.
 func (s *Server) Start() error {
-	s.log.Infof("starting server with config: %+v", s.config)
+	// Keep an explicit allowlist so new configuration fields cannot leak secrets.
+	s.log.Infow("starting server",
+		"server_address", s.config.ServerAddr,
+		"enable_https", s.config.EnableHTTPS,
+		"token_duration", s.config.TokenDuration,
+	)
 
 	server := &http.Server{
 		Addr:    s.config.ServerAddr,

@@ -81,7 +81,7 @@ func (a *Auth) PublicAPIAuth(next http.Handler) http.Handler {
 		}
 
 		if cookie != nil {
-			a.log.With("cookie", cookie).Debug("got cookie from request")
+			a.log.Debug("got authentication cookie from request")
 			userID, err = a.jwt.GetUserID(cookie.Value)
 			if err != nil {
 				userID, err = a.registerNewUser(r.Context(), w)

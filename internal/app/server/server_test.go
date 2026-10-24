@@ -18,6 +18,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 
 	"github.com/madatsci/urlshortener/internal/app/config"
 	"github.com/madatsci/urlshortener/internal/app/models"
@@ -31,6 +32,44 @@ const (
 	tokenDuration = time.Hour
 	tokenIssuer   = "urlshortener_test"
 )
+
+func TestStartLogsOnlySafeConfig(t *testing.T) {
+	var logs bytes.Buffer
+	logger := zap.New(zapcore.NewCore(
+		zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig()),
+		zapcore.AddSync(&logs), zap.DebugLevel,
+	)).Sugar()
+	cfg := &config.Config{
+		ServerAddr:      "127.0.0.1:0",
+		BaseURL:         "http://localhost:8080",
+		FileStoragePath: "private-storage-path",
+		ConfigFilePath:  "private-config-path",
+		DatabaseDSN:     "postgres://private-user:private-password@localhost/private-db",
+		TokenSecret:     "private-token-signing-secret",
+		TokenDuration:   time.Hour,
+		TokenIssuer:     "private-token-issuer",
+	}
+	s := New(cfg, memory.New(), logger)
+	require.NoError(t, s.Start())
+	t.Cleanup(func() {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		require.NoError(t, s.Shutdown(ctx))
+	})
+
+	var entry map[string]any
+	require.NoError(t, json.Unmarshal(logs.Bytes(), &entry))
+	assert.Equal(t, "starting server", entry["msg"])
+	assert.Equal(t, cfg.ServerAddr, entry["server_address"])
+	assert.Equal(t, cfg.EnableHTTPS, entry["enable_https"])
+	assert.Contains(t, entry, "token_duration")
+	for _, value := range []string{
+		cfg.DatabaseDSN, "private-user", "private-password", cfg.TokenSecret,
+		cfg.BaseURL, cfg.FileStoragePath, cfg.ConfigFilePath, cfg.TokenIssuer,
+	} {
+		assert.NotContains(t, logs.String(), value)
+	}
+}
 
 func TestAddHandler(t *testing.T) {
 	type want struct {
