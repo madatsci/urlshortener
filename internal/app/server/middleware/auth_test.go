@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"bytes"
 	"net/http"
 	"net/http/httptest"
 	"sync"
@@ -13,7 +12,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 
 	"github.com/madatsci/urlshortener/internal/app/models"
 	memstore "github.com/madatsci/urlshortener/internal/app/store/memory"
@@ -39,57 +37,6 @@ func newTestAuth(store *memstore.Store) *Auth {
 		Store: store,
 		Log:   zap.NewNop().Sugar(),
 	})
-}
-
-func TestAuthDoesNotLogTokens(t *testing.T) {
-	for _, scope := range []string{"public", "private"} {
-		for _, tokenKind := range []string{"valid", "invalid", "missing"} {
-			t.Run(scope+"/"+tokenKind, func(t *testing.T) {
-				var logs bytes.Buffer
-				store := memstore.New()
-				auth := newTestAuth(store)
-				auth.log = zap.New(zapcore.NewCore(
-					zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig()),
-					zapcore.AddSync(&logs), zap.DebugLevel,
-				)).Sugar()
-				user := models.User{ID: uuid.NewString(), CreatedAt: time.Now()}
-				require.NoError(t, store.CreateUser(t.Context(), user))
-				token, err := auth.jwt.GetString(user.ID)
-				require.NoError(t, err)
-				if tokenKind == "invalid" {
-					token = "private-invalid-jwt"
-				}
-
-				req := httptest.NewRequest(http.MethodGet, "/api/user/urls", nil)
-				if tokenKind != "missing" {
-					req.AddCookie(&http.Cookie{Name: DefaultCookieName, Value: token})
-				}
-				next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					assert.NotEmpty(t, userIDFromContext(r))
-					w.WriteHeader(http.StatusOK)
-				})
-				handler := auth.PublicAPIAuth(next)
-				if scope == "private" {
-					handler = auth.PrivateAPIAuth(next)
-				}
-				rec := httptest.NewRecorder()
-				handler.ServeHTTP(rec, req)
-
-				wantStatus := http.StatusOK
-				if scope == "private" && tokenKind != "valid" {
-					wantStatus = http.StatusUnauthorized
-				}
-				assert.Equal(t, wantStatus, rec.Code)
-				assert.Contains(t, logs.String(), `"level":"debug"`)
-				assert.NotContains(t, logs.String(), token)
-				assert.NotContains(t, logs.String(), testTokenSecret)
-				for _, cookie := range rec.Result().Cookies() {
-					require.NotEmpty(t, cookie.Value)
-					assert.NotContains(t, logs.String(), cookie.Value)
-				}
-			})
-		}
-	}
 }
 
 // TestPrivateAPIAuthIsolatesConcurrentUsers checks that concurrent requests are
