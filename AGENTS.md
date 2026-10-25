@@ -25,7 +25,7 @@ Place tests beside production code in `*_test.go`; name functions `TestXxx` and 
 
 ## Commit & Pull Request Guidelines
 
-Recent commits use short, imperative, sentence-style subjects such as `Updated README` and `Fix for bool flag`. Keep each commit focused. CI requires feature branches named `iter<number>` (for example, `iter18`); `main` runs the complete suite. Pull requests should explain the behavior change, note configuration or migration impacts, link the issue when applicable, and include commands/results used for verification. Include screenshots only for user-visible output or documentation rendering changes.
+Recent commits use short, imperative, sentence-style subjects such as `Updated README` and `Fix for bool flag`. Keep each commit focused. Pull requests should explain the behavior change, note configuration or migration impacts, link the issue when applicable, and include commands/results used for verification. Include screenshots only for user-visible output or documentation rendering changes.
 
 ## Security & Configuration
 
