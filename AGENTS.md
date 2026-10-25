@@ -30,3 +30,13 @@ Recent commits use short, imperative, sentence-style subjects such as `Updated R
 ## Security & Configuration
 
 Do not commit real DSNs, JWT secrets, generated storage files, or coverage artifacts. Copy values from `config.example.json` and override them through environment variables; configuration precedence is environment, flags, then config file.
+
+## Agent skills
+
+### Issue tracker
+
+Issues and specs are tracked in GitHub Issues using the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Domain docs
+
+Domain documentation uses the single-context layout. See `docs/agents/domain.md`.
