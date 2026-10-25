@@ -1,0 +1,33 @@
+name: Manual OpenCode Task
+on:
+  workflow_dispatch:
+    inputs:
+      prompt:
+        description: "Task for OpenCode"
+        required: true
+        type: string
+      model:
+        description: "Model to use"
+        required: false
+        default: "openai/gpt-6.1-sol"
+        type: string
+jobs:
+  opencode:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Run OpenCode
+        uses: anomalyco/opencode/github@latest
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        with:
+          model: ${{ inputs.model }}
+          prompt: ${{ inputs.prompt }}
